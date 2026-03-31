@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum BodyStyle {
+  coupe
+  sedan
+  convertible
+  hatchback
+  wagon
+  suv
+  truck
+  van
+  roadster
+  targa
+}
+
+enum Era {
+  classic
+  retro
+  modern
+  contemporary
+}
+
+enum Rarity {
+  common
+  uncommon
+  rare
+  ultra_rare
+}
+
+enum GameMode {
+  easy
+  medium
+  hard
+  hardcore
+  competitive
+  practice
+}
+
+enum DimensionType {
+  category
+  region
+  country
+}
+
+enum AliasType {
+  make
+  model
+  full
+  nickname
+}
+
+model Region {
+  id       String    @id @default(cuid())
+  slug     String    @unique
+  label    String
+  vehicles Vehicle[]
+}
+
+model Vehicle {
+  id              String            @id @default(cuid())
+  make            String
+  model           String
+  year            Int
+  trim            String?
+  countryOfOrigin String
+  regionId        String
+  bodyStyle       BodyStyle
+  era             Era
+  rarity          Rarity
+  region          Region            @relation(fields: [regionId], references: [id])
+  categories      VehicleCategory[]
+  images          Image[]
+  aliases         VehicleAlias[]
+  guesses         Guess[]
+}
+
+model Category {
+  id       String            @id @default(cuid())
+  slug     String            @unique
+  label    String
+  vehicles VehicleCategory[]
+}
+
+model VehicleCategory {
+  vehicleId  String
+  categoryId String
+  vehicle    Vehicle  @relation(fields: [vehicleId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@id([vehicleId, categoryId])
+}
+
+model VehicleAlias {
+  id        String    @id @default(cuid())
+  vehicleId String
+  alias     String
+  aliasType AliasType
+  vehicle   Vehicle   @relation(fields: [vehicleId], references: [id])
+}
+
+model Image {
+  id                 String      @id @default(cuid())
+  vehicleId          String
+  filename           String      @unique
+  sourceUrl          String?
+  attribution        String?
+  uploadedAt         DateTime    @default(now())
+  isActive           Boolean     @default(true)
+  isHardcoreEligible Boolean     @default(false)
+  vehicle            Vehicle     @relation(fields: [vehicleId], references: [id])
+  stats              ImageStats?
+  rounds             Round[]
+}
+
+model ImageStats {
+  imageId          String    @id
+  correctGuesses   Int       @default(0)
+  incorrectGuesses Int       @default(0)
+  skipCount        Int       @default(0)
+  avgGuessTimeMs   Int?
+  difficultyScore  Float?
+  lastComputedAt   DateTime?
+  image            Image     @relation(fields: [imageId], references: [id])
+}
+
+model Player {
+  id             String                 @id @default(cuid())
+  username       String                 @unique
+  createdAt      DateTime               @default(now())
+  lastSeenAt     DateTime               @default(now())
+  stats          PlayerStats?
+  dimensionStats PlayerDimensionStats[]
+  sessions       GameSession[]
+}
+
+model PlayerStats {
+  playerId       String @id
+  totalScore     Int    @default(0)
+  gamesPlayed    Int    @default(0)
+  roundsPlayed   Int    @default(0)
+  correctGuesses Int    @default(0)
+  currentStreak  Int    @default(0)
+  bestStreak     Int    @default(0)
+  player         Player @relation(fields: [playerId], references: [id])
+}
+
+model PlayerDimensionStats {
+  playerId      String
+  dimensionType DimensionType
+  dimensionKey  String
+  correct       Int           @default(0)
+  incorrect     Int           @default(0)
+  streak        Int           @default(0)
+  lastPlayedAt  DateTime?
+  player        Player        @relation(fields: [playerId], references: [id])
+
+  @@id([playerId, dimensionType, dimensionKey])
+}
+
+model GameSession {
+  id           String      @id @default(cuid())
+  playerId     String?
+  mode         GameMode
+  filterConfig Json
+  startedAt    DateTime    @default(now())
+  endedAt      DateTime?
+  finalScore   Int?
+  player       Player?     @relation(fields: [playerId], references: [id])
+  rounds       Round[]
+}
+
+model Round {
+  id             String      @id @default(cuid())
+  sessionId      String
+  imageId        String
+  sequenceNumber Int
+  easyChoices    String[]
+  timeLimitMs    Int?
+  presentedAt    DateTime    @default(now())
+  session        GameSession @relation(fields: [sessionId], references: [id])
+  image          Image       @relation(fields: [imageId], references: [id])
+  guess          Guess?
+}
+
+model Guess {
+  id               String   @id @default(cuid())
+  roundId          String   @unique
+  rawInput         String
+  guessedVehicleId String?
+  isCorrect        Boolean
+  partialCredit    Int
+  yearDelta        Int?
+  timeTakenMs      Int?
+  zoomLevelAtGuess Int?
+  makePoints       Int      @default(0)
+  modelPoints      Int      @default(0)
+  yearBonus        Int?
+  timeBonus        Int      @default(0)
+  modeMultiplier   Float
+  pointsEarned     Int
+  round            Round    @relation(fields: [roundId], references: [id])
+  guessedVehicle   Vehicle? @relation(fields: [guessedVehicleId], references: [id])
+}
+
+model FeatureFlag {
+  key         String   @id
+  enabled     Boolean  @default(false)
+  description String
+  updatedAt   DateTime @updatedAt
+}
+
+enum StagingStatus {
+  PENDING_REVIEW
+  COMMUNITY_REVIEW
+  READY
+  PUBLISHED
+  REJECTED
+}
+
+model StagingImage {
+  id                 String          @id @default(cuid())
+  cloudinaryPublicId String          @unique
+  filename           String
+  sourceUrl          String?
+  attribution        String?
+  // AI-generated suggestions (stubbed until Gemini is integrated)
+  aiMake             String?
+  aiModel            String?
+  aiYear             Int?
+  aiBodyStyle        String?
+  aiConfidence       Float?
+  aiTaggedAt         DateTime?
+  // Admin-edited values (override AI and community)
+  adminMake          String?
+  adminModel         String?
+  adminYear          Int?
+  adminTrim          String?
+  adminBodyStyle     String?
+  adminNotes         String?
+  reviewedAt         DateTime?
+  // Community-confirmed values (set when a field reaches 5 unique agreements)
+  confirmedMake      String?
+  confirmedModel     String?
+  confirmedYear      Int?
+  confirmedTrim      String?
+  status             StagingStatus   @default(PENDING_REVIEW)
+  // For future user-submitted images
+  submittedBy        String?
+  createdAt          DateTime        @default(now())
+  suggestions        CommunityIdentification[]
+}
+
+model CommunityIdentification {
+  id             String       @id @default(cuid())
+  stagingImageId String
+  username       String
+  suggestedMake  String?
+  suggestedModel String?
+  suggestedYear  Int?
+  suggestedTrim  String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  stagingImage   StagingImage @relation(fields: [stagingImageId], references: [id])
+
+  // One suggestion record per user per image (updated in place)
+  @@unique([stagingImageId, username])
+}
