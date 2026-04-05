@@ -12,7 +12,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const body = await request.json();
 
-  const { make, model, year, trim, bodyStyle, notes, status } = body;
+  const {
+    make, model, year, trim, bodyStyle,
+    rarity, era, regionSlug, countryOfOrigin, categories, isHardcoreEligible,
+    notes, status,
+  } = body;
 
   const VALID_STATUSES: StagingStatus[] = [
     "PENDING_REVIEW",
@@ -34,6 +38,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
       ...(year !== undefined && { adminYear: year ? parseInt(year, 10) : null }),
       ...(trim !== undefined && { adminTrim: trim || null }),
       ...(bodyStyle !== undefined && { adminBodyStyle: bodyStyle || null }),
+      ...(rarity !== undefined && { adminRarity: rarity || null }),
+      ...(era !== undefined && { adminEra: era || null }),
+      ...(regionSlug !== undefined && { adminRegionSlug: regionSlug || null }),
+      ...(countryOfOrigin !== undefined && { adminCountryOfOrigin: countryOfOrigin || null }),
+      ...(categories !== undefined && { adminCategories: Array.isArray(categories) ? categories : [] }),
+      ...(isHardcoreEligible !== undefined && { adminIsHardcoreEligible: Boolean(isHardcoreEligible) }),
       ...(notes !== undefined && { adminNotes: notes || null }),
       ...(status !== undefined && { status }),
       reviewedAt: new Date(),
@@ -53,6 +63,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
       year: updated.adminYear,
       trim: updated.adminTrim,
       bodyStyle: updated.adminBodyStyle,
+      rarity: updated.adminRarity,
+      era: updated.adminEra,
+      regionSlug: updated.adminRegionSlug,
+      countryOfOrigin: updated.adminCountryOfOrigin,
+      categories: updated.adminCategories,
+      isHardcoreEligible: updated.adminIsHardcoreEligible,
       notes: updated.adminNotes,
     },
     confirmed: {

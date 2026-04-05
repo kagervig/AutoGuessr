@@ -2,9 +2,39 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Check,
+  X,
+  Clock,
+  Zap,
+  Star,
+  Flag,
+  RotateCcw,
+  Trophy,
+} from "lucide-react";
 import { TIME_LIMITS } from "@/app/lib/game";
+import { MODES } from "@/app/lib/constants";
+import { Tachometer } from "@/app/components/ui/Tachometer";
+import { cn } from "@/app/lib/utils";
 import MediumModeInput from "./MediumModeInput";
 import HardModeInput from "./HardModeInput";
+
+const MODE_LABELS: Record<string, string> = Object.fromEntries(
+  MODES.map((m) => [m.id, m.label])
+);
+
+// Approximate max per-round score for tachometer calibration
+const MAX_MULTIPLIERS: Record<string, number> = {
+  easy: 1.0,
+  medium: 1.3,
+  hard: 1.7,
+  hardcore: 2.2,
+  competitive: 2.0,
+  practice: 1.0,
+};
 
 interface VehicleInfo {
   make: string;
@@ -56,6 +86,117 @@ interface Props {
 const HARD_MODES = ["hard", "hardcore", "competitive"];
 const CHOICE_MODES = ["easy", "practice"];
 
+// ─── RoundResult overlay ───────────────────────────────────────────────────
+
+function RoundResult({
+  reveal,
+  round,
+  totalRounds,
+  totalScore,
+  onNext,
+}: {
+  reveal: RevealInfo;
+  round: number;
+  totalRounds: number;
+  totalScore: number;
+  onNext: () => void;
+}) {
+  const isLast = round >= totalRounds;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-2xl"
+    >
+      <motion.div
+        initial={{ scale: 0.85, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        className="text-center max-w-sm w-full px-6"
+      >
+        <div className={cn(
+          "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl",
+          reveal.isCorrect ? "bg-green-500/20 shadow-green-500/30" : "bg-red-600/20 shadow-red-600/30"
+        )}>
+          {reveal.isCorrect
+            ? <Check className="w-10 h-10 text-green-400" strokeWidth={3} />
+            : <X className="w-10 h-10 text-red-400" strokeWidth={3} />
+          }
+        </div>
+
+        <p className={cn(
+          "text-2xl font-black tracking-widest uppercase mb-1",
+          reveal.isCorrect ? "text-green-400" : "text-red-400"
+        )}>
+          {reveal.isCorrect ? "Nailed it!" : "Miss!"}
+        </p>
+
+        <p className="text-sm text-muted-foreground mb-1">{reveal.correctLabel}</p>
+        {!reveal.isCorrect && reveal.guessLabel && (
+          <p className="text-xs text-red-400/70 mb-4">You said: {reveal.guessLabel}</p>
+        )}
+        {reveal.isCorrect && <div className="mb-4" />}
+
+        {reveal.pointsEarned > 0 && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring" }}
+            className="inline-flex items-center gap-2 bg-primary/20 border border-primary/40 text-primary rounded-full px-5 py-2 font-black text-xl tracking-wider mb-6"
+          >
+            <Zap className="w-5 h-5" />
+            +{reveal.pointsEarned.toLocaleString()} pts
+          </motion.div>
+        )}
+        {reveal.pointsEarned === 0 && <div className="mb-6" />}
+
+        <div className="text-xs text-muted-foreground mb-8 font-mono">
+          TOTAL: {totalScore.toLocaleString()}
+        </div>
+
+        <button
+          onClick={onNext}
+          className="inline-flex items-center gap-2 bg-white text-black font-black tracking-widest uppercase px-8 py-3 rounded-full hover:bg-primary hover:text-white transition-all duration-200 shadow-lg hover:shadow-primary/40"
+        >
+          {isLast ? (
+            <><Trophy className="w-5 h-5" /> See Results</>
+          ) : (
+            <>Next Round <ChevronRight className="w-5 h-5" /></>
+          )}
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ─── Competitive timer bar (overlaid on image) ─────────────────────────────
+
+function RevealBar({ timerActive, roundState, timeLimitMs }: {
+  timerActive: boolean;
+  roundState: string;
+  timeLimitMs: number;
+}) {
+  return (
+    <div className="flex items-center gap-3 text-sm font-bold">
+      <Clock className="w-4 h-4 text-primary animate-pulse" />
+      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-primary to-orange-400 rounded-full"
+          style={{
+            width: roundState === "revealed" ? "0%" : timerActive ? "0%" : "100%",
+            transition: timerActive && roundState === "answering"
+              ? `width ${timeLimitMs}ms linear`
+              : "none",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Game component ───────────────────────────────────────────────────
+
 export default function GameScreen({ mode, username, filter }: Props) {
   const router = useRouter();
 
@@ -92,7 +233,6 @@ export default function GameScreen({ mode, username, filter }: Props) {
     ])
       .then(([game, flags]) => {
         if (game.error) {
-          // "Not enough cars" errors are shown inline on the home screen
           if (typeof game.error === "string" && game.error.toLowerCase().includes("not enough")) {
             router.replace(`/?filterError=${encodeURIComponent(game.error)}`);
           } else {
@@ -107,7 +247,6 @@ export default function GameScreen({ mode, username, filter }: Props) {
       .finally(() => setLoading(false));
   }, [mode, username, filter]);
 
-  // Reset per-round state when the round index changes
   useEffect(() => {
     roundStartRef.current = Date.now();
     if (gameData) currentRoundIdRef.current = gameData.rounds[currentIndex].roundId;
@@ -119,7 +258,6 @@ export default function GameScreen({ mode, username, filter }: Props) {
       const y = Math.floor(Math.random() * 70 + 15);
       setZoomOrigin(`${x}% ${y}%`);
 
-      // Double rAF to ensure initial scale is painted before transition starts
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = requestAnimationFrame(() => {
           setTimerActive(true);
@@ -148,7 +286,6 @@ export default function GameScreen({ mode, username, filter }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundState]);
 
-  // Set competitive auto-submit after timer becomes active
   useEffect(() => {
     if (!timerActive || mode !== "competitive" || !gameData) return;
     const timeLimitMs = gameData.timeLimitMs ?? TIME_LIMITS.competitive;
@@ -158,18 +295,24 @@ export default function GameScreen({ mode, username, filter }: Props) {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-900">
-        <p className="text-zinc-500">Loading…</p>
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
+          <p className="text-muted-foreground font-mono tracking-widest text-sm uppercase">Loading</p>
+        </div>
       </main>
     );
   }
 
   if (error) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-900 px-4">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
         <p className="text-center text-red-400">{error}</p>
-        <button onClick={() => router.push("/")} className="rounded-lg bg-zinc-800 px-5 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700">
-          Back to home
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center gap-2 glass-panel rounded-xl px-6 py-3 text-sm font-bold text-white hover:bg-white/10 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Garage
         </button>
       </main>
     );
@@ -177,50 +320,13 @@ export default function GameScreen({ mode, username, filter }: Props) {
 
   if (!gameData) return null;
 
-  if (practiceComplete) {
-    const correct = completedRounds.filter((r) => r.isCorrect).length;
-    return (
-      <main className="min-h-screen bg-zinc-900 px-4 py-8">
-        <div className="mx-auto max-w-lg space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Practice complete</h1>
-            <p className="mt-1 text-zinc-400">
-              <span className="text-amber-400 font-semibold">{correct}</span> / {completedRounds.length} correct
-            </p>
-          </div>
-          <div className="space-y-2">
-            {completedRounds.map((r, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-800/50 px-3 py-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={r.imageUrl} alt="" className="h-12 w-16 flex-shrink-0 rounded-lg object-cover" />
-                <div className="flex-1 min-w-0">
-                  <p className={`truncate text-sm font-medium ${r.isCorrect ? "text-zinc-200" : "text-zinc-400"}`}>
-                    {r.correctLabel}
-                  </p>
-                </div>
-                <span className={`text-lg ${r.isCorrect ? "text-green-400" : "text-red-400"}`}>
-                  {r.isCorrect ? "✓" : "✗"}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => router.push("/")} className="flex-1 rounded-xl border border-zinc-700 py-3 text-sm font-semibold text-zinc-300 hover:bg-zinc-800">
-              Home
-            </button>
-            <button onClick={() => router.push(`/game?mode=practice&username=${username}&filter=${filter}`)} className="flex-1 rounded-xl bg-amber-500 py-3 text-sm font-bold text-zinc-900 hover:bg-amber-400">
-              Play Again
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   const round = gameData.rounds[currentIndex];
   const choices = gameData.easyChoices?.[round.roundId] ?? [];
   const timeLimitMs = gameData.timeLimitMs ?? TIME_LIMITS[mode] ?? TIME_LIMITS.easy;
   const isLastRound = currentIndex === gameData.rounds.length - 1;
+  const isHardcore = mode === "hardcore";
+  const isCompetitive = mode === "competitive";
+  const maxTotalScore = gameData.rounds.length * Math.floor(1000 * (MAX_MULTIPLIERS[mode] ?? 1.0));
 
   function resolveAndReveal({
     makeCorrect,
@@ -367,134 +473,286 @@ export default function GameScreen({ mode, username, filter }: Props) {
     setSelectedEasyId(null);
   }
 
-  const isHardcore = mode === "hardcore";
-  const isCompetitive = mode === "competitive";
+  // Practice complete screen
+  if (practiceComplete) {
+    const correct = completedRounds.filter((r) => r.isCorrect).length;
+    const total = completedRounds.length;
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-panel rounded-3xl p-10 max-w-lg w-full text-center border border-white/10"
+        >
+          <div className="mb-8">
+            <Flag className="w-12 h-12 text-primary mx-auto mb-4" />
+            <h1 className="text-4xl font-black tracking-widest uppercase mb-1">Session Over</h1>
+            <p className="text-muted-foreground">{username || "Driver"} · Garage mode</p>
+          </div>
+
+          <div className="text-5xl font-black text-white mb-1">
+            {correct} <span className="text-2xl text-muted-foreground">/ {total}</span>
+          </div>
+          <div className="text-sm text-muted-foreground font-mono tracking-widest mb-8">CORRECT</div>
+
+          <div className="space-y-2 mb-8 text-left">
+            {completedRounds.map((r, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={r.imageUrl} alt="" className="h-12 w-16 shrink-0 rounded-lg object-cover" />
+                <p className={cn("flex-1 min-w-0 truncate text-sm font-medium", r.isCorrect ? "text-zinc-200" : "text-zinc-500")}>
+                  {r.correctLabel}
+                </p>
+                <span className={cn("text-lg shrink-0", r.isCorrect ? "text-green-400" : "text-red-400")}>
+                  {r.isCorrect ? "✓" : "✗"}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => router.push(`/game?mode=practice&username=${username}&filter=${filter}`)}
+              className="inline-flex items-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-6 py-3 rounded-full hover:brightness-110 transition-all"
+            >
+              <RotateCcw className="w-4 h-4" /> Play Again
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="inline-flex items-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-6 py-3 rounded-full hover:bg-white/10 transition-all"
+            >
+              <ArrowLeft className="w-4 h-4" /> Garage
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <main className="flex min-h-screen flex-col bg-zinc-900">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-sm text-zinc-500">
-          Round <span className="font-semibold text-zinc-300">{currentIndex + 1}</span> / {gameData.rounds.length}
-        </span>
-        <span className="text-sm font-semibold text-amber-400">
-          {mode === "practice" ? "Practice" : `${score.toLocaleString()} pts`}
-        </span>
-      </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
 
-      {/* Image — 4:3 aspect ratio */}
-      <div className="relative w-full overflow-hidden" style={{ paddingBottom: "75%" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={round.imageUrl}
-          src={round.imageUrl}
-          alt="Identify this car"
-          loading="eager"
-          className="absolute inset-0 h-full w-full object-cover transition-[filter,transform]"
-          style={{
-            // Hardcore: blur until revealed
-            filter: isHardcore && roundState === "answering"
-              ? "blur(4px) brightness(0.7) contrast(1.2)"
-              : "none",
-            transitionDuration: isHardcore ? "300ms" : "0ms",
-            // Competitive: zoom in then animate out
-            ...(isCompetitive
-              ? {
-                  transformOrigin: zoomOrigin,
-                  transform: zoomedOut ? "scale(1)" : "scale(8)",
-                  transition: zoomedOut
-                    ? `transform ${timeLimitMs}ms linear, filter 300ms`
-                    : "none",
-                }
-              : {}),
-          }}
-        />
-        <div className="absolute inset-0 -z-10 flex items-center justify-center bg-zinc-800">
-          <span className="text-sm text-zinc-600">Image unavailable</span>
-        </div>
-      </div>
-
-      {/* Competitive countdown bar */}
-      {isCompetitive && (
-        <div className="h-1 w-full bg-zinc-800">
-          <div
-            className="h-full bg-amber-500"
-            style={{
-              width: roundState === "revealed" ? "0%" : timerActive ? "0%" : "100%",
-              transition: timerActive && roundState === "answering"
-                ? `width ${timeLimitMs}ms linear`
-                : "none",
-            }}
-          />
-        </div>
-      )}
-
-      {/* Controls */}
-      <div className="flex flex-1 flex-col gap-3 px-4 py-4">
-        {/* Easy / practice mode choices */}
-        {CHOICE_MODES.includes(mode) && (
-          <div className="grid grid-cols-1 gap-2">
-            {choices.map((choice) => {
-              const isSelected = selectedEasyId === choice.vehicleId;
-              const isCorrectChoice = choice.vehicleId === round.vehicleId;
-              let cls = "w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors";
-              if (roundState === "answering") {
-                cls += " border-zinc-700 bg-zinc-800 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-700";
-              } else if (isCorrectChoice) {
-                cls += " border-green-600 bg-green-900/30 text-green-300";
-              } else if (isSelected) {
-                cls += " border-red-600 bg-red-900/30 text-red-300";
-              } else {
-                cls += " border-zinc-800 bg-zinc-900 text-zinc-600";
-              }
-              return (
-                <button key={choice.vehicleId} disabled={roundState === "revealed"} onClick={() => handleEasyAnswer(choice.vehicleId)} className={cls}>
-                  {choice.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Medium mode */}
-        {mode === "medium" && (
-          <MediumModeInput
-            makes={gameData.makes ?? []}
-            showYear={mediumYearGuessing}
-            disabled={roundState === "revealed"}
-            onSubmit={handleMediumSubmit}
-          />
-        )}
-
-        {/* Hard / hardcore / competitive */}
-        {HARD_MODES.includes(mode) && (
-          <HardModeInput
-            makes={gameData.makes ?? []}
-            disabled={roundState === "revealed"}
-            onSubmit={handleHardSubmit}
-          />
-        )}
-
-        {/* Reveal panel */}
-        {roundState === "revealed" && reveal && (
-          <div className="space-y-1 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3">
-            <p className="text-xs text-zinc-500">Correct answer</p>
-            <p className="text-base font-bold text-white">{reveal.correctLabel}</p>
-            {!reveal.isCorrect && reveal.guessLabel && (
-              <p className="text-sm text-red-400">You answered: {reveal.guessLabel}</p>
-            )}
-            {reveal.pointsEarned > 0 && (
-              <p className="text-sm text-amber-400">+{reveal.pointsEarned.toLocaleString()} pts</p>
-            )}
-          </div>
-        )}
-
-        {roundState === "revealed" && (
-          <button onClick={handleNext} className="w-full rounded-xl bg-amber-500 py-3.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-amber-400">
-            {isLastRound ? (mode === "practice" ? "See Summary" : "See Results") : "Next"}
+      {/* Sticky top HUD */}
+      <div className="sticky top-0 z-40 glass-panel border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+          <button
+            onClick={() => router.push("/")}
+            className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors text-sm font-bold"
+          >
+            <ArrowLeft className="w-4 h-4" /> Garage
           </button>
-        )}
+
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-1">
+              {gameData.rounds.map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all",
+                    i < currentIndex ? "bg-green-500" : i === currentIndex ? "bg-primary scale-125" : "bg-white/15"
+                  )}
+                />
+              ))}
+            </div>
+            <span className="text-xs font-mono text-muted-foreground">
+              {currentIndex + 1}/{gameData.rounds.length}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-bold tracking-widest text-primary uppercase">
+              {MODE_LABELS[mode] || mode}
+            </span>
+            {username && (
+              <span className="hidden sm:block text-xs font-mono text-muted-foreground">
+                {username}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
-    </main>
+
+      {/* Main layout */}
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
+
+        {/* Left column */}
+        <div className="space-y-4">
+
+          {/* Car image */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              className="relative rounded-2xl overflow-hidden aspect-video bg-card border border-white/10 shadow-xl"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                key={round.imageUrl}
+                src={round.imageUrl}
+                alt="Identify this car"
+                loading="eager"
+                className="absolute inset-0 w-full h-full object-cover transition-[filter,transform]"
+                style={{
+                  filter: isHardcore && roundState === "answering"
+                    ? "blur(4px) brightness(0.7) contrast(1.2)"
+                    : "none",
+                  transitionDuration: isHardcore ? "300ms" : "0ms",
+                  ...(isCompetitive
+                    ? {
+                        transformOrigin: zoomOrigin,
+                        transform: zoomedOut ? "scale(1)" : "scale(8)",
+                        transition: zoomedOut
+                          ? `transform ${timeLimitMs}ms linear, filter 300ms`
+                          : "none",
+                      }
+                    : {}),
+                }}
+                draggable={false}
+              />
+
+              {/* Image fallback bg */}
+              <div className="absolute inset-0 -z-10 flex items-center justify-center bg-card">
+                <span className="text-sm text-muted-foreground">Image unavailable</span>
+              </div>
+
+              {/* Competitive timer bar at image bottom */}
+              {isCompetitive && roundState === "answering" && (
+                <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                  <RevealBar timerActive={timerActive} roundState={roundState} timeLimitMs={timeLimitMs} />
+                </div>
+              )}
+
+              {/* Round label */}
+              <div className="absolute top-4 left-4 glass-panel px-3 py-1 rounded-full text-xs font-bold tracking-widest text-white/70 uppercase">
+                {isHardcore ? "Obscured" : `Round ${currentIndex + 1}`}
+              </div>
+
+              {/* Result overlay */}
+              <AnimatePresence>
+                {roundState === "revealed" && reveal && (
+                  <RoundResult
+                    reveal={reveal}
+                    round={currentIndex + 1}
+                    totalRounds={gameData.rounds.length}
+                    totalScore={score}
+                    onNext={handleNext}
+                  />
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Answer area */}
+          <AnimatePresence mode="wait">
+            {roundState === "answering" && (
+              <motion.div
+                key={`answer-${currentIndex}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="glass-panel rounded-2xl p-5 border border-white/10"
+              >
+                <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
+                  {mode === "easy" && "Choose the correct make & model"}
+                  {mode === "medium" && "Select make & model"}
+                  {(mode === "hard" || mode === "hardcore") && "Type make, model & year exactly"}
+                  {mode === "competitive" && "Identify before the image reveals!"}
+                  {mode === "practice" && "Choose the correct make & model"}
+                </p>
+
+                {CHOICE_MODES.includes(mode) && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {choices.map((choice, i) => (
+                      <motion.button
+                        key={choice.vehicleId}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.06 }}
+                        onClick={() => handleEasyAnswer(choice.vehicleId)}
+                        className="relative group p-4 rounded-xl border-2 border-white/10 bg-white/5 hover:border-primary/60 hover:bg-primary/10 text-left transition-all duration-200 font-bold text-sm tracking-wide overflow-hidden"
+                      >
+                        <span className="absolute top-2 right-3 text-xs font-mono text-white/20 group-hover:text-primary/50 transition-colors">
+                          {String.fromCharCode(65 + i)}
+                        </span>
+                        {choice.label}
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+
+                {mode === "medium" && (
+                  <MediumModeInput
+                    makes={gameData.makes ?? []}
+                    showYear={mediumYearGuessing}
+                    disabled={false}
+                    onSubmit={handleMediumSubmit}
+                  />
+                )}
+
+                {HARD_MODES.includes(mode) && mode !== "competitive" && (
+                  <HardModeInput
+                    makes={gameData.makes ?? []}
+                    disabled={false}
+                    onSubmit={handleHardSubmit}
+                  />
+                )}
+
+                {mode === "competitive" && (
+                  <HardModeInput
+                    makes={gameData.makes ?? []}
+                    disabled={false}
+                    onSubmit={handleHardSubmit}
+                  />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Right column */}
+        <div className="flex flex-col items-center gap-5 lg:sticky lg:top-20">
+
+          {/* Tachometer */}
+          <div className="glass-panel rounded-3xl p-6 border border-white/10 w-full flex flex-col items-center">
+            <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
+              Score Gauge
+            </p>
+            <Tachometer score={score} maxScore={maxTotalScore} size={240} />
+            <div className="mt-4 w-full space-y-2">
+              <div className="flex justify-between text-xs font-mono text-muted-foreground">
+                <span>ROUND</span>
+                <span className="text-white font-bold">{currentIndex + 1} / {gameData.rounds.length}</span>
+              </div>
+              <div className="flex justify-between text-xs font-mono text-muted-foreground">
+                <span>TOTAL SCORE</span>
+                <span className="text-white font-bold">{score.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-xs font-mono text-muted-foreground">
+                <span>MAX POSSIBLE</span>
+                <span className="text-white/40">{maxTotalScore.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Mode info chip */}
+          <div className="glass-panel rounded-2xl p-4 border border-white/10 w-full">
+            <div className="flex items-center gap-3 mb-2">
+              <Star className="w-4 h-4 text-primary" />
+              <span className="text-sm font-black tracking-widest uppercase">{MODE_LABELS[mode] || mode}</span>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {mode === "easy" && "Pick the right car from 4 choices."}
+              {mode === "medium" && "Select the make and model from dropdown lists."}
+              {mode === "hard" && "Type the exact make, model, and year."}
+              {mode === "hardcore" && "Same as Expert, but the image is obscured."}
+              {mode === "competitive" && "Race the clock — faster answers earn bonus points."}
+              {mode === "practice" && "No leaderboard pressure. Drill your knowledge."}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

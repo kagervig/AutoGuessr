@@ -43,6 +43,12 @@ export async function GET(request: NextRequest) {
         year: img.adminYear,
         trim: img.adminTrim,
         bodyStyle: img.adminBodyStyle,
+        rarity: img.adminRarity,
+        era: img.adminEra,
+        regionSlug: img.adminRegionSlug,
+        countryOfOrigin: img.adminCountryOfOrigin,
+        categories: img.adminCategories,
+        isHardcoreEligible: img.adminIsHardcoreEligible,
         notes: img.adminNotes,
       },
       confirmed: {
