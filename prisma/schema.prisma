@@ -238,13 +238,19 @@ model StagingImage {
   aiConfidence       Float?
   aiTaggedAt         DateTime?
   // Admin-edited values (override AI and community)
-  adminMake          String?
-  adminModel         String?
-  adminYear          Int?
-  adminTrim          String?
-  adminBodyStyle     String?
-  adminNotes         String?
-  reviewedAt         DateTime?
+  adminMake                String?
+  adminModel               String?
+  adminYear                Int?
+  adminTrim                String?
+  adminBodyStyle           String?
+  adminRarity              String?
+  adminEra                 String?
+  adminRegionSlug          String?
+  adminCountryOfOrigin     String?
+  adminCategories          String[]
+  adminIsHardcoreEligible  Boolean?
+  adminNotes               String?
+  reviewedAt               DateTime?
   // Community-confirmed values (set when a field reaches 5 unique agreements)
   confirmedMake      String?
   confirmedModel     String?

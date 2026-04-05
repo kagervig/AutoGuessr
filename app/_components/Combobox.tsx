@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@/app/lib/utils";
 
 interface Props {
   value: string;
@@ -18,7 +19,6 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
     ? options.filter((o) => o.toLowerCase().includes(value.toLowerCase()))
     : options;
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -49,12 +49,17 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
         disabled={disabled}
         aria-autocomplete="list"
         aria-expanded={open}
-        className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition focus:border-amber-500 disabled:opacity-50"
+        className={cn(
+          "w-full bg-white/5 border-2 border-white/10 rounded-xl px-4 py-3",
+          "text-white font-bold placeholder:text-white/25",
+          "focus:outline-none focus:border-primary transition-colors",
+          "disabled:opacity-40"
+        )}
       />
       {open && filtered.length > 0 && (
         <ul
           role="listbox"
-          className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-800 py-1 shadow-lg"
+          className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-white/10 bg-card py-1 shadow-xl"
         >
           {filtered.slice(0, 50).map((option) => (
             <li
@@ -66,12 +71,12 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
                 onChange(option);
                 setOpen(false);
               }}
-              className={[
+              className={cn(
                 "cursor-pointer px-4 py-2 text-sm transition-colors",
                 value === option
-                  ? "bg-amber-500/20 text-amber-300"
-                  : "text-zinc-300 hover:bg-zinc-700",
-              ].join(" ")}
+                  ? "bg-primary/20 text-primary"
+                  : "text-zinc-300 hover:bg-white/5 hover:text-white"
+              )}
             >
               {option}
             </li>

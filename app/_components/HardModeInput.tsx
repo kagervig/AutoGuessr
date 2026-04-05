@@ -53,12 +53,12 @@ export default function HardModeInput({ makes, disabled, onSubmit }: Props) {
         min={1885}
         max={new Date().getFullYear() + 1}
         disabled={disabled}
-        className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition focus:border-amber-500 disabled:opacity-50"
+        className="w-full bg-white/5 border-2 border-white/10 rounded-xl px-4 py-3 text-white font-bold placeholder:text-white/25 focus:outline-none focus:border-primary transition-colors disabled:opacity-40"
       />
       <button
         disabled={disabled || !canSubmit}
         onClick={() => onSubmit(make, model, year)}
-        className="w-full rounded-xl bg-amber-500 py-3.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-40"
+        className="w-full py-3 rounded-xl bg-primary text-white font-black tracking-widest uppercase disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 transition-all"
       >
         Submit
       </button>

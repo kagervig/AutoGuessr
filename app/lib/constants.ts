@@ -1,33 +1,33 @@
 export const MODES = [
   {
     id: "easy",
-    label: "Easy",
-    description: "4 multiple choice answers",
+    label: "Rookie",
+    description: "4 multiple choice answers. Perfect for warming up.",
   },
   {
     id: "medium",
-    label: "Medium",
-    description: "Select make and model from dropdowns",
+    label: "Pro",
+    description: "Select make and model from comprehensive dropdowns.",
   },
   {
     id: "hard",
-    label: "Hard",
-    description: "Type make, model, and year",
+    label: "Expert",
+    description: "Type the exact make, model, and year.",
   },
   {
     id: "hardcore",
-    label: "Hardcore",
-    description: "Hard mode with obscured images",
+    label: "Blind",
+    description: "Expert rules, but images are heavily obscured.",
   },
   {
     id: "competitive",
-    label: "Competitive",
-    description: "Beat the clock as the image slowly reveals",
+    label: "Time Attack",
+    description: "Beat the clock as the image slowly reveals itself.",
   },
   {
     id: "practice",
-    label: "Practice",
-    description: "Drill a category or region — no leaderboard",
+    label: "Garage",
+    description: "Drill specific categories or regions. No leaderboard.",
   },
 ] as const;
 

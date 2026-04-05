@@ -11,7 +11,10 @@ const BODY_STYLES: BodyStyle[] = [
   "suv", "truck", "van", "roadster", "targa",
 ];
 
-export async function POST(request: NextRequest, { params }: Params) {
+const ERAS: Era[] = ["classic", "retro", "modern", "contemporary"];
+const RARITIES: Rarity[] = ["common", "uncommon", "rare", "ultra_rare"];
+
+export async function POST(_request: NextRequest, { params }: Params) {
   const { id } = await params;
 
   const staging = await prisma.stagingImage.findUnique({ where: { id } });
@@ -22,51 +25,54 @@ export async function POST(request: NextRequest, { params }: Params) {
     return Response.json({ error: "Already published" }, { status: 400 });
   }
 
-  // Resolve the final values: admin fields take precedence over community-confirmed
+  // Admin fields take precedence over community-confirmed
   const make = staging.adminMake ?? staging.confirmedMake;
   const model = staging.adminModel ?? staging.confirmedModel;
   const year = staging.adminYear ?? staging.confirmedYear;
 
   if (!make || !model || !year) {
     return Response.json(
-      { error: "make, model, and year are required to publish. Fill them in via the admin panel or wait for community confirmation." },
+      { error: "Make, model, and year are required. Fill them in and save before publishing." },
       { status: 422 }
     );
   }
 
+  const regionSlug = staging.adminRegionSlug;
+  const countryOfOrigin = staging.adminCountryOfOrigin;
+
+  if (!regionSlug || !countryOfOrigin) {
+    return Response.json(
+      { error: "Region and country of origin are required. Fill them in and save before publishing." },
+      { status: 422 }
+    );
+  }
+
+  const region = await prisma.region.findUnique({ where: { slug: regionSlug } });
+  if (!region) {
+    return Response.json({ error: `Region not found: "${regionSlug}"` }, { status: 400 });
+  }
+
   const trim = staging.adminTrim ?? staging.confirmedTrim ?? null;
+
   const rawBodyStyle = staging.adminBodyStyle ?? staging.aiBodyStyle ?? null;
   const bodyStyle: BodyStyle =
     rawBodyStyle && BODY_STYLES.includes(rawBodyStyle as BodyStyle)
       ? (rawBodyStyle as BodyStyle)
       : "sedan";
 
-  // POST body can supply the remaining required Vehicle fields
-  const body = await request.json().catch(() => ({}));
-  const regionId: string | undefined = body.regionId;
-  const countryOfOrigin: string | undefined = body.countryOfOrigin;
-  const era: Era = body.era ?? "modern";
-  const rarity: Rarity = body.rarity ?? "common";
-  const categorySlugs: string[] = body.categorySlugs ?? [];
-  const isHardcoreEligible: boolean = body.isHardcoreEligible ?? false;
+  const rawEra = staging.adminEra ?? null;
+  const era: Era = rawEra && ERAS.includes(rawEra as Era) ? (rawEra as Era) : "modern";
 
-  if (!regionId || !countryOfOrigin) {
-    return Response.json(
-      { error: "regionId and countryOfOrigin are required in the request body to publish." },
-      { status: 422 }
-    );
-  }
+  const rawRarity = staging.adminRarity ?? null;
+  const rarity: Rarity = rawRarity && RARITIES.includes(rawRarity as Rarity) ? (rawRarity as Rarity) : "common";
 
-  const region = await prisma.region.findUnique({ where: { id: regionId } });
-  if (!region) {
-    return Response.json({ error: `Region not found: ${regionId}` }, { status: 400 });
-  }
+  const categorySlugs = staging.adminCategories;
+  const isHardcoreEligible = staging.adminIsHardcoreEligible ?? false;
 
   const categories = categorySlugs.length
     ? await prisma.category.findMany({ where: { slug: { in: categorySlugs } } })
     : [];
 
-  // Create Vehicle + Image + ImageStats, then mark staging as published
   const vehicle = await prisma.vehicle.create({
     data: {
       make,
