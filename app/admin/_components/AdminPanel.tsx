@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Combobox from "@/app/_components/Combobox";
 
 type StagingStatus = "PENDING_REVIEW" | "COMMUNITY_REVIEW" | "READY" | "PUBLISHED" | "REJECTED";
 
@@ -72,9 +73,12 @@ const BODY_STYLES = [
   "wagon",
   "suv",
   "truck",
+  "pickup",
   "van",
   "roadster",
   "targa",
+  "compact",
+  "special_purpose",
 ];
 const ERAS = ["classic", "retro", "modern", "contemporary"];
 const RARITIES = ["common", "uncommon", "rare", "ultra_rare"];
@@ -167,6 +171,12 @@ export default function AdminPanel() {
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [makeOptions, setMakeOptions] = useState<string[]>([]);
+  const [modelOptions, setModelOptions] = useState<string[]>([]);
+  const [trimOptions, setTrimOptions] = useState<string[]>([]);
+  const [countryOptions, setCountryOptions] = useState<string[]>([]);
+  const [regionOptions, setRegionOptions] = useState<string[]>([]);
+
   const fetchImages = useCallback(async () => {
     setLoading(true);
     const qs = statusFilter !== "ALL" ? `?status=${statusFilter}` : "";
@@ -179,6 +189,36 @@ export default function AdminPanel() {
   useEffect(() => {
     fetchImages();
   }, [fetchImages]);
+
+  // Load static autocomplete options once on mount
+  useEffect(() => {
+    fetch("/api/admin/autocomplete?field=make")
+      .then((r) => r.json())
+      .then(setMakeOptions);
+    fetch("/api/admin/autocomplete?field=country")
+      .then((r) => r.json())
+      .then(setCountryOptions);
+    fetch("/api/filters")
+      .then((r) => r.json())
+      .then((d) => setRegionOptions((d.regions ?? []).map((r: { slug: string }) => r.slug)));
+  }, []);
+
+  // Reload model options when make changes
+  useEffect(() => {
+    const qs = editForm.make ? `&make=${encodeURIComponent(editForm.make)}` : "";
+    fetch(`/api/admin/autocomplete?field=model${qs}`)
+      .then((r) => r.json())
+      .then(setModelOptions);
+  }, [editForm.make]);
+
+  // Reload trim options when make or model changes
+  useEffect(() => {
+    const make = editForm.make ? `&make=${encodeURIComponent(editForm.make)}` : "";
+    const model = editForm.model ? `&model=${encodeURIComponent(editForm.model)}` : "";
+    fetch(`/api/admin/autocomplete?field=trim${make}${model}`)
+      .then((r) => r.json())
+      .then(setTrimOptions);
+  }, [editForm.make, editForm.model]);
 
   function selectImage(img: StagingImage) {
     setSelectedId(img.id);
@@ -455,17 +495,33 @@ export default function AdminPanel() {
                   Vehicle details
                 </p>
 
-                {(["make", "model", "trim"] as const).map((field) => (
-                  <div key={field}>
-                    <label className="block text-xs text-gray-500 mb-0.5 capitalize">{field}</label>
-                    <input
-                      type="text"
-                      value={editForm[field]}
-                      onChange={(e) => setEditForm((f) => ({ ...f, [field]: e.target.value }))}
-                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
-                    />
-                  </div>
-                ))}
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5 capitalize">Make</label>
+                  <Combobox
+                    variant="admin"
+                    value={editForm.make}
+                    onChange={(v) => setEditForm((f) => ({ ...f, make: v }))}
+                    options={makeOptions}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5 capitalize">Model</label>
+                  <Combobox
+                    variant="admin"
+                    value={editForm.model}
+                    onChange={(v) => setEditForm((f) => ({ ...f, model: v }))}
+                    options={modelOptions}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5 capitalize">Trim</label>
+                  <Combobox
+                    variant="admin"
+                    value={editForm.trim}
+                    onChange={(v) => setEditForm((f) => ({ ...f, trim: v }))}
+                    options={trimOptions}
+                  />
+                </div>
 
                 <div>
                   <label className="block text-xs text-gray-500 mb-0.5">Year</label>
@@ -529,26 +585,24 @@ export default function AdminPanel() {
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 mb-0.5">Region slug</label>
-                    <input
-                      type="text"
+                    <Combobox
+                      variant="admin"
                       value={editForm.regionSlug}
-                      onChange={(e) => setEditForm((f) => ({ ...f, regionSlug: e.target.value }))}
+                      onChange={(v) => setEditForm((f) => ({ ...f, regionSlug: v }))}
+                      options={regionOptions}
                       placeholder="e.g. japan"
-                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs text-gray-500 mb-0.5">Country of origin</label>
-                  <input
-                    type="text"
+                  <Combobox
+                    variant="admin"
                     value={editForm.countryOfOrigin}
-                    onChange={(e) =>
-                      setEditForm((f) => ({ ...f, countryOfOrigin: e.target.value }))
-                    }
+                    onChange={(v) => setEditForm((f) => ({ ...f, countryOfOrigin: v }))}
+                    options={countryOptions}
                     placeholder="e.g. Japan"
-                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
                   />
                 </div>
 
