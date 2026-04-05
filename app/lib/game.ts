@@ -102,8 +102,9 @@ export function scoreRound({
       ? Math.max(0, Math.round(200 * (1 - yearDelta / 5)))
       : null;
 
+  // Time bonus only applies when at least the make is correct
   const timeBonus =
-    mode !== "practice"
+    mode !== "practice" && makeCorrect
       ? Math.max(0, Math.round(100 * (1 - elapsedMs / timeLimitMs)))
       : 0;
 

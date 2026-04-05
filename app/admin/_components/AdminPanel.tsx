@@ -163,6 +163,7 @@ function formFromImage(img: StagingImage): EditForm {
 
 export default function AdminPanel() {
   const [images, setImages] = useState<StagingImage[]>([]);
+  const [counts, setCounts] = useState<Partial<Record<StagingStatus, number>>>({});
   const [statusFilter, setStatusFilter] = useState<StagingStatus | "ALL">("ALL");
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -182,7 +183,8 @@ export default function AdminPanel() {
     const qs = statusFilter !== "ALL" ? `?status=${statusFilter}` : "";
     const res = await fetch(`/api/admin/staging${qs}`);
     const data = await res.json();
-    setImages(data);
+    setImages(data.items);
+    setCounts(data.counts);
     setLoading(false);
   }, [statusFilter]);
 
@@ -334,7 +336,7 @@ export default function AdminPanel() {
         <div>
           <h1 className="text-lg font-semibold">Staging Review</h1>
           <p className="text-sm text-black">
-            {images.length} image{images.length !== 1 ? "s" : ""}
+            {Object.values(counts).reduce((a, b) => a + b, 0)} total
           </p>
         </div>
         <a href="/" className="text-sm text-gray-400 hover:text-gray-600">
@@ -360,7 +362,9 @@ export default function AdminPanel() {
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
-              {s === "ALL" ? "All" : STATUS_LABELS[s]}
+              {s === "ALL"
+                ? `All (${Object.values(counts).reduce((a, b) => a + b, 0)})`
+                : `${STATUS_LABELS[s]} (${counts[s] ?? 0})`}
             </button>
           ))}
         </nav>

@@ -52,6 +52,19 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+async function existsInCloudinary(stem: string): Promise<string | null> {
+  try {
+    const response = await cloudinary.api.resources({
+      type: "upload",
+      prefix: `autoguessr/staging/${stem}`,
+      max_results: 1,
+    });
+    return response.resources.length > 0 ? response.resources[0].public_id : null;
+  } catch {
+    return null;
+  }
+}
+
 async function uploadToStaging(filePath: string, publicId: string): Promise<number> {
   const originalBytes = fs.statSync(filePath).size;
 
@@ -113,13 +126,26 @@ async function main() {
 
     console.log(`\nProcessing: ${filename}`);
 
-    // Check if already staged (by original filename in the staging folder)
+    // Check if already staged by DB record
     const existing = await prisma.stagingImage.findFirst({
       where: { filename },
     });
     if (existing) {
       console.log(`  Already staged — skipping`);
       skipped++;
+      continue;
+    }
+
+    // Check if already uploaded to Cloudinary (e.g. direct upload without DB record)
+    const existingPublicId = await existsInCloudinary(stem);
+    if (existingPublicId) {
+      console.log(`  Already in Cloudinary as ${existingPublicId} — registering to DB`);
+      if (!dryRun) {
+        await prisma.stagingImage.create({
+          data: { cloudinaryPublicId: existingPublicId, filename },
+        });
+      }
+      uploaded++;
       continue;
     }
 
