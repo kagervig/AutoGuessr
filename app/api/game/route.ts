@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
         select: { id: true, make: true, model: true, year: true, era: true },
       },
     },
+    orderBy: { uploadedAt: "desc" },
   });
 
   if (allImages.length < 4) {
@@ -106,18 +107,12 @@ export async function GET(request: NextRequest) {
     )
   );
 
-  // Build response rounds
+  // Build response rounds — vehicle identity is intentionally omitted to prevent client-side cheating
   const roundData = selected.map((image, i) => ({
     roundId: rounds[i].id,
     sequenceNumber: i + 1,
     imageId: image.id,
     imageUrl: imageUrl(image.filename, image.vehicleId),
-    vehicle: {
-      make: image.vehicle.make,
-      model: image.vehicle.model,
-      year: image.vehicle.year,
-    },
-    vehicleId: image.vehicleId,
   }));
 
   // Easy and practice modes: generate 4 choices per round

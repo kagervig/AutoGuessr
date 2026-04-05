@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
     modelMatch,
     partialCredit,
     yearDelta,
+    vehicle: { make: vehicle.make, model: vehicle.model, year: vehicle.year },
     ...scoring,
   });
 }
