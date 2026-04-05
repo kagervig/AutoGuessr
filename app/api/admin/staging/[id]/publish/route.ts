@@ -8,7 +8,7 @@ interface Params {
 
 const BODY_STYLES: BodyStyle[] = [
   "coupe", "sedan", "convertible", "hatchback", "wagon",
-  "suv", "truck", "van", "roadster", "targa",
+  "suv", "truck", "pickup", "van", "roadster", "targa", "compact", "special_purpose",
 ];
 
 const ERAS: Era[] = ["classic", "retro", "modern", "contemporary"];

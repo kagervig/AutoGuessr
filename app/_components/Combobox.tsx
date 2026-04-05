@@ -9,9 +9,10 @@ interface Props {
   options: string[];
   placeholder?: string;
   disabled?: boolean;
+  variant?: "game" | "admin";
 }
 
-export default function Combobox({ value, onChange, options, placeholder, disabled }: Props) {
+export default function Combobox({ value, onChange, options, placeholder, disabled, variant = "game" }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -49,17 +50,23 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
         disabled={disabled}
         aria-autocomplete="list"
         aria-expanded={open}
-        className={cn(
-          "w-full bg-white/5 border-2 border-white/10 rounded-xl px-4 py-3",
-          "text-white font-bold placeholder:text-white/25",
-          "focus:outline-none focus:border-primary transition-colors",
-          "disabled:opacity-40"
-        )}
+        className={variant === "admin"
+          ? "w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
+          : cn(
+            "w-full bg-white/5 border-2 border-white/10 rounded-xl px-4 py-3",
+            "text-white font-bold placeholder:text-white/25",
+            "focus:outline-none focus:border-primary transition-colors",
+            "disabled:opacity-40"
+          )
+        }
       />
       {open && filtered.length > 0 && (
         <ul
           role="listbox"
-          className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-white/10 bg-card py-1 shadow-xl"
+          className={variant === "admin"
+            ? "absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded border border-gray-200 bg-white py-1 shadow-md"
+            : "absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-white/10 bg-card py-1 shadow-xl"
+          }
         >
           {filtered.slice(0, 50).map((option) => (
             <li
@@ -71,12 +78,18 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
                 onChange(option);
                 setOpen(false);
               }}
-              className={cn(
-                "cursor-pointer px-4 py-2 text-sm transition-colors",
-                value === option
-                  ? "bg-primary/20 text-primary"
-                  : "text-zinc-300 hover:bg-white/5 hover:text-white"
-              )}
+              className={variant === "admin"
+                ? cn(
+                  "cursor-pointer px-3 py-1.5 text-sm transition-colors text-black",
+                  value === option ? "bg-gray-100" : "hover:bg-gray-50"
+                )
+                : cn(
+                  "cursor-pointer px-4 py-2 text-sm transition-colors",
+                  value === option
+                    ? "bg-primary/20 text-primary"
+                    : "text-zinc-300 hover:bg-white/5 hover:text-white"
+                )
+              }
             >
               {option}
             </li>

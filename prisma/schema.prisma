@@ -15,9 +15,12 @@ enum BodyStyle {
   wagon
   suv
   truck
+  pickup
   van
   roadster
   targa
+  compact
+  special_purpose
 }
 
 enum Era {
