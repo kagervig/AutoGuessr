@@ -12,25 +12,16 @@
  *   --limit N   Process only N images (useful for testing)
  *
  * Required env:
- *   DATABASE_URL, GEMINI_API_KEY
- *
- * Images are read from Data/Images/<filename> when present. If the local file
- * is not found, the image is fetched from Cloudinary using the public ID stored
- * on the StagingImage record. Run register-cloudinary.ts to create records for
- * images already uploaded directly to Cloudinary.
+ *   DATABASE_URL, GEMINI_API_KEY, CLOUDINARY_CLOUD_NAME
  */
 
 import "dotenv/config";
-import fs from "fs";
-import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../app/generated/prisma/client";
 
 // ── Config ────────────────────────────────────────────────────────────────────
-
-const IMAGES_DIR = path.resolve("Data/Images");
 
 // Free tier: 15 requests/min. 4.5s gap keeps us safely under.
 const RATE_LIMIT_MS = 4500;
@@ -82,17 +73,10 @@ function sleep(ms: number): Promise<void> {
 
 // ── Image loading ─────────────────────────────────────────────────────────────
 
-async function imageToBase64(filePath: string | null, cloudinaryPublicId: string): Promise<{ base64: string; mimeType: string } | null> {
-  if (filePath && fs.existsSync(filePath)) {
-    const bytes = fs.readFileSync(filePath);
-    const mimeType = filePath.endsWith(".webp") ? "image/webp" : "image/jpeg";
-    return { base64: bytes.toString("base64"), mimeType };
-  }
-
-  // Fall back to Cloudinary
+async function imageToBase64(cloudinaryPublicId: string): Promise<{ base64: string; mimeType: string } | null> {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   if (!cloudName) {
-    console.warn("  CLOUDINARY_CLOUD_NAME not set — cannot fetch from Cloudinary");
+    console.warn("  CLOUDINARY_CLOUD_NAME not set");
     return null;
   }
   const url = `https://res.cloudinary.com/${cloudName}/image/upload/${cloudinaryPublicId}`;
@@ -114,8 +98,8 @@ async function imageToBase64(filePath: string | null, cloudinaryPublicId: string
 
 // ── Gemini call ───────────────────────────────────────────────────────────────
 
-async function tagImage(filePath: string | null, cloudinaryPublicId: string): Promise<GeminiTag | null> {
-  const image = await imageToBase64(filePath, cloudinaryPublicId);
+async function tagImage(cloudinaryPublicId: string): Promise<GeminiTag | null> {
+  const image = await imageToBase64(cloudinaryPublicId);
   if (!image) return null;
   const { base64, mimeType } = image;
 
@@ -159,6 +143,10 @@ async function main(): Promise<void> {
     console.error("Missing GEMINI_API_KEY — add it to your .env file");
     process.exit(1);
   }
+  if (!process.env.CLOUDINARY_CLOUD_NAME) {
+    console.error("Missing CLOUDINARY_CLOUD_NAME — add it to your .env file");
+    process.exit(1);
+  }
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const adapter = new PrismaPg(pool);
@@ -184,12 +172,9 @@ async function main(): Promise<void> {
 
   for (let i = 0; i < untagged.length; i++) {
     const record = untagged[i];
-    const localPath = path.join(IMAGES_DIR, record.filename);
-    const filePath = fs.existsSync(localPath) ? localPath : null;
-    const source = filePath ? "local" : "cloudinary";
-    console.log(`[${i + 1}/${untagged.length}] ${record.filename} (${source})`);
+    console.log(`[${i + 1}/${untagged.length}] ${record.filename}`);
 
-    const tag = await tagImage(filePath, record.cloudinaryPublicId);
+    const tag = await tagImage(record.cloudinaryPublicId);
 
     if (!tag) {
       failed++;

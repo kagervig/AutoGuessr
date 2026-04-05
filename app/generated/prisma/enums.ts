@@ -17,9 +17,12 @@ export const BodyStyle = {
   wagon: 'wagon',
   suv: 'suv',
   truck: 'truck',
+  pickup: 'pickup',
   van: 'van',
   roadster: 'roadster',
-  targa: 'targa'
+  targa: 'targa',
+  compact: 'compact',
+  special_purpose: 'special_purpose'
 } as const
 
 export type BodyStyle = (typeof BodyStyle)[keyof typeof BodyStyle]
