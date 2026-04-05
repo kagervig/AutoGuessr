@@ -2,6 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowLeft, Trophy } from "lucide-react";
+import { MODES } from "@/app/lib/constants";
+import { cn } from "@/app/lib/utils";
+
+const PERIODS = [
+  { id: "day", label: "Today" },
+  { id: "week", label: "This Week" },
+  { id: "alltime", label: "All Time" },
+] as const;
+type PeriodId = (typeof PERIODS)[number]["id"];
+
+// Leaderboard excludes practice mode
+const LEADERBOARD_MODES = MODES.filter((m) => m.id !== "practice");
 
 interface LeaderboardEntry {
   rank: number;
@@ -14,21 +28,6 @@ interface Props {
   username: string;
   initialMode?: string;
 }
-
-const PERIODS = [
-  { id: "day", label: "Today" },
-  { id: "week", label: "This Week" },
-  { id: "alltime", label: "All Time" },
-] as const;
-type PeriodId = (typeof PERIODS)[number]["id"];
-
-const MODES = [
-  { id: "easy", label: "Easy" },
-  { id: "medium", label: "Medium" },
-  { id: "hard", label: "Hard" },
-  { id: "hardcore", label: "Hardcore" },
-  { id: "competitive", label: "Competitive" },
-];
 
 export default function LeaderboardScreen({ username, initialMode }: Props) {
   const router = useRouter();
@@ -54,31 +53,38 @@ export default function LeaderboardScreen({ username, initialMode }: Props) {
   }, [period, mode]);
 
   return (
-    <main className="min-h-screen bg-zinc-900 px-4 py-8">
-      <div className="mx-auto max-w-lg space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Leaderboard</h1>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Header */}
+      <div className="sticky top-0 z-40 glass-panel border-b border-white/10">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <button
             onClick={() => router.push("/")}
-            className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800"
+            className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors text-sm font-bold"
           >
-            Home
+            <ArrowLeft className="w-4 h-4" /> Garage
           </button>
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-primary" />
+            <span className="font-display font-black tracking-widest uppercase text-sm">Leaderboard</span>
+          </div>
+          <div className="w-20" />
         </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
         {/* Period tabs */}
-        <div className="flex rounded-xl border border-zinc-700 p-1">
+        <div className="flex glass-panel rounded-xl p-1 border border-white/10">
           {PERIODS.map((p) => (
             <button
               key={p.id}
               onClick={() => setPeriod(p.id)}
-              className={[
-                "flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
+              className={cn(
+                "flex-1 rounded-lg py-2 text-sm font-bold tracking-wider uppercase transition-colors",
                 period === p.id
-                  ? "bg-amber-500 text-zinc-900"
-                  : "text-zinc-400 hover:text-zinc-200",
-              ].join(" ")}
+                  ? "bg-primary text-white"
+                  : "text-muted-foreground hover:text-white"
+              )}
             >
               {p.label}
             </button>
@@ -89,78 +95,82 @@ export default function LeaderboardScreen({ username, initialMode }: Props) {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setMode("")}
-            className={[
-              "rounded-full border px-3 py-1 text-xs transition-colors",
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               mode === ""
-                ? "border-amber-500 bg-amber-500/10 text-amber-400"
-                : "border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300",
-            ].join(" ")}
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-white/10 text-muted-foreground hover:border-white/20 hover:text-white"
+            )}
           >
             All modes
           </button>
-          {MODES.map((m) => (
+          {LEADERBOARD_MODES.map((m) => (
             <button
               key={m.id}
               onClick={() => setMode(m.id)}
-              className={[
-                "rounded-full border px-3 py-1 text-xs transition-colors",
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 mode === m.id
-                  ? "border-amber-500 bg-amber-500/10 text-amber-400"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300",
-              ].join(" ")}
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-white/10 text-muted-foreground hover:border-white/20 hover:text-white"
+              )}
             >
               {m.label}
             </button>
           ))}
         </div>
 
-        {loading && <p className="text-center text-zinc-500">Loading…</p>}
+        {loading && (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          </div>
+        )}
+
         {error && <p className="text-center text-red-400">{error}</p>}
 
         {!loading && !error && entries.length === 0 && (
-          <p className="text-center text-zinc-500">No scores yet. Be the first!</p>
+          <p className="text-center text-muted-foreground py-12">No scores yet. Be the first!</p>
         )}
 
         {!loading && !error && entries.length > 0 && (
-          <div className="space-y-1.5">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-2"
+          >
             {entries.map((entry) => {
-              const isMe = username && entry.username === username;
+              const isMe = !!(username && entry.username === username);
+              const rankColor =
+                entry.rank === 1 ? "text-yellow-400" :
+                entry.rank === 2 ? "text-zinc-300" :
+                entry.rank === 3 ? "text-amber-700" :
+                "text-muted-foreground";
+
               return (
                 <div
                   key={entry.rank}
-                  className={[
+                  className={cn(
                     "flex items-center gap-3 rounded-xl border px-4 py-3",
-                    isMe ? "border-amber-600 bg-amber-950/30" : "border-zinc-800 bg-zinc-800/40",
-                  ].join(" ")}
+                    isMe ? "border-primary/40 bg-primary/10" : "border-white/10 bg-white/5"
+                  )}
                 >
-                  <span
-                    className={[
-                      "w-6 shrink-0 text-center text-sm font-bold",
-                      entry.rank === 1
-                        ? "text-amber-400"
-                        : entry.rank === 2
-                          ? "text-zinc-300"
-                          : entry.rank === 3
-                            ? "text-amber-700"
-                            : "text-zinc-600",
-                    ].join(" ")}
-                  >
+                  <span className={cn("w-6 shrink-0 text-center text-sm font-black", rankColor)}>
                     {entry.rank}
                   </span>
-                  <span className={`flex-1 truncate text-sm font-semibold ${isMe ? "text-amber-300" : "text-zinc-200"}`}>
+                  <span className={cn("flex-1 truncate text-sm font-semibold", isMe ? "text-primary" : "text-zinc-200")}>
                     {entry.username}
-                    {isMe && <span className="ml-1.5 text-xs font-normal text-amber-500">(you)</span>}
+                    {isMe && <span className="ml-1.5 text-xs font-normal text-primary/70">(you)</span>}
                   </span>
                   <div className="shrink-0 text-right">
                     <p className="text-sm font-bold text-white">{entry.totalScore.toLocaleString()}</p>
-                    <p className="text-xs text-zinc-500">{entry.gamesPlayed}g</p>
+                    <p className="text-xs text-muted-foreground">{entry.gamesPlayed}g</p>
                   </div>
                 </div>
               );
             })}
-          </div>
+          </motion.div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
