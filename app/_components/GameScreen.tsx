@@ -47,8 +47,6 @@ interface RoundData {
   sequenceNumber: number;
   imageId: string;
   imageUrl: string;
-  vehicleId: string;
-  vehicle: VehicleInfo;
 }
 
 interface Choice {
@@ -272,17 +270,22 @@ export default function GameScreen({ mode, username, filter }: Props) {
     };
   }, [currentIndex, mode, gameData]);
 
-  const handleTimeout = useCallback(() => {
+  const handleTimeout = useCallback(async () => {
     if (roundState !== "answering") return;
     const roundId = currentRoundIdRef.current;
+    let vehicle: VehicleInfo | undefined;
     if (roundId) {
-      fetch("/api/guess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roundId, rawInput: "", timeTakenMs: Date.now() - roundStartRef.current }),
-      }).catch(() => {/* fire and forget */});
+      try {
+        const res = await fetch("/api/guess", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roundId, rawInput: "", timeTakenMs: Date.now() - roundStartRef.current }),
+        });
+        const data = await res.json();
+        vehicle = data.vehicle;
+      } catch {/* ignore — reveal will show blank label */}
     }
-    resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel: "", pointsEarned: 0 });
+    resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel: "", pointsEarned: 0, vehicle });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundState]);
 
@@ -333,19 +336,23 @@ export default function GameScreen({ mode, username, filter }: Props) {
     modelCorrect,
     guessLabel,
     pointsEarned,
+    vehicle,
   }: {
     makeCorrect: boolean;
     modelCorrect: boolean;
     guessLabel: string;
     pointsEarned: number;
+    vehicle?: VehicleInfo;
   }) {
     if (autoSubmitRef.current !== null) {
       clearTimeout(autoSubmitRef.current);
       autoSubmitRef.current = null;
     }
 
-    const { make, model, year } = round.vehicle;
-    const correctLabel = HARD_MODES.includes(mode) ? `${year} ${make} ${model}` : `${make} ${model}`;
+    const make = vehicle?.make ?? "";
+    const model = vehicle?.model ?? "";
+    const year = vehicle?.year ?? 0;
+    const correctLabel = HARD_MODES.includes(mode) ? `${year} ${make} ${model}`.trim() : `${make} ${model}`.trim();
 
     setScore((s) => s + pointsEarned);
     setReveal({ correctLabel, guessLabel, isCorrect: makeCorrect && modelCorrect, pointsEarned });
@@ -365,10 +372,13 @@ export default function GameScreen({ mode, username, filter }: Props) {
         body: JSON.stringify({ roundId: round.roundId, rawInput: guessLabel, guessedVehicleId: vehicleId, timeTakenMs: elapsedMs }),
       });
       const data = await res.json();
-      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned });
+      if (!res.ok) {
+        resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+        return;
+      }
+      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle });
     } catch {
-      const isMatch = vehicleId === round.vehicleId;
-      resolveAndReveal({ makeCorrect: isMatch, modelCorrect: isMatch, guessLabel, pointsEarned: 0 });
+      resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
   }
 
@@ -390,7 +400,11 @@ export default function GameScreen({ mode, username, filter }: Props) {
         }),
       });
       const data = await res.json();
-      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned });
+      if (!res.ok) {
+        resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+        return;
+      }
+      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle });
     } catch {
       resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
@@ -418,7 +432,11 @@ export default function GameScreen({ mode, username, filter }: Props) {
         }),
       });
       const data = await res.json();
-      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned });
+      if (!res.ok) {
+        resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+        return;
+      }
+      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle });
     } catch {
       resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
@@ -671,7 +689,8 @@ export default function GameScreen({ mode, username, filter }: Props) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.06 }}
                         onClick={() => handleEasyAnswer(choice.vehicleId)}
-                        className="relative group p-4 rounded-xl border-2 border-white/10 bg-white/5 hover:border-primary/60 hover:bg-primary/10 text-left transition-all duration-200 font-bold text-sm tracking-wide overflow-hidden"
+                        disabled={selectedEasyId !== null}
+                        className="relative group p-4 rounded-xl border-2 border-white/10 bg-white/5 hover:border-primary/60 hover:bg-primary/10 text-left transition-all duration-200 font-bold text-sm tracking-wide overflow-hidden disabled:pointer-events-none"
                       >
                         <span className="absolute top-2 right-3 text-xs font-mono text-white/20 group-hover:text-primary/50 transition-colors">
                           {String.fromCharCode(65 + i)}

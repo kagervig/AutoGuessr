@@ -16,13 +16,23 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const statusParam = searchParams.get("status") as StagingStatus | null;
 
-  const images = await prisma.stagingImage.findMany({
-    where: statusParam ? { status: statusParam } : undefined,
-    include: { suggestions: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const [images, countRows] = await Promise.all([
+    prisma.stagingImage.findMany({
+      where: statusParam ? { status: statusParam } : undefined,
+      include: { suggestions: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.stagingImage.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+    }),
+  ]);
 
-  const response = images.map((img) => {
+  const counts = Object.fromEntries(
+    countRows.map((r) => [r.status, r._count._all])
+  ) as Partial<Record<StagingStatus, number>>;
+
+  const items = images.map((img) => {
     const agreements = computeAgreements(img.suggestions);
     return {
       id: img.id,
@@ -67,5 +77,5 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return Response.json(response);
+  return Response.json({ items, counts });
 }

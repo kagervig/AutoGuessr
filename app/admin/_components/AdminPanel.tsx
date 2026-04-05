@@ -163,6 +163,7 @@ function formFromImage(img: StagingImage): EditForm {
 
 export default function AdminPanel() {
   const [images, setImages] = useState<StagingImage[]>([]);
+  const [counts, setCounts] = useState<Partial<Record<StagingStatus, number>>>({});
   const [statusFilter, setStatusFilter] = useState<StagingStatus | "ALL">("ALL");
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -182,7 +183,8 @@ export default function AdminPanel() {
     const qs = statusFilter !== "ALL" ? `?status=${statusFilter}` : "";
     const res = await fetch(`/api/admin/staging${qs}`);
     const data = await res.json();
-    setImages(data);
+    setImages(data.items);
+    setCounts(data.counts);
     setLoading(false);
   }, [statusFilter]);
 
@@ -235,30 +237,50 @@ export default function AdminPanel() {
     }));
   }
 
+  function patchImage(updated: Partial<StagingImage> & { id: string }) {
+    setImages((imgs) => imgs.map((img) => (img.id === updated.id ? { ...img, ...updated } : img)));
+  }
+
+  function removeImage(id: string, oldStatus: StagingStatus, newStatus?: StagingStatus) {
+    setImages((imgs) =>
+      statusFilter === "ALL"
+        ? imgs.map((img) => (img.id === id && newStatus ? { ...img, status: newStatus } : img))
+        : imgs.filter((img) => img.id !== id)
+    );
+    setCounts((c) => {
+      const next = { ...c };
+      next[oldStatus] = Math.max(0, (next[oldStatus] ?? 0) - 1);
+      if (newStatus) next[newStatus] = (next[newStatus] ?? 0) + 1;
+      return next;
+    });
+  }
+
+  const editPayload = {
+    make: editForm.make || null,
+    model: editForm.model || null,
+    year: editForm.year || null,
+    trim: editForm.trim || null,
+    bodyStyle: editForm.bodyStyle || null,
+    rarity: editForm.rarity || null,
+    era: editForm.era || null,
+    regionSlug: editForm.regionSlug || null,
+    countryOfOrigin: editForm.countryOfOrigin || null,
+    categories: editForm.categories,
+    isHardcoreEligible: editForm.isHardcoreEligible,
+    notes: editForm.notes || null,
+  };
+
   async function saveEdit(id: string) {
     setSaving(true);
     setError(null);
     const res = await fetch(`/api/admin/staging/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        make: editForm.make || null,
-        model: editForm.model || null,
-        year: editForm.year || null,
-        trim: editForm.trim || null,
-        bodyStyle: editForm.bodyStyle || null,
-        rarity: editForm.rarity || null,
-        era: editForm.era || null,
-        regionSlug: editForm.regionSlug || null,
-        countryOfOrigin: editForm.countryOfOrigin || null,
-        categories: editForm.categories,
-        isHardcoreEligible: editForm.isHardcoreEligible,
-        notes: editForm.notes || null,
-      }),
+      body: JSON.stringify(editPayload),
     });
     setSaving(false);
     if (res.ok) {
-      await fetchImages();
+      patchImage(await res.json());
     } else {
       const d = await res.json();
       setError(d.error ?? "Save failed");
@@ -266,6 +288,7 @@ export default function AdminPanel() {
   }
 
   async function setStatus(id: string, status: StagingStatus) {
+    const oldStatus = images.find((img) => img.id === id)?.status;
     setSaving(true);
     setError(null);
     const res = await fetch(`/api/admin/staging/${id}`, {
@@ -275,7 +298,7 @@ export default function AdminPanel() {
     });
     setSaving(false);
     if (res.ok) {
-      await fetchImages();
+      if (oldStatus) removeImage(id, oldStatus, status);
       if (status === "REJECTED" || status === "PUBLISHED") setSelectedId(null);
     } else {
       const d = await res.json();
@@ -285,25 +308,13 @@ export default function AdminPanel() {
 
   async function publish(id: string) {
     // Save current form state first, then publish
+    const oldStatus = images.find((img) => img.id === id)?.status;
     setSaving(true);
     setError(null);
     const saveRes = await fetch(`/api/admin/staging/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        make: editForm.make || null,
-        model: editForm.model || null,
-        year: editForm.year || null,
-        trim: editForm.trim || null,
-        bodyStyle: editForm.bodyStyle || null,
-        rarity: editForm.rarity || null,
-        era: editForm.era || null,
-        regionSlug: editForm.regionSlug || null,
-        countryOfOrigin: editForm.countryOfOrigin || null,
-        categories: editForm.categories,
-        isHardcoreEligible: editForm.isHardcoreEligible,
-        notes: editForm.notes || null,
-      }),
+      body: JSON.stringify(editPayload),
     });
     setSaving(false);
 
@@ -318,8 +329,8 @@ export default function AdminPanel() {
     setPublishing(false);
 
     if (res.ok) {
+      if (oldStatus) removeImage(id, oldStatus, "PUBLISHED");
       setSelectedId(null);
-      await fetchImages();
     } else {
       const d = await res.json();
       setError(d.error ?? "Publish failed");
@@ -334,7 +345,7 @@ export default function AdminPanel() {
         <div>
           <h1 className="text-lg font-semibold">Staging Review</h1>
           <p className="text-sm text-black">
-            {images.length} image{images.length !== 1 ? "s" : ""}
+            {Object.values(counts).reduce((a, b) => a + b, 0)} total
           </p>
         </div>
         <a href="/" className="text-sm text-gray-400 hover:text-gray-600">
@@ -360,7 +371,9 @@ export default function AdminPanel() {
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
-              {s === "ALL" ? "All" : STATUS_LABELS[s]}
+              {s === "ALL"
+                ? `All (${Object.values(counts).reduce((a, b) => a + b, 0)})`
+                : `${STATUS_LABELS[s]} (${counts[s] ?? 0})`}
             </button>
           ))}
         </nav>

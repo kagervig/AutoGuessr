@@ -82,7 +82,7 @@ function eraFromYear(year: number): Era {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  const csvPath = path.resolve("Data1/helper-scripts/car_db.csv");
+  const csvPath = path.resolve("Data/helper-scripts/car_db.csv");
   const raw = fs.readFileSync(csvPath, "utf-8");
   const rows = parse(raw, { columns: true, skip_empty_lines: true }) as Array<{
     make: string;
@@ -112,8 +112,15 @@ async function main() {
     regionMap.set(slug, region.id);
   }
 
-  let upserted = 0;
+  // Build the full set of candidate records from the CSV
+  type VehicleData = {
+    make: string; model: string; year: number; trim: string | null;
+    countryOfOrigin: string; regionId: string;
+    bodyStyle: BodyStyle; era: Era; rarity: "common";
+  };
+
   let skipped = 0;
+  const candidates: VehicleData[] = [];
 
   for (const row of rows) {
     const year = parseInt(row.year, 10);
@@ -133,50 +140,59 @@ async function main() {
       continue;
     }
 
-    const regionId = regionMap.get(regionSlug)!;
-    const trim = row.trim.trim() || null;
-    const era = eraFromYear(year);
-
-    if (dryRun) {
-      console.log(`  [dry-run] ${year} ${row.make} ${row.model}${trim ? ` (${trim})` : ""} — ${bodyStyle} / ${era}`);
-      upserted++;
-      continue;
-    }
-
-    // Upsert: find existing vehicle with same make/model/year/trim, create if absent
-    const existing = await prisma.vehicle.findFirst({
-      where: {
-        make: row.make,
-        model: row.model,
-        year,
-        trim: trim ?? null,
-      },
+    candidates.push({
+      make: row.make,
+      model: row.model,
+      year,
+      trim: row.trim.trim() || null,
+      countryOfOrigin: row.country,
+      regionId: regionMap.get(regionSlug)!,
+      bodyStyle,
+      era: eraFromYear(year),
+      rarity: "common",
     });
-
-    if (!existing) {
-      await prisma.vehicle.create({
-        data: {
-          make: row.make,
-          model: row.model,
-          year,
-          trim,
-          countryOfOrigin: row.country,
-          regionId,
-          bodyStyle,
-          era,
-          rarity: "common",
-        },
-      });
-    }
-
-    upserted++;
   }
+
+  console.log(`  ${candidates.length} valid rows, ${skipped} skipped.`);
+
+  if (dryRun) {
+    for (const v of candidates.slice(0, 5)) {
+      console.log(`  [dry-run] ${v.year} ${v.make} ${v.model}${v.trim ? ` (${v.trim})` : ""} — ${v.bodyStyle} / ${v.era}`);
+    }
+    if (candidates.length > 5) console.log(`  [dry-run] ... and ${candidates.length - 5} more`);
+    await prisma.$disconnect();
+    await pool.end();
+    return;
+  }
+
+  // Fetch all existing (make, model, year, trim) keys in one query to avoid N individual lookups
+  const existing = await prisma.vehicle.findMany({
+    select: { make: true, model: true, year: true, trim: true },
+  });
+  const existingKeys = new Set(
+    existing.map((v) => `${v.make}|${v.model}|${v.year}|${v.trim ?? ""}`)
+  );
+
+  const toInsert = candidates.filter(
+    (v) => !existingKeys.has(`${v.make}|${v.model}|${v.year}|${v.trim ?? ""}`)
+  );
+  console.log(`  ${toInsert.length} new vehicles to insert (${candidates.length - toInsert.length} already exist).`);
+
+  // createMany in batches to avoid hitting DB limits
+  const BATCH = 500;
+  let inserted = 0; // declared here so it's in scope for the final log
+  for (let i = 0; i < toInsert.length; i += BATCH) {
+    await prisma.vehicle.createMany({ data: toInsert.slice(i, i + BATCH) });
+    inserted += Math.min(BATCH, toInsert.length - i);
+    process.stdout.write(`\r  Inserted ${inserted}/${toInsert.length}...`);
+  }
+  console.log();
 
   await prisma.$disconnect();
   await pool.end();
 
   console.log(`\nDone.`);
-  console.log(`  Upserted: ${upserted}`);
+  console.log(`  Inserted: ${inserted}`);
   console.log(`  Skipped:  ${skipped}`);
 }
 
