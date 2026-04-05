@@ -57,6 +57,11 @@ export type StagingImageMinAggregateOutputType = {
   adminYear: number | null
   adminTrim: string | null
   adminBodyStyle: string | null
+  adminRarity: string | null
+  adminEra: string | null
+  adminRegionSlug: string | null
+  adminCountryOfOrigin: string | null
+  adminIsHardcoreEligible: boolean | null
   adminNotes: string | null
   reviewedAt: Date | null
   confirmedMake: string | null
@@ -85,6 +90,11 @@ export type StagingImageMaxAggregateOutputType = {
   adminYear: number | null
   adminTrim: string | null
   adminBodyStyle: string | null
+  adminRarity: string | null
+  adminEra: string | null
+  adminRegionSlug: string | null
+  adminCountryOfOrigin: string | null
+  adminIsHardcoreEligible: boolean | null
   adminNotes: string | null
   reviewedAt: Date | null
   confirmedMake: string | null
@@ -113,6 +123,12 @@ export type StagingImageCountAggregateOutputType = {
   adminYear: number
   adminTrim: number
   adminBodyStyle: number
+  adminRarity: number
+  adminEra: number
+  adminRegionSlug: number
+  adminCountryOfOrigin: number
+  adminCategories: number
+  adminIsHardcoreEligible: number
   adminNotes: number
   reviewedAt: number
   confirmedMake: number
@@ -157,6 +173,11 @@ export type StagingImageMinAggregateInputType = {
   adminYear?: true
   adminTrim?: true
   adminBodyStyle?: true
+  adminRarity?: true
+  adminEra?: true
+  adminRegionSlug?: true
+  adminCountryOfOrigin?: true
+  adminIsHardcoreEligible?: true
   adminNotes?: true
   reviewedAt?: true
   confirmedMake?: true
@@ -185,6 +206,11 @@ export type StagingImageMaxAggregateInputType = {
   adminYear?: true
   adminTrim?: true
   adminBodyStyle?: true
+  adminRarity?: true
+  adminEra?: true
+  adminRegionSlug?: true
+  adminCountryOfOrigin?: true
+  adminIsHardcoreEligible?: true
   adminNotes?: true
   reviewedAt?: true
   confirmedMake?: true
@@ -213,6 +239,12 @@ export type StagingImageCountAggregateInputType = {
   adminYear?: true
   adminTrim?: true
   adminBodyStyle?: true
+  adminRarity?: true
+  adminEra?: true
+  adminRegionSlug?: true
+  adminCountryOfOrigin?: true
+  adminCategories?: true
+  adminIsHardcoreEligible?: true
   adminNotes?: true
   reviewedAt?: true
   confirmedMake?: true
@@ -328,6 +360,12 @@ export type StagingImageGroupByOutputType = {
   adminYear: number | null
   adminTrim: string | null
   adminBodyStyle: string | null
+  adminRarity: string | null
+  adminEra: string | null
+  adminRegionSlug: string | null
+  adminCountryOfOrigin: string | null
+  adminCategories: string[]
+  adminIsHardcoreEligible: boolean | null
   adminNotes: string | null
   reviewedAt: Date | null
   confirmedMake: string | null
@@ -379,6 +417,12 @@ export type StagingImageWhereInput = {
   adminYear?: Prisma.IntNullableFilter<"StagingImage"> | number | null
   adminTrim?: Prisma.StringNullableFilter<"StagingImage"> | string | null
   adminBodyStyle?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminRarity?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminEra?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminRegionSlug?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminCountryOfOrigin?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminCategories?: Prisma.StringNullableListFilter<"StagingImage">
+  adminIsHardcoreEligible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
   adminNotes?: Prisma.StringNullableFilter<"StagingImage"> | string | null
   reviewedAt?: Prisma.DateTimeNullableFilter<"StagingImage"> | Date | string | null
   confirmedMake?: Prisma.StringNullableFilter<"StagingImage"> | string | null
@@ -408,6 +452,12 @@ export type StagingImageOrderByWithRelationInput = {
   adminYear?: Prisma.SortOrderInput | Prisma.SortOrder
   adminTrim?: Prisma.SortOrderInput | Prisma.SortOrder
   adminBodyStyle?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminRarity?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminEra?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminRegionSlug?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminCountryOfOrigin?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminCategories?: Prisma.SortOrder
+  adminIsHardcoreEligible?: Prisma.SortOrderInput | Prisma.SortOrder
   adminNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedMake?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -440,6 +490,12 @@ export type StagingImageWhereUniqueInput = Prisma.AtLeast<{
   adminYear?: Prisma.IntNullableFilter<"StagingImage"> | number | null
   adminTrim?: Prisma.StringNullableFilter<"StagingImage"> | string | null
   adminBodyStyle?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminRarity?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminEra?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminRegionSlug?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminCountryOfOrigin?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminCategories?: Prisma.StringNullableListFilter<"StagingImage">
+  adminIsHardcoreEligible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
   adminNotes?: Prisma.StringNullableFilter<"StagingImage"> | string | null
   reviewedAt?: Prisma.DateTimeNullableFilter<"StagingImage"> | Date | string | null
   confirmedMake?: Prisma.StringNullableFilter<"StagingImage"> | string | null
@@ -469,6 +525,12 @@ export type StagingImageOrderByWithAggregationInput = {
   adminYear?: Prisma.SortOrderInput | Prisma.SortOrder
   adminTrim?: Prisma.SortOrderInput | Prisma.SortOrder
   adminBodyStyle?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminRarity?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminEra?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminRegionSlug?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminCountryOfOrigin?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminCategories?: Prisma.SortOrder
+  adminIsHardcoreEligible?: Prisma.SortOrderInput | Prisma.SortOrder
   adminNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedMake?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -505,6 +567,12 @@ export type StagingImageScalarWhereWithAggregatesInput = {
   adminYear?: Prisma.IntNullableWithAggregatesFilter<"StagingImage"> | number | null
   adminTrim?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
   adminBodyStyle?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
+  adminRarity?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
+  adminEra?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
+  adminRegionSlug?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
+  adminCountryOfOrigin?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
+  adminCategories?: Prisma.StringNullableListFilter<"StagingImage">
+  adminIsHardcoreEligible?: Prisma.BoolNullableWithAggregatesFilter<"StagingImage"> | boolean | null
   adminNotes?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
   reviewedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"StagingImage"> | Date | string | null
   confirmedMake?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
@@ -533,6 +601,12 @@ export type StagingImageCreateInput = {
   adminYear?: number | null
   adminTrim?: string | null
   adminBodyStyle?: string | null
+  adminRarity?: string | null
+  adminEra?: string | null
+  adminRegionSlug?: string | null
+  adminCountryOfOrigin?: string | null
+  adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
@@ -562,6 +636,12 @@ export type StagingImageUncheckedCreateInput = {
   adminYear?: number | null
   adminTrim?: string | null
   adminBodyStyle?: string | null
+  adminRarity?: string | null
+  adminEra?: string | null
+  adminRegionSlug?: string | null
+  adminCountryOfOrigin?: string | null
+  adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
@@ -591,6 +671,12 @@ export type StagingImageUpdateInput = {
   adminYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   adminTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminBodyStyle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRarity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRegionSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCountryOfOrigin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -620,6 +706,12 @@ export type StagingImageUncheckedUpdateInput = {
   adminYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   adminTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminBodyStyle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRarity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRegionSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCountryOfOrigin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -649,6 +741,12 @@ export type StagingImageCreateManyInput = {
   adminYear?: number | null
   adminTrim?: string | null
   adminBodyStyle?: string | null
+  adminRarity?: string | null
+  adminEra?: string | null
+  adminRegionSlug?: string | null
+  adminCountryOfOrigin?: string | null
+  adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
@@ -677,6 +775,12 @@ export type StagingImageUpdateManyMutationInput = {
   adminYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   adminTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminBodyStyle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRarity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRegionSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCountryOfOrigin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -705,6 +809,12 @@ export type StagingImageUncheckedUpdateManyInput = {
   adminYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   adminTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminBodyStyle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRarity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRegionSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCountryOfOrigin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -733,6 +843,12 @@ export type StagingImageCountOrderByAggregateInput = {
   adminYear?: Prisma.SortOrder
   adminTrim?: Prisma.SortOrder
   adminBodyStyle?: Prisma.SortOrder
+  adminRarity?: Prisma.SortOrder
+  adminEra?: Prisma.SortOrder
+  adminRegionSlug?: Prisma.SortOrder
+  adminCountryOfOrigin?: Prisma.SortOrder
+  adminCategories?: Prisma.SortOrder
+  adminIsHardcoreEligible?: Prisma.SortOrder
   adminNotes?: Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
   confirmedMake?: Prisma.SortOrder
@@ -768,6 +884,11 @@ export type StagingImageMaxOrderByAggregateInput = {
   adminYear?: Prisma.SortOrder
   adminTrim?: Prisma.SortOrder
   adminBodyStyle?: Prisma.SortOrder
+  adminRarity?: Prisma.SortOrder
+  adminEra?: Prisma.SortOrder
+  adminRegionSlug?: Prisma.SortOrder
+  adminCountryOfOrigin?: Prisma.SortOrder
+  adminIsHardcoreEligible?: Prisma.SortOrder
   adminNotes?: Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
   confirmedMake?: Prisma.SortOrder
@@ -796,6 +917,11 @@ export type StagingImageMinOrderByAggregateInput = {
   adminYear?: Prisma.SortOrder
   adminTrim?: Prisma.SortOrder
   adminBodyStyle?: Prisma.SortOrder
+  adminRarity?: Prisma.SortOrder
+  adminEra?: Prisma.SortOrder
+  adminRegionSlug?: Prisma.SortOrder
+  adminCountryOfOrigin?: Prisma.SortOrder
+  adminIsHardcoreEligible?: Prisma.SortOrder
   adminNotes?: Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
   confirmedMake?: Prisma.SortOrder
@@ -817,6 +943,19 @@ export type StagingImageSumOrderByAggregateInput = {
 export type StagingImageScalarRelationFilter = {
   is?: Prisma.StagingImageWhereInput
   isNot?: Prisma.StagingImageWhereInput
+}
+
+export type StagingImageCreateadminCategoriesInput = {
+  set: string[]
+}
+
+export type StagingImageUpdateadminCategoriesInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
+export type NullableBoolFieldUpdateOperationsInput = {
+  set?: boolean | null
 }
 
 export type EnumStagingStatusFieldUpdateOperationsInput = {
@@ -854,6 +993,12 @@ export type StagingImageCreateWithoutSuggestionsInput = {
   adminYear?: number | null
   adminTrim?: string | null
   adminBodyStyle?: string | null
+  adminRarity?: string | null
+  adminEra?: string | null
+  adminRegionSlug?: string | null
+  adminCountryOfOrigin?: string | null
+  adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
@@ -882,6 +1027,12 @@ export type StagingImageUncheckedCreateWithoutSuggestionsInput = {
   adminYear?: number | null
   adminTrim?: string | null
   adminBodyStyle?: string | null
+  adminRarity?: string | null
+  adminEra?: string | null
+  adminRegionSlug?: string | null
+  adminCountryOfOrigin?: string | null
+  adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
@@ -926,6 +1077,12 @@ export type StagingImageUpdateWithoutSuggestionsInput = {
   adminYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   adminTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminBodyStyle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRarity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRegionSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCountryOfOrigin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -954,6 +1111,12 @@ export type StagingImageUncheckedUpdateWithoutSuggestionsInput = {
   adminYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   adminTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminBodyStyle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRarity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminRegionSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCountryOfOrigin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
+  adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1013,6 +1176,12 @@ export type StagingImageSelect<ExtArgs extends runtime.Types.Extensions.Internal
   adminYear?: boolean
   adminTrim?: boolean
   adminBodyStyle?: boolean
+  adminRarity?: boolean
+  adminEra?: boolean
+  adminRegionSlug?: boolean
+  adminCountryOfOrigin?: boolean
+  adminCategories?: boolean
+  adminIsHardcoreEligible?: boolean
   adminNotes?: boolean
   reviewedAt?: boolean
   confirmedMake?: boolean
@@ -1043,6 +1212,12 @@ export type StagingImageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   adminYear?: boolean
   adminTrim?: boolean
   adminBodyStyle?: boolean
+  adminRarity?: boolean
+  adminEra?: boolean
+  adminRegionSlug?: boolean
+  adminCountryOfOrigin?: boolean
+  adminCategories?: boolean
+  adminIsHardcoreEligible?: boolean
   adminNotes?: boolean
   reviewedAt?: boolean
   confirmedMake?: boolean
@@ -1071,6 +1246,12 @@ export type StagingImageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   adminYear?: boolean
   adminTrim?: boolean
   adminBodyStyle?: boolean
+  adminRarity?: boolean
+  adminEra?: boolean
+  adminRegionSlug?: boolean
+  adminCountryOfOrigin?: boolean
+  adminCategories?: boolean
+  adminIsHardcoreEligible?: boolean
   adminNotes?: boolean
   reviewedAt?: boolean
   confirmedMake?: boolean
@@ -1099,6 +1280,12 @@ export type StagingImageSelectScalar = {
   adminYear?: boolean
   adminTrim?: boolean
   adminBodyStyle?: boolean
+  adminRarity?: boolean
+  adminEra?: boolean
+  adminRegionSlug?: boolean
+  adminCountryOfOrigin?: boolean
+  adminCategories?: boolean
+  adminIsHardcoreEligible?: boolean
   adminNotes?: boolean
   reviewedAt?: boolean
   confirmedMake?: boolean
@@ -1110,7 +1297,7 @@ export type StagingImageSelectScalar = {
   createdAt?: boolean
 }
 
-export type StagingImageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cloudinaryPublicId" | "filename" | "sourceUrl" | "attribution" | "aiMake" | "aiModel" | "aiYear" | "aiBodyStyle" | "aiConfidence" | "aiTaggedAt" | "adminMake" | "adminModel" | "adminYear" | "adminTrim" | "adminBodyStyle" | "adminNotes" | "reviewedAt" | "confirmedMake" | "confirmedModel" | "confirmedYear" | "confirmedTrim" | "status" | "submittedBy" | "createdAt", ExtArgs["result"]["stagingImage"]>
+export type StagingImageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cloudinaryPublicId" | "filename" | "sourceUrl" | "attribution" | "aiMake" | "aiModel" | "aiYear" | "aiBodyStyle" | "aiConfidence" | "aiTaggedAt" | "adminMake" | "adminModel" | "adminYear" | "adminTrim" | "adminBodyStyle" | "adminRarity" | "adminEra" | "adminRegionSlug" | "adminCountryOfOrigin" | "adminCategories" | "adminIsHardcoreEligible" | "adminNotes" | "reviewedAt" | "confirmedMake" | "confirmedModel" | "confirmedYear" | "confirmedTrim" | "status" | "submittedBy" | "createdAt", ExtArgs["result"]["stagingImage"]>
 export type StagingImageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   suggestions?: boolean | Prisma.StagingImage$suggestionsArgs<ExtArgs>
   _count?: boolean | Prisma.StagingImageCountOutputTypeDefaultArgs<ExtArgs>
@@ -1140,6 +1327,12 @@ export type $StagingImagePayload<ExtArgs extends runtime.Types.Extensions.Intern
     adminYear: number | null
     adminTrim: string | null
     adminBodyStyle: string | null
+    adminRarity: string | null
+    adminEra: string | null
+    adminRegionSlug: string | null
+    adminCountryOfOrigin: string | null
+    adminCategories: string[]
+    adminIsHardcoreEligible: boolean | null
     adminNotes: string | null
     reviewedAt: Date | null
     confirmedMake: string | null
@@ -1589,6 +1782,12 @@ export interface StagingImageFieldRefs {
   readonly adminYear: Prisma.FieldRef<"StagingImage", 'Int'>
   readonly adminTrim: Prisma.FieldRef<"StagingImage", 'String'>
   readonly adminBodyStyle: Prisma.FieldRef<"StagingImage", 'String'>
+  readonly adminRarity: Prisma.FieldRef<"StagingImage", 'String'>
+  readonly adminEra: Prisma.FieldRef<"StagingImage", 'String'>
+  readonly adminRegionSlug: Prisma.FieldRef<"StagingImage", 'String'>
+  readonly adminCountryOfOrigin: Prisma.FieldRef<"StagingImage", 'String'>
+  readonly adminCategories: Prisma.FieldRef<"StagingImage", 'String[]'>
+  readonly adminIsHardcoreEligible: Prisma.FieldRef<"StagingImage", 'Boolean'>
   readonly adminNotes: Prisma.FieldRef<"StagingImage", 'String'>
   readonly reviewedAt: Prisma.FieldRef<"StagingImage", 'DateTime'>
   readonly confirmedMake: Prisma.FieldRef<"StagingImage", 'String'>

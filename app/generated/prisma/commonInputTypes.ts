@@ -409,11 +409,24 @@ export type FloatWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedFloatFilter<$PrismaModel>
 }
 
+export type BoolNullableFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedBoolNullableFilter<$PrismaModel> | boolean | null
+}
+
 export type EnumStagingStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.StagingStatus | Prisma.EnumStagingStatusFieldRefInput<$PrismaModel>
   in?: $Enums.StagingStatus[] | Prisma.ListEnumStagingStatusFieldRefInput<$PrismaModel>
   notIn?: $Enums.StagingStatus[] | Prisma.ListEnumStagingStatusFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumStagingStatusFilter<$PrismaModel> | $Enums.StagingStatus
+}
+
+export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolNullableFilter<$PrismaModel>
 }
 
 export type EnumStagingStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -785,11 +798,24 @@ export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedFloatFilter<$PrismaModel>
 }
 
+export type NestedBoolNullableFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedBoolNullableFilter<$PrismaModel> | boolean | null
+}
+
 export type NestedEnumStagingStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.StagingStatus | Prisma.EnumStagingStatusFieldRefInput<$PrismaModel>
   in?: $Enums.StagingStatus[] | Prisma.ListEnumStagingStatusFieldRefInput<$PrismaModel>
   notIn?: $Enums.StagingStatus[] | Prisma.ListEnumStagingStatusFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumStagingStatusFilter<$PrismaModel> | $Enums.StagingStatus
+}
+
+export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumStagingStatusWithAggregatesFilter<$PrismaModel = never> = {

@@ -17,9 +17,33 @@ interface StagingImage {
   filename: string;
   status: StagingStatus;
   createdAt: string;
-  ai: { make: string | null; model: string | null; year: number | null; bodyStyle: string | null; confidence: number | null };
-  admin: { make: string | null; model: string | null; year: number | null; trim: string | null; bodyStyle: string | null; notes: string | null };
-  confirmed: { make: string | null; model: string | null; year: number | null; trim: string | null };
+  ai: {
+    make: string | null;
+    model: string | null;
+    year: number | null;
+    bodyStyle: string | null;
+    confidence: number | null;
+  };
+  admin: {
+    make: string | null;
+    model: string | null;
+    year: number | null;
+    trim: string | null;
+    bodyStyle: string | null;
+    rarity: string | null;
+    era: string | null;
+    regionSlug: string | null;
+    countryOfOrigin: string | null;
+    categories: string[];
+    isHardcoreEligible: boolean | null;
+    notes: string | null;
+  };
+  confirmed: {
+    make: string | null;
+    model: string | null;
+    year: number | null;
+    trim: string | null;
+  };
   agreements: Agreements;
   suggestionCount: number;
 }
@@ -40,9 +64,21 @@ const STATUS_COLOURS: Record<StagingStatus, string> = {
   REJECTED: "bg-red-100 text-red-700",
 };
 
-const BODY_STYLES = ["coupe", "sedan", "convertible", "hatchback", "wagon", "suv", "truck", "van", "roadster", "targa"];
+const BODY_STYLES = [
+  "coupe",
+  "sedan",
+  "convertible",
+  "hatchback",
+  "wagon",
+  "suv",
+  "truck",
+  "van",
+  "roadster",
+  "targa",
+];
 const ERAS = ["classic", "retro", "modern", "contemporary"];
 const RARITIES = ["common", "uncommon", "rare", "ultra_rare"];
+const CATEGORIES = ["muscle", "supercar", "electric", "classic", "sports", "luxury"];
 
 interface EditForm {
   make: string;
@@ -50,25 +86,32 @@ interface EditForm {
   year: string;
   trim: string;
   bodyStyle: string;
+  rarity: string;
+  era: string;
+  regionSlug: string;
+  countryOfOrigin: string;
+  categories: string[];
+  isHardcoreEligible: boolean;
   notes: string;
 }
 
-interface PublishForm {
-  regionId: string;
-  countryOfOrigin: string;
-  era: string;
-  rarity: string;
-  categorySlugs: string;
-  isHardcoreEligible: boolean;
-}
-
-function AgreementBar({ label, count, confirmed }: { label: string; count: number; confirmed: boolean }) {
+function AgreementBar({
+  label,
+  count,
+  confirmed,
+}: {
+  label: string;
+  count: number;
+  confirmed: boolean;
+}) {
   const pct = Math.min((count / 5) * 100, 100);
   return (
     <div className="text-xs">
       <div className="flex justify-between mb-0.5">
         <span className="text-gray-500">{label}</span>
-        <span className={confirmed ? "text-green-600 font-medium" : "text-gray-400"}>{count}/5</span>
+        <span className={confirmed ? "text-green-600 font-medium" : "text-gray-400"}>
+          {count}/5
+        </span>
       </div>
       <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
         <div
@@ -80,15 +123,48 @@ function AgreementBar({ label, count, confirmed }: { label: string; count: numbe
   );
 }
 
+function emptyForm(): EditForm {
+  return {
+    make: "",
+    model: "",
+    year: "",
+    trim: "",
+    bodyStyle: "",
+    rarity: "",
+    era: "",
+    regionSlug: "",
+    countryOfOrigin: "",
+    categories: [],
+    isHardcoreEligible: false,
+    notes: "",
+  };
+}
+
+function formFromImage(img: StagingImage): EditForm {
+  return {
+    make: img.admin.make ?? img.confirmed.make ?? img.ai.make ?? "",
+    model: img.admin.model ?? img.confirmed.model ?? img.ai.model ?? "",
+    year: String(img.admin.year ?? img.confirmed.year ?? img.ai.year ?? ""),
+    trim: img.admin.trim ?? img.confirmed.trim ?? "",
+    bodyStyle: img.admin.bodyStyle ?? img.ai.bodyStyle ?? "",
+    rarity: img.admin.rarity ?? "",
+    era: img.admin.era ?? "",
+    regionSlug: img.admin.regionSlug ?? "",
+    countryOfOrigin: img.admin.countryOfOrigin ?? "",
+    categories: img.admin.categories ?? [],
+    isHardcoreEligible: img.admin.isHardcoreEligible ?? false,
+    notes: img.admin.notes ?? "",
+  };
+}
+
 export default function AdminPanel() {
   const [images, setImages] = useState<StagingImage[]>([]);
   const [statusFilter, setStatusFilter] = useState<StagingStatus | "ALL">("ALL");
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<EditForm>({ make: "", model: "", year: "", trim: "", bodyStyle: "", notes: "" });
-  const [publishForm, setPublishForm] = useState<PublishForm>({ regionId: "", countryOfOrigin: "", era: "modern", rarity: "common", categorySlugs: "", isHardcoreEligible: false });
-  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm>(emptyForm());
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchImages = useCallback(async () => {
@@ -100,19 +176,23 @@ export default function AdminPanel() {
     setLoading(false);
   }, [statusFilter]);
 
-  useEffect(() => { fetchImages(); }, [fetchImages]);
+  useEffect(() => {
+    fetchImages();
+  }, [fetchImages]);
 
   function selectImage(img: StagingImage) {
     setSelectedId(img.id);
-    setEditForm({
-      make: img.admin.make ?? img.confirmed.make ?? img.ai.make ?? "",
-      model: img.admin.model ?? img.confirmed.model ?? img.ai.model ?? "",
-      year: String(img.admin.year ?? img.confirmed.year ?? img.ai.year ?? ""),
-      trim: img.admin.trim ?? img.confirmed.trim ?? "",
-      bodyStyle: img.admin.bodyStyle ?? img.ai.bodyStyle ?? "",
-      notes: img.admin.notes ?? "",
-    });
+    setEditForm(formFromImage(img));
     setError(null);
+  }
+
+  function toggleCategory(slug: string) {
+    setEditForm((f) => ({
+      ...f,
+      categories: f.categories.includes(slug)
+        ? f.categories.filter((c) => c !== slug)
+        : [...f.categories, slug],
+    }));
   }
 
   async function saveEdit(id: string) {
@@ -127,6 +207,12 @@ export default function AdminPanel() {
         year: editForm.year || null,
         trim: editForm.trim || null,
         bodyStyle: editForm.bodyStyle || null,
+        rarity: editForm.rarity || null,
+        era: editForm.era || null,
+        regionSlug: editForm.regionSlug || null,
+        countryOfOrigin: editForm.countryOfOrigin || null,
+        categories: editForm.categories,
+        isHardcoreEligible: editForm.isHardcoreEligible,
         notes: editForm.notes || null,
       }),
     });
@@ -158,23 +244,40 @@ export default function AdminPanel() {
   }
 
   async function publish(id: string) {
+    // Save current form state first, then publish
     setSaving(true);
     setError(null);
-    const res = await fetch(`/api/admin/staging/${id}/publish`, {
-      method: "POST",
+    const saveRes = await fetch(`/api/admin/staging/${id}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        regionId: publishForm.regionId,
-        countryOfOrigin: publishForm.countryOfOrigin,
-        era: publishForm.era,
-        rarity: publishForm.rarity,
-        categorySlugs: publishForm.categorySlugs.split(",").map((s) => s.trim()).filter(Boolean),
-        isHardcoreEligible: publishForm.isHardcoreEligible,
+        make: editForm.make || null,
+        model: editForm.model || null,
+        year: editForm.year || null,
+        trim: editForm.trim || null,
+        bodyStyle: editForm.bodyStyle || null,
+        rarity: editForm.rarity || null,
+        era: editForm.era || null,
+        regionSlug: editForm.regionSlug || null,
+        countryOfOrigin: editForm.countryOfOrigin || null,
+        categories: editForm.categories,
+        isHardcoreEligible: editForm.isHardcoreEligible,
+        notes: editForm.notes || null,
       }),
     });
     setSaving(false);
+
+    if (!saveRes.ok) {
+      const d = await saveRes.json();
+      setError(d.error ?? "Save failed");
+      return;
+    }
+
+    setPublishing(true);
+    const res = await fetch(`/api/admin/staging/${id}/publish`, { method: "POST" });
+    setPublishing(false);
+
     if (res.ok) {
-      setShowPublishModal(false);
       setSelectedId(null);
       await fetchImages();
     } else {
@@ -190,18 +293,27 @@ export default function AdminPanel() {
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold">Staging Review</h1>
-          <p className="text-sm text-gray-500">{images.length} image{images.length !== 1 ? "s" : ""}</p>
+          <p className="text-sm text-black">
+            {images.length} image{images.length !== 1 ? "s" : ""}
+          </p>
         </div>
-        <a href="/" className="text-sm text-gray-400 hover:text-gray-600">← Game</a>
+        <a href="/" className="text-sm text-gray-400 hover:text-gray-600">
+          ← Game
+        </a>
       </header>
 
       {/* Status filter tabs */}
       <div className="border-b border-gray-200 bg-white px-6">
         <nav className="flex gap-1 -mb-px">
-          {(["ALL", "PENDING_REVIEW", "COMMUNITY_REVIEW", "READY", "PUBLISHED", "REJECTED"] as const).map((s) => (
+          {(
+            ["ALL", "PENDING_REVIEW", "COMMUNITY_REVIEW", "READY", "PUBLISHED", "REJECTED"] as const
+          ).map((s) => (
             <button
               key={s}
-              onClick={() => { setStatusFilter(s); setSelectedId(null); }}
+              onClick={() => {
+                setStatusFilter(s);
+                setSelectedId(null);
+              }}
               className={`px-3 py-2.5 text-sm border-b-2 transition-colors ${
                 statusFilter === s
                   ? "border-gray-900 text-gray-900 font-medium"
@@ -240,18 +352,21 @@ export default function AdminPanel() {
                     className="w-full aspect-[4/3] object-cover bg-gray-100"
                   />
                   <div className="p-1.5 bg-white">
-                    <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLOURS[img.status]}`}>
+                    <span
+                      className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLOURS[img.status]}`}
+                    >
                       {STATUS_LABELS[img.status]}
                     </span>
                     {(img.admin.make || img.confirmed.make || img.ai.make) && (
                       <p className="text-[11px] text-gray-600 mt-0.5 truncate">
-                        {img.admin.make ?? img.confirmed.make ?? img.ai.make}
-                        {" "}
+                        {img.admin.make ?? img.confirmed.make ?? img.ai.make}{" "}
                         {img.admin.model ?? img.confirmed.model ?? img.ai.model}
                       </p>
                     )}
                     {img.suggestionCount > 0 && (
-                      <p className="text-[10px] text-blue-500">{img.suggestionCount} suggestion{img.suggestionCount !== 1 ? "s" : ""}</p>
+                      <p className="text-[10px] text-blue-500">
+                        {img.suggestionCount} suggestion{img.suggestionCount !== 1 ? "s" : ""}
+                      </p>
                     )}
                   </div>
                 </button>
@@ -262,7 +377,7 @@ export default function AdminPanel() {
 
         {/* Detail panel */}
         {selected && (
-          <div className="w-80 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0">
+          <div className="w-96 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0">
             <div className="p-4 space-y-4">
               {/* Image preview */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -272,18 +387,20 @@ export default function AdminPanel() {
                 className="w-full aspect-[4/3] object-cover rounded-lg bg-gray-100"
               />
 
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>
-              )}
+              {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
 
               {/* AI suggestions */}
               {(selected.ai.make || selected.ai.model) && (
                 <div className="text-xs bg-purple-50 rounded-lg p-3">
                   <p className="font-medium text-purple-700 mb-1">AI suggestion</p>
                   <p className="text-purple-600">
-                    {[selected.ai.year, selected.ai.make, selected.ai.model].filter(Boolean).join(" ")}
+                    {[selected.ai.year, selected.ai.make, selected.ai.model]
+                      .filter(Boolean)
+                      .join(" ")}
                     {selected.ai.confidence != null && (
-                      <span className="ml-1 text-purple-400">({Math.round(selected.ai.confidence * 100)}%)</span>
+                      <span className="ml-1 text-purple-400">
+                        ({Math.round(selected.ai.confidence * 100)}%)
+                      </span>
                     )}
                   </p>
                 </div>
@@ -292,14 +409,41 @@ export default function AdminPanel() {
               {/* Community agreements */}
               {selected.suggestionCount > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Community ({selected.suggestionCount} suggestion{selected.suggestionCount !== 1 ? "s" : ""})</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Community ({selected.suggestionCount} suggestion
+                    {selected.suggestionCount !== 1 ? "s" : ""})
+                  </p>
                   {selected.agreements.make.value && (
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">{selected.agreements.make.value} {selected.agreements.model.value}</p>
-                      <AgreementBar label="Make" count={selected.agreements.make.count} confirmed={selected.agreements.make.confirmed} />
-                      {selected.agreements.model.value && <AgreementBar label="Model" count={selected.agreements.model.count} confirmed={selected.agreements.model.confirmed} />}
-                      {selected.agreements.year.value && <AgreementBar label="Year" count={selected.agreements.year.count} confirmed={selected.agreements.year.confirmed} />}
-                      {selected.agreements.trim.value && <AgreementBar label="Trim" count={selected.agreements.trim.count} confirmed={selected.agreements.trim.confirmed} />}
+                      <p className="text-xs text-gray-600 mb-1">
+                        {selected.agreements.make.value} {selected.agreements.model.value}
+                      </p>
+                      <AgreementBar
+                        label="Make"
+                        count={selected.agreements.make.count}
+                        confirmed={selected.agreements.make.confirmed}
+                      />
+                      {selected.agreements.model.value && (
+                        <AgreementBar
+                          label="Model"
+                          count={selected.agreements.model.count}
+                          confirmed={selected.agreements.model.confirmed}
+                        />
+                      )}
+                      {selected.agreements.year.value && (
+                        <AgreementBar
+                          label="Year"
+                          count={selected.agreements.year.count}
+                          confirmed={selected.agreements.year.confirmed}
+                        />
+                      )}
+                      {selected.agreements.trim.value && (
+                        <AgreementBar
+                          label="Trim"
+                          count={selected.agreements.trim.count}
+                          confirmed={selected.agreements.trim.confirmed}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -307,7 +451,10 @@ export default function AdminPanel() {
 
               {/* Edit form */}
               <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Details</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Vehicle details
+                </p>
+
                 {(["make", "model", "trim"] as const).map((field) => (
                   <div key={field}>
                     <label className="block text-xs text-gray-500 mb-0.5 capitalize">{field}</label>
@@ -315,43 +462,141 @@ export default function AdminPanel() {
                       type="text"
                       value={editForm[field]}
                       onChange={(e) => setEditForm((f) => ({ ...f, [field]: e.target.value }))}
-                      className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
+                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
                     />
                   </div>
                 ))}
+
                 <div>
                   <label className="block text-xs text-gray-500 mb-0.5">Year</label>
                   <input
                     type="number"
                     value={editForm.year}
                     onChange={(e) => setEditForm((f) => ({ ...f, year: e.target.value }))}
-                    className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
+                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
                     placeholder="e.g. 1994"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Body style</label>
-                  <select
-                    value={editForm.bodyStyle}
-                    onChange={(e) => setEditForm((f) => ({ ...f, bodyStyle: e.target.value }))}
-                    className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
-                  >
-                    <option value="">— select —</option>
-                    {BODY_STYLES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-0.5">Body style</label>
+                    <select
+                      value={editForm.bodyStyle}
+                      onChange={(e) => setEditForm((f) => ({ ...f, bodyStyle: e.target.value }))}
+                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
+                    >
+                      <option value="">— select —</option>
+                      {BODY_STYLES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-0.5">Era</label>
+                    <select
+                      value={editForm.era}
+                      onChange={(e) => setEditForm((f) => ({ ...f, era: e.target.value }))}
+                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
+                    >
+                      <option value="">— select —</option>
+                      {ERAS.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-0.5">Rarity</label>
+                    <select
+                      value={editForm.rarity}
+                      onChange={(e) => setEditForm((f) => ({ ...f, rarity: e.target.value }))}
+                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
+                    >
+                      <option value="">— select —</option>
+                      {RARITIES.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-0.5">Region slug</label>
+                    <input
+                      type="text"
+                      value={editForm.regionSlug}
+                      onChange={(e) => setEditForm((f) => ({ ...f, regionSlug: e.target.value }))}
+                      placeholder="e.g. japan"
+                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">Country of origin</label>
+                  <input
+                    type="text"
+                    value={editForm.countryOfOrigin}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, countryOfOrigin: e.target.value }))
+                    }
+                    placeholder="e.g. Japan"
+                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
+                  />
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Categories</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CATEGORIES.map((slug) => (
+                      <button
+                        key={slug}
+                        type="button"
+                        onClick={() => toggleCategory(slug)}
+                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                          editForm.categories.includes(slug)
+                            ? "bg-gray-900 text-white border-gray-900"
+                            : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+                        }`}
+                      >
+                        {slug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editForm.isHardcoreEligible}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, isHardcoreEligible: e.target.checked }))
+                    }
+                    className="rounded"
+                  />
+                  Hardcore eligible
+                </label>
+
                 <div>
                   <label className="block text-xs text-gray-500 mb-0.5">Notes</label>
                   <textarea
                     value={editForm.notes}
                     onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
                     rows={2}
-                    className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 resize-none"
+                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 resize-none"
                   />
                 </div>
+
                 <button
                   onClick={() => saveEdit(selected.id)}
-                  disabled={saving}
+                  disabled={saving || publishing}
                   className="w-full text-sm bg-gray-900 text-white rounded px-3 py-2 hover:bg-gray-700 disabled:opacity-50"
                 >
                   {saving ? "Saving…" : "Save changes"}
@@ -364,34 +609,36 @@ export default function AdminPanel() {
                 {selected.status !== "COMMUNITY_REVIEW" && (
                   <button
                     onClick={() => setStatus(selected.id, "COMMUNITY_REVIEW")}
-                    disabled={saving}
+                    disabled={saving || publishing}
                     className="w-full text-sm border border-blue-200 text-blue-700 rounded px-3 py-2 hover:bg-blue-50 disabled:opacity-50"
                   >
                     Send to community
                   </button>
                 )}
-                {selected.status !== "PENDING_REVIEW" && selected.status !== "PUBLISHED" && selected.status !== "REJECTED" && (
-                  <button
-                    onClick={() => setStatus(selected.id, "PENDING_REVIEW")}
-                    disabled={saving}
-                    className="w-full text-sm border border-gray-200 text-gray-600 rounded px-3 py-2 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Back to pending
-                  </button>
-                )}
+                {selected.status !== "PENDING_REVIEW" &&
+                  selected.status !== "PUBLISHED" &&
+                  selected.status !== "REJECTED" && (
+                    <button
+                      onClick={() => setStatus(selected.id, "PENDING_REVIEW")}
+                      disabled={saving || publishing}
+                      className="w-full text-sm border border-gray-200 text-gray-600 rounded px-3 py-2 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Back to pending
+                    </button>
+                  )}
                 {selected.status !== "PUBLISHED" && selected.status !== "REJECTED" && (
                   <button
-                    onClick={() => { setShowPublishModal(true); setError(null); }}
-                    disabled={saving}
+                    onClick={() => publish(selected.id)}
+                    disabled={saving || publishing}
                     className="w-full text-sm bg-green-600 text-white rounded px-3 py-2 hover:bg-green-700 disabled:opacity-50"
                   >
-                    Publish to game
+                    {publishing ? "Publishing…" : "Approve & publish"}
                   </button>
                 )}
                 {selected.status !== "REJECTED" && (
                   <button
                     onClick={() => setStatus(selected.id, "REJECTED")}
-                    disabled={saving}
+                    disabled={saving || publishing}
                     className="w-full text-sm border border-red-200 text-red-600 rounded px-3 py-2 hover:bg-red-50 disabled:opacity-50"
                   >
                     Reject
@@ -402,103 +649,6 @@ export default function AdminPanel() {
           </div>
         )}
       </div>
-
-      {/* Publish modal */}
-      {showPublishModal && selected && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowPublishModal(false); }}
-        >
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h2 className="font-semibold">Publish to game</h2>
-            <p className="text-sm text-gray-500">
-              Publishing: <span className="text-gray-900">{[editForm.year, editForm.make, editForm.model, editForm.trim].filter(Boolean).join(" ")}</span>
-            </p>
-
-            {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-0.5">Region ID <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  value={publishForm.regionId}
-                  onChange={(e) => setPublishForm((f) => ({ ...f, regionId: e.target.value }))}
-                  placeholder="e.g. cma..."
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-0.5">Country of origin <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  value={publishForm.countryOfOrigin}
-                  onChange={(e) => setPublishForm((f) => ({ ...f, countryOfOrigin: e.target.value }))}
-                  placeholder="e.g. Japan"
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Era</label>
-                  <select
-                    value={publishForm.era}
-                    onChange={(e) => setPublishForm((f) => ({ ...f, era: e.target.value }))}
-                    className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
-                  >
-                    {ERAS.map((e) => <option key={e} value={e}>{e}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Rarity</label>
-                  <select
-                    value={publishForm.rarity}
-                    onChange={(e) => setPublishForm((f) => ({ ...f, rarity: e.target.value }))}
-                    className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
-                  >
-                    {RARITIES.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-0.5">Category slugs (comma-separated)</label>
-                <input
-                  type="text"
-                  value={publishForm.categorySlugs}
-                  onChange={(e) => setPublishForm((f) => ({ ...f, categorySlugs: e.target.value }))}
-                  placeholder="e.g. jdm,sports"
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
-                />
-              </div>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={publishForm.isHardcoreEligible}
-                  onChange={(e) => setPublishForm((f) => ({ ...f, isHardcoreEligible: e.target.checked }))}
-                  className="rounded"
-                />
-                Hardcore eligible
-              </label>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={() => setShowPublishModal(false)}
-                className="flex-1 text-sm border border-gray-200 text-gray-600 rounded px-3 py-2 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => publish(selected.id)}
-                disabled={saving}
-                className="flex-1 text-sm bg-green-600 text-white rounded px-3 py-2 hover:bg-green-700 disabled:opacity-50"
-              >
-                {saving ? "Publishing…" : "Publish"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
