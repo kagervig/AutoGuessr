@@ -1,0 +1,30 @@
+name: Tag Images
+
+  on:
+    schedule:
+      - cron: '0 2 * * *'
+    workflow_dispatch:
+
+  jobs:
+    tag:
+      runs-on: ubuntu-latest
+
+      steps:
+        - uses: actions/checkout@v4
+
+        - uses: actions/setup-node@v4
+          with:
+            node-version: '20'
+            cache: 'npm'
+
+        - name: Install dependencies
+          run: npm ci
+
+        - name: Tag untagged images
+          run: npm run tag-images
+          env:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
+            CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+            GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+            GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+            GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
