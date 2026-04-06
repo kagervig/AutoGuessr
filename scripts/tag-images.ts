@@ -5,6 +5,10 @@
  * Gemini, and writes the AI-generated tags back to the DB. Safe to re-run —
  * already-tagged images are skipped automatically.
  *
+ * Multiple API keys are supported via GEMINI_API_KEY_1, GEMINI_API_KEY_2, etc.
+ * When a key's daily quota is exceeded the script automatically switches to the
+ * next available key. Key usage is tracked in .gemini-key-state.json (per-day).
+ *
  * Usage:
  *   npx tsx scripts/tag-images.ts [--limit N]
  *
@@ -12,10 +16,13 @@
  *   --limit N   Process only N images (useful for testing)
  *
  * Required env:
- *   DATABASE_URL, GEMINI_API_KEY, CLOUDINARY_CLOUD_NAME
+ *   DATABASE_URL, CLOUDINARY_CLOUD_NAME
+ *   GEMINI_API_KEY_1 (plus optionally GEMINI_API_KEY_2, GEMINI_API_KEY_3, ...)
  */
 
 import "dotenv/config";
+import fs from "fs";
+import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -25,6 +32,7 @@ import { PrismaClient } from "../app/generated/prisma/client";
 
 // Free tier: 15 requests/min. 4.5s gap keeps us safely under.
 const RATE_LIMIT_MS = 4500;
+const STATE_FILE = path.join(process.cwd(), ".gemini-key-state.json");
 
 // ── CLI args ──────────────────────────────────────────────────────────────────
 
@@ -32,9 +40,80 @@ const args = process.argv.slice(2);
 const limitArg = args.indexOf("--limit");
 const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : undefined;
 
-// ── Gemini setup ──────────────────────────────────────────────────────────────
+// ── API key management ────────────────────────────────────────────────────────
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+interface KeyEntry {
+  id: number;
+  key: string;
+}
+
+interface KeyState {
+  date: string;
+  usedKeyIds: number[];
+}
+
+function loadKeys(): KeyEntry[] {
+  const keys: KeyEntry[] = [];
+  let i = 1;
+  while (true) {
+    const key = process.env[`GEMINI_API_KEY_${i}`];
+    if (!key) break;
+    keys.push({ id: i, key });
+    i++;
+  }
+  return keys;
+}
+
+function loadKeyState(): KeyState {
+  try {
+    return JSON.parse(fs.readFileSync(STATE_FILE, "utf-8")) as KeyState;
+  } catch {
+    return { date: "", usedKeyIds: [] };
+  }
+}
+
+function saveKeyState(state: KeyState): void {
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+}
+
+function todayString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getAvailableKeys(keys: KeyEntry[]): KeyEntry[] {
+  const state = loadKeyState();
+  const today = todayString();
+  const usedToday = state.date === today ? new Set(state.usedKeyIds) : new Set<number>();
+  return keys.filter((k) => !usedToday.has(k.id));
+}
+
+function markKeyUsed(id: number): void {
+  const state = loadKeyState();
+  const today = todayString();
+  if (state.date !== today) {
+    saveKeyState({ date: today, usedKeyIds: [id] });
+  } else if (!state.usedKeyIds.includes(id)) {
+    state.usedKeyIds.push(id);
+    saveKeyState(state);
+  }
+}
+
+// ── Quota error ───────────────────────────────────────────────────────────────
+
+class QuotaExceededError extends Error {
+  constructor() {
+    super("Gemini daily quota exceeded");
+    this.name = "QuotaExceededError";
+  }
+}
+
+function isQuotaError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message.toLowerCase();
+  return msg.includes("429") || msg.includes("resource_exhausted") || msg.includes("quota");
+}
+
+// ── Gemini prompt ─────────────────────────────────────────────────────────────
 
 const SYSTEM_INSTRUCTION = `You are a car identification expert. Given a photo, identify the primary car subject and return a JSON object with exactly these fields:
 
@@ -98,27 +177,33 @@ async function imageToBase64(cloudinaryPublicId: string): Promise<{ base64: stri
 
 // ── Gemini call ───────────────────────────────────────────────────────────────
 
-async function tagImage(cloudinaryPublicId: string): Promise<GeminiTag | null> {
+async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<GeminiTag | null> {
   const image = await imageToBase64(cloudinaryPublicId);
   if (!image) return null;
   const { base64, mimeType } = image;
 
-  const result = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      responseMimeType: "application/json",
-    },
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { inlineData: { mimeType: mimeType, data: base64 } },
-          { text: "Identify this car." },
-        ],
+  let result;
+  try {
+    result = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        responseMimeType: "application/json",
       },
-    ],
-  });
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { inlineData: { mimeType: mimeType, data: base64 } },
+            { text: "Identify this car." },
+          ],
+        },
+      ],
+    });
+  } catch (err) {
+    if (isQuotaError(err)) throw new QuotaExceededError();
+    throw err;
+  }
 
   const text = result.text ?? "";
 
@@ -139,14 +224,24 @@ async function tagImage(cloudinaryPublicId: string): Promise<GeminiTag | null> {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
-  if (!process.env.GEMINI_API_KEY) {
-    console.error("Missing GEMINI_API_KEY — add it to your .env file");
-    process.exit(1);
-  }
   if (!process.env.CLOUDINARY_CLOUD_NAME) {
     console.error("Missing CLOUDINARY_CLOUD_NAME — add it to your .env file");
     process.exit(1);
   }
+
+  const allKeys = loadKeys();
+  if (allKeys.length === 0) {
+    console.error("No Gemini API keys found — set GEMINI_API_KEY_1, GEMINI_API_KEY_2, ... in your .env file");
+    process.exit(1);
+  }
+
+  const availableKeys = getAvailableKeys(allKeys);
+  if (availableKeys.length === 0) {
+    console.log(`All ${allKeys.length} API key(s) have already been used today. Try again tomorrow.`);
+    process.exit(0);
+  }
+
+  console.log(`Found ${allKeys.length} key(s), ${availableKeys.length} available today.`);
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const adapter = new PrismaPg(pool);
@@ -167,6 +262,10 @@ async function main(): Promise<void> {
 
   console.log(`Tagging ${untagged.length} image(s)...`);
 
+  let keyIndex = 0;
+  let ai = new GoogleGenAI({ apiKey: availableKeys[keyIndex].key });
+  console.log(`Using key ${availableKeys[keyIndex].id}`);
+
   let tagged = 0;
   let failed = 0;
 
@@ -174,7 +273,37 @@ async function main(): Promise<void> {
     const record = untagged[i];
     console.log(`[${i + 1}/${untagged.length}] ${record.filename}`);
 
-    const tag = await tagImage(record.cloudinaryPublicId);
+    let tag: GeminiTag | null = null;
+
+    try {
+      tag = await tagImage(ai, record.cloudinaryPublicId);
+    } catch (err) {
+      if (!(err instanceof QuotaExceededError)) throw err;
+
+      markKeyUsed(availableKeys[keyIndex].id);
+      console.warn(`  Key ${availableKeys[keyIndex].id} quota exceeded.`);
+      keyIndex++;
+
+      if (keyIndex >= availableKeys.length) {
+        console.log("All available API keys exhausted for today. Stopping.");
+        failed += untagged.length - i;
+        break;
+      }
+
+      ai = new GoogleGenAI({ apiKey: availableKeys[keyIndex].key });
+      console.log(`  Switched to key ${availableKeys[keyIndex].id} — retrying image.`);
+
+      try {
+        tag = await tagImage(ai, record.cloudinaryPublicId);
+      } catch (retryErr) {
+        if (retryErr instanceof QuotaExceededError) {
+          // Let the next iteration handle further key rotation
+          i--;
+          continue;
+        }
+        throw retryErr;
+      }
+    }
 
     if (!tag) {
       failed++;

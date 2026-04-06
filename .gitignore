@@ -23,3 +23,6 @@ dist/
 
 # Data
 /Data/
+
+# Gemini key rotation state
+.gemini-key-state.json
