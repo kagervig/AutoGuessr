@@ -94,7 +94,10 @@ export function scoreRound({
   pointsEarned: number;
 } {
   const makePoints = makeCorrect ? 300 : 0;
-  const modelPoints = makeCorrect && modelCorrect ? 400 : 0;
+  // Medium mode awards model points independently of make (partial credit for separate fields)
+  const modelPoints = mode === "medium"
+    ? (modelCorrect ? 400 : 0)
+    : (makeCorrect && modelCorrect ? 400 : 0);
 
   const yearBonusApplies = ["hard", "hardcore", "competitive"].includes(mode);
   const yearBonus =

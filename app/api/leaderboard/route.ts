@@ -11,7 +11,7 @@ function periodStart(period: Period): Date | null {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }
   if (period === "week") {
-    const day = now.getDay(); // 0=Sun
+    const day = now.getDay();
     const diff = now.getDate() - day + (day === 0 ? -6 : 1); // ISO week starts Mon
     return new Date(now.getFullYear(), now.getMonth(), diff);
   }
@@ -31,36 +31,31 @@ export async function GET(request: NextRequest) {
   const period = VALID_PERIODS.includes(periodParam) ? periodParam : "alltime";
   const startDate = periodStart(period);
 
-  // Aggregate total points per player for the given mode and period
-  const sessions = await prisma.gameSession.groupBy({
-    by: ["playerId"],
+  const sessions = await prisma.gameSession.findMany({
     where: {
       endedAt: { not: null },
       finalScore: { not: null, gt: 0 },
+      initials: { not: null },
       ...(mode ? { mode } : { mode: { in: [...VALID_MODES] } }),
       ...(startDate ? { startedAt: { gte: startDate } } : {}),
     },
-    _sum: { finalScore: true },
-    _count: { id: true },
-    orderBy: { _sum: { finalScore: "desc" } },
+    orderBy: { finalScore: "desc" },
     take: 20,
+    select: {
+      id: true,
+      initials: true,
+      finalScore: true,
+      mode: true,
+      startedAt: true,
+    },
   });
 
-  // Remove sessions without a playerId
-  const withPlayer = sessions.filter((s) => s.playerId !== null);
-
-  const playerIds = withPlayer.map((s) => s.playerId as string);
-  const players = await prisma.player.findMany({
-    where: { id: { in: playerIds } },
-    select: { id: true, username: true },
-  });
-  const playerMap = Object.fromEntries(players.map((p) => [p.id, p.username]));
-
-  const entries = withPlayer.map((s, i) => ({
+  const entries = sessions.map((s, i) => ({
     rank: i + 1,
-    username: playerMap[s.playerId as string] ?? "Unknown",
-    totalScore: s._sum.finalScore ?? 0,
-    gamesPlayed: s._count.id,
+    initials: s.initials as string,
+    score: s.finalScore as number,
+    mode: s.mode,
+    date: s.startedAt.toISOString(),
   }));
 
   return Response.json(entries);

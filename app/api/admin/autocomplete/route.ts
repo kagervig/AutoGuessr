@@ -50,7 +50,20 @@ export async function GET(request: NextRequest) {
       return Response.json(rows.map((r) => r.countryOfOrigin));
     }
 
+    case "make_defaults": {
+      const rows = await prisma.vehicle.findMany({
+        select: { make: true, countryOfOrigin: true, region: { select: { slug: true } } },
+        distinct: ["make"],
+        orderBy: { make: "asc" },
+      });
+      const defaults: Record<string, { country: string; regionSlug: string }> = {};
+      for (const row of rows) {
+        defaults[row.make] = { country: row.countryOfOrigin, regionSlug: row.region.slug };
+      }
+      return Response.json(defaults);
+    }
+
     default:
-      return Response.json({ error: "field must be one of: make, model, trim, country" }, { status: 400 });
+      return Response.json({ error: "field must be one of: make, model, trim, country, make_defaults" }, { status: 400 });
   }
 }

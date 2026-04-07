@@ -15,7 +15,7 @@ import {
   RotateCcw,
   Trophy,
 } from "lucide-react";
-import { TIME_LIMITS } from "@/app/lib/game";
+import { TIME_LIMITS, shuffle } from "@/app/lib/game";
 import { MODES } from "@/app/lib/constants";
 import { Tachometer } from "@/app/components/ui/Tachometer";
 import { cn } from "@/app/lib/utils";
@@ -211,7 +211,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
   const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
   const [practiceComplete, setPracticeComplete] = useState(false);
 
-  // Competitive mode
+  // Zoom modes (hard + competitive)
   const [timerActive, setTimerActive] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
   const [zoomedOut, setZoomedOut] = useState(false);
@@ -219,6 +219,12 @@ export default function GameScreen({ mode, username, filter }: Props) {
   const rafRef = useRef<number | null>(null);
   const roundStartRef = useRef<number>(Date.now());
   const currentRoundIdRef = useRef<string>("");
+
+  // Hardcore grid
+  const [visiblePanels, setVisiblePanels] = useState<boolean[]>(Array(9).fill(true));
+  const panelOrderRef = useRef<number[]>([]);
+  const panelIndexRef = useRef(0);
+  const panelIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams({ mode });
@@ -251,7 +257,24 @@ export default function GameScreen({ mode, username, filter }: Props) {
     setTimerActive(false);
     setZoomedOut(false);
 
-    if (mode === "competitive" && gameData) {
+    if (mode === "hardcore") {
+      setVisiblePanels(Array(9).fill(true));
+      panelOrderRef.current = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+      panelIndexRef.current = 0;
+      panelIntervalRef.current = setInterval(() => {
+        const idx = panelOrderRef.current[panelIndexRef.current];
+        panelIndexRef.current++;
+        if (idx !== undefined) {
+          setVisiblePanels((prev) => {
+            const next = [...prev];
+            next[idx] = false;
+            return next;
+          });
+        }
+      }, 5000);
+    }
+
+    if ((mode === "competitive" || mode === "hard") && gameData) {
       const x = Math.floor(Math.random() * 70 + 15);
       const y = Math.floor(Math.random() * 70 + 15);
       setZoomOrigin(`${x}% ${y}%`);
@@ -267,6 +290,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       if (autoSubmitRef.current !== null) clearTimeout(autoSubmitRef.current);
+      if (panelIntervalRef.current !== null) clearInterval(panelIntervalRef.current);
     };
   }, [currentIndex, mode, gameData]);
 
@@ -329,6 +353,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
   const isLastRound = currentIndex === gameData.rounds.length - 1;
   const isHardcore = mode === "hardcore";
   const isCompetitive = mode === "competitive";
+  const isZoomMode = mode === "competitive" || mode === "hard";
   const maxTotalScore = gameData.rounds.length * Math.floor(1000 * (MAX_MULTIPLIERS[mode] ?? 1.0));
 
   function resolveAndReveal({
@@ -347,6 +372,10 @@ export default function GameScreen({ mode, username, filter }: Props) {
     if (autoSubmitRef.current !== null) {
       clearTimeout(autoSubmitRef.current);
       autoSubmitRef.current = null;
+    }
+    if (panelIntervalRef.current !== null) {
+      clearInterval(panelIntervalRef.current);
+      panelIntervalRef.current = null;
     }
 
     const make = vehicle?.make ?? "";
@@ -613,16 +642,12 @@ export default function GameScreen({ mode, username, filter }: Props) {
                 loading="eager"
                 className="absolute inset-0 w-full h-full object-cover transition-[filter,transform]"
                 style={{
-                  filter: isHardcore && roundState === "answering"
-                    ? "blur(4px) brightness(0.7) contrast(1.2)"
-                    : "none",
-                  transitionDuration: isHardcore ? "300ms" : "0ms",
-                  ...(isCompetitive
+                  ...(isZoomMode
                     ? {
                         transformOrigin: zoomOrigin,
                         transform: zoomedOut ? "scale(1)" : "scale(8)",
                         transition: zoomedOut
-                          ? `transform ${timeLimitMs}ms linear, filter 300ms`
+                          ? `transform ${timeLimitMs}ms linear`
                           : "none",
                       }
                     : {}),
@@ -635,8 +660,21 @@ export default function GameScreen({ mode, username, filter }: Props) {
                 <span className="text-sm text-muted-foreground">Image unavailable</span>
               </div>
 
-              {/* Competitive timer bar at image bottom */}
-              {isCompetitive && roundState === "answering" && (
+              {/* Hardcore grid overlay — panels are removed every 5 seconds */}
+              {isHardcore && roundState === "answering" && (
+                <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+                  {visiblePanels.map((visible, i) => (
+                    <div
+                      key={i}
+                      className="bg-black transition-opacity duration-500"
+                      style={{ opacity: visible ? 1 : 0 }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Timer bar for zoom modes */}
+              {isZoomMode && roundState === "answering" && (
                 <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                   <RevealBar timerActive={timerActive} roundState={roundState} timeLimitMs={timeLimitMs} />
                 </div>
@@ -644,7 +682,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
 
               {/* Round label */}
               <div className="absolute top-4 left-4 glass-panel px-3 py-1 rounded-full text-xs font-bold tracking-widest text-white/70 uppercase">
-                {isHardcore ? "Obscured" : `Round ${currentIndex + 1}`}
+                {isHardcore ? "Blind" : `Round ${currentIndex + 1}`}
               </div>
 
               {/* Result overlay */}
@@ -674,7 +712,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
               >
                 <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
                   {mode === "easy" && "Choose the correct make & model"}
-                  {mode === "medium" && "Select make & model"}
+                  {mode === "medium" && "Type make & model — partial credit for either"}
                   {(mode === "hard" || mode === "hardcore") && "Type make, model & year exactly"}
                   {mode === "competitive" && "Identify before the image reveals!"}
                   {mode === "practice" && "Choose the correct make & model"}
@@ -763,9 +801,9 @@ export default function GameScreen({ mode, username, filter }: Props) {
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {mode === "easy" && "Pick the right car from 4 choices."}
-              {mode === "medium" && "Select the make and model from dropdown lists."}
-              {mode === "hard" && "Type the exact make, model, and year."}
-              {mode === "hardcore" && "Same as Expert, but the image is obscured."}
+              {mode === "medium" && "Type the make and model. Partial credit for either field alone."}
+              {mode === "hard" && "Type make, model, and year as the image zooms out."}
+              {mode === "hardcore" && "Same as Expert. Panels are removed every 5 seconds to reveal the car."}
               {mode === "competitive" && "Race the clock — faster answers earn bonus points."}
               {mode === "practice" && "No leaderboard pressure. Drill your knowledge."}
             </p>

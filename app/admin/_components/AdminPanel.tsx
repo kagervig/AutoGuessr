@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Combobox from "@/app/_components/Combobox";
+import { eraFromYear } from "@/app/lib/constants";
 
 type StagingStatus = "PENDING_REVIEW" | "COMMUNITY_REVIEW" | "READY" | "PUBLISHED" | "REJECTED";
 
@@ -177,6 +178,7 @@ export default function AdminPanel() {
   const [trimOptions, setTrimOptions] = useState<string[]>([]);
   const [countryOptions, setCountryOptions] = useState<string[]>([]);
   const [regionOptions, setRegionOptions] = useState<string[]>([]);
+  const [makeDefaults, setMakeDefaults] = useState<Record<string, { country: string; regionSlug: string }>>({});
 
   const fetchImages = useCallback(async () => {
     setLoading(true);
@@ -200,6 +202,9 @@ export default function AdminPanel() {
     fetch("/api/admin/autocomplete?field=country")
       .then((r) => r.json())
       .then(setCountryOptions);
+    fetch("/api/admin/autocomplete?field=make_defaults")
+      .then((r) => r.json())
+      .then(setMakeDefaults);
     fetch("/api/filters")
       .then((r) => r.json())
       .then((d) => setRegionOptions((d.regions ?? []).map((r: { slug: string }) => r.slug)));
@@ -212,6 +217,28 @@ export default function AdminPanel() {
       .then((r) => r.json())
       .then(setModelOptions);
   }, [editForm.make]);
+
+  // Auto-fill country and region when make is set and those fields are empty
+  useEffect(() => {
+    if (!editForm.make) return;
+    const defaults = makeDefaults[editForm.make];
+    if (!defaults) return;
+    setEditForm((f) => ({
+      ...f,
+      countryOfOrigin: f.countryOfOrigin || defaults.country,
+      regionSlug: f.regionSlug || defaults.regionSlug,
+    }));
+  }, [editForm.make, makeDefaults]);
+
+  // Auto-fill era from year when era is empty
+  useEffect(() => {
+    const year = parseInt(editForm.year, 10);
+    if (!editForm.year || isNaN(year)) return;
+    setEditForm((f) => ({
+      ...f,
+      era: f.era || eraFromYear(year),
+    }));
+  }, [editForm.year]);
 
   // Reload trim options when make or model changes
   useEffect(() => {

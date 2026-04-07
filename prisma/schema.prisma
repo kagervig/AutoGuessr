@@ -175,6 +175,7 @@ model GameSession {
   startedAt    DateTime    @default(now())
   endedAt      DateTime?
   finalScore   Int?
+  initials     String?
   player       Player?     @relation(fields: [playerId], references: [id])
   rounds       Round[]
 }

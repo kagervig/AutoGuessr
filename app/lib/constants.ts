@@ -45,6 +45,13 @@ export const COUNTRIES = [
   { code: "AU", label: "Australia" },
 ] as const;
 
+export function eraFromYear(year: number): string {
+  if (year < 1970) return "classic";
+  if (year < 2000) return "retro";
+  if (year < 2015) return "modern";
+  return "contemporary";
+}
+
 // Fallback filter data used when the database has not been seeded yet
 export const FALLBACK_CATEGORIES = [
   { id: "classic", slug: "classic", label: "Classic" },

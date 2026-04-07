@@ -17,19 +17,25 @@ type PeriodId = (typeof PERIODS)[number]["id"];
 // Leaderboard excludes practice mode
 const LEADERBOARD_MODES = MODES.filter((m) => m.id !== "practice");
 
+const RANK_COLORS: Record<number, string> = {
+  1: "text-yellow-400",
+  2: "text-zinc-300",
+  3: "text-amber-700",
+};
+
 interface LeaderboardEntry {
   rank: number;
-  username: string;
-  totalScore: number;
-  gamesPlayed: number;
+  initials: string;
+  score: number;
+  mode: string;
+  date: string;
 }
 
 interface Props {
-  username: string;
   initialMode?: string;
 }
 
-export default function LeaderboardScreen({ username, initialMode }: Props) {
+export default function LeaderboardScreen({ initialMode }: Props) {
   const router = useRouter();
   const [period, setPeriod] = useState<PeriodId>("alltime");
   const [mode, setMode] = useState(initialMode ?? "");
@@ -52,6 +58,8 @@ export default function LeaderboardScreen({ username, initialMode }: Props) {
       .finally(() => setLoading(false));
   }, [period, mode]);
 
+  const modeLabel = LEADERBOARD_MODES.find((m) => m.id === mode)?.label;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
@@ -65,7 +73,9 @@ export default function LeaderboardScreen({ username, initialMode }: Props) {
           </button>
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-primary" />
-            <span className="font-display font-black tracking-widest uppercase text-sm">Leaderboard</span>
+            <span className="font-display font-black tracking-widest uppercase text-sm">
+              {modeLabel ? `${modeLabel} · Leaderboard` : "Leaderboard"}
+            </span>
           </div>
           <div className="w-20" />
         </div>
@@ -129,7 +139,9 @@ export default function LeaderboardScreen({ username, initialMode }: Props) {
         {error && <p className="text-center text-red-400">{error}</p>}
 
         {!loading && !error && entries.length === 0 && (
-          <p className="text-center text-muted-foreground py-12">No scores yet. Be the first!</p>
+          <p className="text-center text-muted-foreground py-12">
+            No scores yet. Be the first!
+          </p>
         )}
 
         {!loading && !error && entries.length > 0 && (
@@ -139,31 +151,32 @@ export default function LeaderboardScreen({ username, initialMode }: Props) {
             className="space-y-2"
           >
             {entries.map((entry) => {
-              const isMe = !!(username && entry.username === username);
-              const rankColor =
-                entry.rank === 1 ? "text-yellow-400" :
-                entry.rank === 2 ? "text-zinc-300" :
-                entry.rank === 3 ? "text-amber-700" :
-                "text-muted-foreground";
+              const rankColor = RANK_COLORS[entry.rank] ?? "text-muted-foreground";
+              const entryMode = LEADERBOARD_MODES.find((m) => m.id === entry.mode);
 
               return (
                 <div
-                  key={entry.rank}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl border px-4 py-3",
-                    isMe ? "border-primary/40 bg-primary/10" : "border-white/10 bg-white/5"
-                  )}
+                  key={`${entry.rank}-${entry.initials}-${entry.date}`}
+                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
                 >
                   <span className={cn("w-6 shrink-0 text-center text-sm font-black", rankColor)}>
                     {entry.rank}
                   </span>
-                  <span className={cn("flex-1 truncate text-sm font-semibold", isMe ? "text-primary" : "text-zinc-200")}>
-                    {entry.username}
-                    {isMe && <span className="ml-1.5 text-xs font-normal text-primary/70">(you)</span>}
+                  {/* Initials — prominent, monospace arcade style */}
+                  <span className="w-14 shrink-0 font-mono text-xl font-black tracking-widest text-white">
+                    {entry.initials}
                   </span>
+                  <div className="flex-1 min-w-0">
+                    {!mode && entryMode && (
+                      <p className="text-xs text-muted-foreground uppercase tracking-widest">
+                        {entryMode.label}
+                      </p>
+                    )}
+                  </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-sm font-bold text-white">{entry.totalScore.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">{entry.gamesPlayed}g</p>
+                    <p className="text-sm font-bold text-white tabular-nums">
+                      {entry.score.toLocaleString()}
+                    </p>
                   </div>
                 </div>
               );
