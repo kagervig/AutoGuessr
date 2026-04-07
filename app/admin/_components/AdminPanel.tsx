@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Combobox from "@/app/_components/Combobox";
 import { eraFromYear } from "@/app/lib/constants";
+import MakesModelsPanel from "./MakesModelsPanel";
+import CategoriesPanel from "./CategoriesPanel";
+
+type AdminPage = "staging" | "makes-models" | "categories";
 
 type StagingStatus = "PENDING_REVIEW" | "COMMUNITY_REVIEW" | "READY" | "PUBLISHED" | "REJECTED";
 
@@ -45,6 +49,7 @@ interface StagingImage {
     isModelNameVisible: boolean | null;
     hasMultipleVehicles: boolean | null;
     isFaceVisible: boolean | null;
+    isVehicleUnmodified: boolean | null;
   };
   confirmed: {
     make: string | null;
@@ -110,6 +115,7 @@ interface EditForm {
   isModelNameVisible: boolean;
   hasMultipleVehicles: boolean;
   isFaceVisible: boolean;
+  isVehicleUnmodified: boolean;
 }
 
 function AgreementBar({
@@ -160,6 +166,7 @@ function emptyForm(): EditForm {
     isModelNameVisible: false,
     hasMultipleVehicles: false,
     isFaceVisible: false,
+    isVehicleUnmodified: true,
   };
 }
 
@@ -183,16 +190,19 @@ function formFromImage(img: StagingImage): EditForm {
     isModelNameVisible: img.admin.isModelNameVisible ?? false,
     hasMultipleVehicles: img.admin.hasMultipleVehicles ?? false,
     isFaceVisible: img.admin.isFaceVisible ?? false,
+    isVehicleUnmodified: img.admin.isVehicleUnmodified ?? true,
   };
 }
 
 export default function AdminPanel() {
+  const [activePage, setActivePage] = useState<AdminPage>("staging");
   const [images, setImages] = useState<StagingImage[]>([]);
   const [counts, setCounts] = useState<Partial<Record<StagingStatus, number>>>({});
   const [statusFilter, setStatusFilter] = useState<StagingStatus | "ALL">("ALL");
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editForm, setEditForm] = useState<EditForm>(emptyForm());
+  const lastSelectedIdxRef = useRef<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -273,13 +283,23 @@ export default function AdminPanel() {
       .then((d) => d && setTrimOptions(d));
   }, [editForm.make, editForm.model]);
 
-  function selectImage(img: StagingImage) {
-    setSelectedIds([img.id]);
-    setEditForm(formFromImage(img));
+  function handleImageClick(img: StagingImage, shiftKey: boolean) {
+    const idx = images.findIndex((i) => i.id === img.id);
+    if (shiftKey && lastSelectedIdxRef.current !== null && selectedIds.length > 0) {
+      const from = Math.min(lastSelectedIdxRef.current, idx);
+      const to = Math.max(lastSelectedIdxRef.current, idx);
+      const rangeIds = images.slice(from, to + 1).map((i) => i.id);
+      setSelectedIds((prev) => [...new Set([...prev, ...rangeIds])]);
+    } else {
+      setSelectedIds([img.id]);
+      setEditForm(formFromImage(img));
+      lastSelectedIdxRef.current = idx;
+    }
     setError(null);
   }
 
   function toggleImageSelection(id: string) {
+    const idx = images.findIndex((i) => i.id === id);
     setSelectedIds((prev) => {
       if (prev.includes(id)) {
         const next = prev.filter((i) => i !== id);
@@ -291,6 +311,7 @@ export default function AdminPanel() {
         }
         return next;
       }
+      lastSelectedIdxRef.current = idx;
       return [...prev, id];
     });
     setError(null);
@@ -342,6 +363,7 @@ export default function AdminPanel() {
     isModelNameVisible: editForm.isModelNameVisible,
     hasMultipleVehicles: editForm.hasMultipleVehicles,
     isFaceVisible: editForm.isFaceVisible,
+    isVehicleUnmodified: editForm.isVehicleUnmodified,
   };
 
   async function saveEdit(id: string) {
@@ -440,18 +462,41 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]">
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Staging Review</h1>
-          <p className="text-sm text-black">
-            {Object.values(counts).reduce((a, b) => a + b, 0)} total
-          </p>
+      <header className="border-b border-gray-200 bg-white px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-lg font-semibold">Admin</h1>
+          <nav className="flex gap-0.5">
+            {(
+              [
+                ["staging", "Staging"],
+                ["makes-models", "Makes & Models"],
+                ["categories", "Categories"],
+              ] as [AdminPage, string][]
+            ).map(([page, label]) => (
+              <button
+                key={page}
+                onClick={() => setActivePage(page)}
+                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  activePage === page
+                    ? "bg-gray-900 text-white"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
         </div>
         <a href="/" className="text-sm text-gray-400 hover:text-gray-600">
           ← Game
         </a>
       </header>
 
+      {activePage === "makes-models" && <MakesModelsPanel />}
+      {activePage === "categories" && <CategoriesPanel />}
+
+      {activePage === "staging" && (
+      <>
       {/* Status filter tabs */}
       <div className="border-b border-gray-200 bg-white px-6">
         <nav className="flex gap-1 -mb-px">
@@ -478,7 +523,7 @@ export default function AdminPanel() {
         </nav>
       </div>
 
-      <div className="flex h-[calc(100vh-113px)]">
+      <div className="flex h-[calc(100vh-96px)]">
         {/* Image grid */}
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
@@ -496,16 +541,16 @@ export default function AdminPanel() {
                       : "border-transparent hover:border-gray-300"
                   }`}
                 >
-                  {/* Checkbox for multi-select */}
+                  {/* Checkbox for multi-select — large hit area covers top-left corner */}
                   <div
-                    className="absolute top-1.5 left-1.5 z-10"
+                    className="absolute top-0 left-0 z-10 w-10 h-10 flex items-start justify-start p-2 cursor-pointer"
                     onClick={(e) => { e.stopPropagation(); toggleImageSelection(img.id); }}
                   >
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(img.id)}
                       onChange={() => {}}
-                      className="w-4 h-4 rounded cursor-pointer accent-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="w-4 h-4 rounded cursor-pointer accent-gray-900 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
                       style={selectedIds.includes(img.id) ? { opacity: 1 } : {}}
                     />
                   </div>
@@ -513,10 +558,10 @@ export default function AdminPanel() {
                   <img
                     src={img.imageUrl}
                     alt={img.filename}
-                    onClick={() => selectImage(img)}
-                    className="w-full aspect-[4/3] object-cover bg-gray-100"
+                    onClick={(e) => { if (e.shiftKey) e.preventDefault(); handleImageClick(img, e.shiftKey); }}
+                    className="w-full aspect-[4/3] object-cover bg-gray-100 select-none"
                   />
-                  <div className="p-1.5 bg-white" onClick={() => selectImage(img)}>
+                  <div className="p-1.5 bg-white select-none" onClick={(e) => { if (e.shiftKey) e.preventDefault(); handleImageClick(img, e.shiftKey); }}>
                     <span
                       className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLOURS[img.status]}`}
                     >
@@ -556,13 +601,21 @@ export default function AdminPanel() {
                       const img = images.find((i) => i.id === id);
                       if (!img) return null;
                       return (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          key={id}
-                          src={img.imageUrl}
-                          alt={img.filename}
-                          className="w-16 h-12 object-cover rounded border border-blue-200"
-                        />
+                        <div key={id} className="relative group/thumb">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={img.imageUrl}
+                            alt={img.filename}
+                            className="w-16 h-12 object-cover rounded border border-blue-200"
+                          />
+                          <button
+                            onClick={() => toggleImageSelection(id)}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-gray-900 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                            aria-label="Deselect"
+                          >
+                            ×
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -868,6 +921,17 @@ export default function AdminPanel() {
                       />
                       Face visible
                     </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editForm.isVehicleUnmodified}
+                        onChange={(e) =>
+                          setEditForm((f) => ({ ...f, isVehicleUnmodified: e.target.checked }))
+                        }
+                        className="rounded"
+                      />
+                      Vehicle unmodified
+                    </label>
                   </div>
                 </div>
 
@@ -928,6 +992,8 @@ export default function AdminPanel() {
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

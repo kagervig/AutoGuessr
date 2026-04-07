@@ -16,7 +16,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     make, model, year, trim, bodyStyle,
     rarity, era, regionSlug, countryOfOrigin, categories, isHardcoreEligible,
     notes, copyrightHolder, isCropped, isLogoVisible, isModelNameVisible,
-    hasMultipleVehicles, isFaceVisible, status,
+    hasMultipleVehicles, isFaceVisible, isVehicleUnmodified, status,
   } = body;
 
   const VALID_STATUSES: StagingStatus[] = [
@@ -52,6 +52,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       ...(isModelNameVisible !== undefined && { adminIsModelNameVisible: Boolean(isModelNameVisible) }),
       ...(hasMultipleVehicles !== undefined && { adminHasMultipleVehicles: Boolean(hasMultipleVehicles) }),
       ...(isFaceVisible !== undefined && { adminIsFaceVisible: Boolean(isFaceVisible) }),
+      ...(isVehicleUnmodified !== undefined && { adminIsVehicleUnmodified: Boolean(isVehicleUnmodified) }),
       ...(status !== undefined && { status }),
       reviewedAt: new Date(),
     },
@@ -83,6 +84,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       isModelNameVisible: updated.adminIsModelNameVisible,
       hasMultipleVehicles: updated.adminHasMultipleVehicles,
       isFaceVisible: updated.adminIsFaceVisible,
+      isVehicleUnmodified: updated.adminIsVehicleUnmodified,
     },
     confirmed: {
       make: updated.confirmedMake,

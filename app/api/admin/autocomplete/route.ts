@@ -51,13 +51,24 @@ export async function GET(request: NextRequest) {
     }
 
     case "copyright_holder": {
-      const rows = await prisma.image.findMany({
-        where: { copyrightHolder: { not: null } },
-        select: { copyrightHolder: true },
-        distinct: ["copyrightHolder"],
-        orderBy: { copyrightHolder: "asc" },
-      });
-      return Response.json(rows.flatMap((r) => (r.copyrightHolder ? [r.copyrightHolder] : [])));
+      const [published, staging] = await Promise.all([
+        prisma.image.findMany({
+          where: { copyrightHolder: { not: null } },
+          select: { copyrightHolder: true },
+          distinct: ["copyrightHolder"],
+        }),
+        prisma.stagingImage.findMany({
+          where: { adminCopyrightHolder: { not: null } },
+          select: { adminCopyrightHolder: true },
+          distinct: ["adminCopyrightHolder"],
+        }),
+      ]);
+      const values = [
+        ...published.flatMap((r) => (r.copyrightHolder ? [r.copyrightHolder] : [])),
+        ...staging.flatMap((r) => (r.adminCopyrightHolder ? [r.adminCopyrightHolder] : [])),
+      ];
+      const unique = [...new Set(values)].sort();
+      return Response.json(unique);
     }
 
     case "make_defaults": {
