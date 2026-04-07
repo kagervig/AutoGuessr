@@ -105,6 +105,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
       isModelNameVisible: staging.adminIsModelNameVisible ?? false,
       hasMultipleVehicles: staging.adminHasMultipleVehicles ?? false,
       isFaceVisible: staging.adminIsFaceVisible ?? false,
+      isVehicleUnmodified: staging.adminIsVehicleUnmodified ?? true,
       isActive: true,
       isHardcoreEligible,
     },

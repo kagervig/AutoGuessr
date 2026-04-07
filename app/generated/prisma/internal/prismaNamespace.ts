@@ -1706,6 +1706,7 @@ export const ImageScalarFieldEnum = {
   isModelNameVisible: 'isModelNameVisible',
   hasMultipleVehicles: 'hasMultipleVehicles',
   isFaceVisible: 'isFaceVisible',
+  isVehicleUnmodified: 'isVehicleUnmodified',
   uploadedAt: 'uploadedAt',
   isActive: 'isActive',
   isHardcoreEligible: 'isHardcoreEligible'
@@ -1852,6 +1853,7 @@ export const StagingImageScalarFieldEnum = {
   adminIsModelNameVisible: 'adminIsModelNameVisible',
   adminHasMultipleVehicles: 'adminHasMultipleVehicles',
   adminIsFaceVisible: 'adminIsFaceVisible',
+  adminIsVehicleUnmodified: 'adminIsVehicleUnmodified',
   reviewedAt: 'reviewedAt',
   confirmedMake: 'confirmedMake',
   confirmedModel: 'confirmedModel',
