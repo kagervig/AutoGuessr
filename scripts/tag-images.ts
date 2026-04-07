@@ -124,12 +124,17 @@ const SYSTEM_INSTRUCTION = `You are a car identification expert. Given a photo, 
   "trim": "string — specific trim if clearly identifiable from the image, otherwise empty string",
   "body_style": "one of: coupe, sedan, convertible, hatchback, wagon, suv, truck, van, roadster",
   "confidence": number between 0 and 1 — your confidence in the identification (0.9 = high, 0.6 = medium, 0.3 = low),
+  "is_logo_visible": boolean — true if the manufacturer badge or logo is clearly visible on the car,
+  "is_model_name_visible": boolean — true if the model name text is clearly legible on the car body,
+  "has_multiple_vehicles": boolean — true if two or more distinct vehicles appear in the image,
+  "is_face_visible": boolean — true if any human face is visible in the image,
+  "is_vehicle_unmodified": boolean — true if the vehicle appears to be stock/unmodified; false if clearly modified (body kit, custom paint, aftermarket wheels, roll cage, racing livery, etc.),
   "notes": "string — anything uncertain or worth flagging for manual review, otherwise empty string"
 }
 
 Rules:
 - Return ONLY valid JSON. No markdown fences, no explanation outside the JSON.
-- If multiple cars are visible, identify the most prominent one and include "multiple cars visible" in notes.
+- If multiple cars are visible, identify the most prominent one.
 - If you cannot identify the car at all, return the object with empty strings and null year and confidence 0.1.`;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -141,6 +146,11 @@ interface GeminiTag {
   trim: string;
   body_style: string;
   confidence: number;
+  is_logo_visible: boolean;
+  is_model_name_visible: boolean;
+  has_multiple_vehicles: boolean;
+  is_face_visible: boolean;
+  is_vehicle_unmodified: boolean;
   notes: string;
 }
 
@@ -317,6 +327,12 @@ async function main(): Promise<void> {
           aiBodyStyle:  tag.body_style || null,
           aiConfidence: tag.confidence,
           aiTaggedAt:   new Date(),
+          // Boolean flags: only set when admin hasn't already reviewed them
+          ...(record.adminIsLogoVisible        === null ? { adminIsLogoVisible:        tag.is_logo_visible        } : {}),
+          ...(record.adminIsModelNameVisible   === null ? { adminIsModelNameVisible:   tag.is_model_name_visible  } : {}),
+          ...(record.adminHasMultipleVehicles  === null ? { adminHasMultipleVehicles:  tag.has_multiple_vehicles  } : {}),
+          ...(record.adminIsFaceVisible        === null ? { adminIsFaceVisible:        tag.is_face_visible        } : {}),
+          ...(record.adminIsVehicleUnmodified  === null ? { adminIsVehicleUnmodified:  tag.is_vehicle_unmodified  } : {}),
           // Store notes in adminNotes only if it's empty — don't overwrite human edits
           ...(record.adminNotes === null && tag.notes
             ? { adminNotes: `[AI] ${tag.notes}` }

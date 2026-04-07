@@ -120,6 +120,7 @@ model Image {
   isModelNameVisible   Boolean     @default(false)
   hasMultipleVehicles  Boolean     @default(false)
   isFaceVisible        Boolean     @default(false)
+  isVehicleUnmodified  Boolean     @default(true)
   uploadedAt           DateTime    @default(now())
   isActive             Boolean     @default(true)
   isHardcoreEligible   Boolean     @default(false)
@@ -266,7 +267,8 @@ model StagingImage {
   adminIsLogoVisible       Boolean?
   adminIsModelNameVisible  Boolean?
   adminHasMultipleVehicles Boolean?
-  adminIsFaceVisible       Boolean?
+  adminIsFaceVisible           Boolean?
+  adminIsVehicleUnmodified     Boolean?
   reviewedAt               DateTime?
   // Community-confirmed values (set when a field reaches 5 unique agreements)
   confirmedMake      String?
