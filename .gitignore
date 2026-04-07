@@ -26,3 +26,4 @@ dist/
 
 # Gemini key rotation state
 .gemini-key-state.json
+.vercel
