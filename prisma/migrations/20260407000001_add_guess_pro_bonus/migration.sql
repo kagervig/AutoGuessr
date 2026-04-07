@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Guess" ADD COLUMN "proBonus" INTEGER NOT NULL DEFAULT 0;

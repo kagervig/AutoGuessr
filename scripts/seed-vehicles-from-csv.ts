@@ -143,7 +143,7 @@ async function main() {
       countryOfOrigin: row.country,
       regionId: regionMap.get(regionSlug)!,
       bodyStyle,
-      era: eraFromYear(year),
+      era: eraFromYear(year) as Era,
       rarity: "common",
     });
   }

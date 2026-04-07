@@ -72,6 +72,11 @@
   }
 }
 
+@keyframes zoom-out {
+  from { transform: scale(4); }
+  to   { transform: scale(1); }
+}
+
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }

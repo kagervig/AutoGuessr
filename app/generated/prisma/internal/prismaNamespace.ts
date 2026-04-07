@@ -1700,6 +1700,12 @@ export const ImageScalarFieldEnum = {
   filename: 'filename',
   sourceUrl: 'sourceUrl',
   attribution: 'attribution',
+  copyrightHolder: 'copyrightHolder',
+  isCropped: 'isCropped',
+  isLogoVisible: 'isLogoVisible',
+  isModelNameVisible: 'isModelNameVisible',
+  hasMultipleVehicles: 'hasMultipleVehicles',
+  isFaceVisible: 'isFaceVisible',
   uploadedAt: 'uploadedAt',
   isActive: 'isActive',
   isHardcoreEligible: 'isHardcoreEligible'
@@ -1798,6 +1804,7 @@ export const GuessScalarFieldEnum = {
   modelPoints: 'modelPoints',
   yearBonus: 'yearBonus',
   timeBonus: 'timeBonus',
+  proBonus: 'proBonus',
   modeMultiplier: 'modeMultiplier',
   pointsEarned: 'pointsEarned'
 } as const
@@ -1839,6 +1846,12 @@ export const StagingImageScalarFieldEnum = {
   adminCategories: 'adminCategories',
   adminIsHardcoreEligible: 'adminIsHardcoreEligible',
   adminNotes: 'adminNotes',
+  adminCopyrightHolder: 'adminCopyrightHolder',
+  adminIsCropped: 'adminIsCropped',
+  adminIsLogoVisible: 'adminIsLogoVisible',
+  adminIsModelNameVisible: 'adminIsModelNameVisible',
+  adminHasMultipleVehicles: 'adminHasMultipleVehicles',
+  adminIsFaceVisible: 'adminIsFaceVisible',
   reviewedAt: 'reviewedAt',
   confirmedMake: 'confirmedMake',
   confirmedModel: 'confirmedModel',
@@ -1998,6 +2011,13 @@ export type ListEnumAliasTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -2008,13 +2028,6 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 

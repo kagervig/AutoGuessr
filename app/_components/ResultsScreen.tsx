@@ -20,6 +20,7 @@ interface GuessData {
   modelPoints: number;
   yearBonus: number | null;
   timeBonus: number;
+  proBonus: number;
   pointsEarned: number;
   yearDelta: number | null;
 }
@@ -359,6 +360,7 @@ export default function ResultsScreen({ sessionId, mode, username }: Props) {
                     {g.modelPoints > 0 && <span>model +{g.modelPoints}</span>}
                     {g.yearBonus != null && g.yearBonus > 0 && <span>year +{g.yearBonus}</span>}
                     {g.timeBonus > 0 && <span>speed +{g.timeBonus}</span>}
+                    {g.proBonus > 0 && <span className="text-yellow-400">pro +{g.proBonus}</span>}
                   </div>
                 )}
               </div>

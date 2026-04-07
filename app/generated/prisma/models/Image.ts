@@ -30,6 +30,12 @@ export type ImageMinAggregateOutputType = {
   filename: string | null
   sourceUrl: string | null
   attribution: string | null
+  copyrightHolder: string | null
+  isCropped: boolean | null
+  isLogoVisible: boolean | null
+  isModelNameVisible: boolean | null
+  hasMultipleVehicles: boolean | null
+  isFaceVisible: boolean | null
   uploadedAt: Date | null
   isActive: boolean | null
   isHardcoreEligible: boolean | null
@@ -41,6 +47,12 @@ export type ImageMaxAggregateOutputType = {
   filename: string | null
   sourceUrl: string | null
   attribution: string | null
+  copyrightHolder: string | null
+  isCropped: boolean | null
+  isLogoVisible: boolean | null
+  isModelNameVisible: boolean | null
+  hasMultipleVehicles: boolean | null
+  isFaceVisible: boolean | null
   uploadedAt: Date | null
   isActive: boolean | null
   isHardcoreEligible: boolean | null
@@ -52,6 +64,12 @@ export type ImageCountAggregateOutputType = {
   filename: number
   sourceUrl: number
   attribution: number
+  copyrightHolder: number
+  isCropped: number
+  isLogoVisible: number
+  isModelNameVisible: number
+  hasMultipleVehicles: number
+  isFaceVisible: number
   uploadedAt: number
   isActive: number
   isHardcoreEligible: number
@@ -65,6 +83,12 @@ export type ImageMinAggregateInputType = {
   filename?: true
   sourceUrl?: true
   attribution?: true
+  copyrightHolder?: true
+  isCropped?: true
+  isLogoVisible?: true
+  isModelNameVisible?: true
+  hasMultipleVehicles?: true
+  isFaceVisible?: true
   uploadedAt?: true
   isActive?: true
   isHardcoreEligible?: true
@@ -76,6 +100,12 @@ export type ImageMaxAggregateInputType = {
   filename?: true
   sourceUrl?: true
   attribution?: true
+  copyrightHolder?: true
+  isCropped?: true
+  isLogoVisible?: true
+  isModelNameVisible?: true
+  hasMultipleVehicles?: true
+  isFaceVisible?: true
   uploadedAt?: true
   isActive?: true
   isHardcoreEligible?: true
@@ -87,6 +117,12 @@ export type ImageCountAggregateInputType = {
   filename?: true
   sourceUrl?: true
   attribution?: true
+  copyrightHolder?: true
+  isCropped?: true
+  isLogoVisible?: true
+  isModelNameVisible?: true
+  hasMultipleVehicles?: true
+  isFaceVisible?: true
   uploadedAt?: true
   isActive?: true
   isHardcoreEligible?: true
@@ -171,6 +207,12 @@ export type ImageGroupByOutputType = {
   filename: string
   sourceUrl: string | null
   attribution: string | null
+  copyrightHolder: string | null
+  isCropped: boolean
+  isLogoVisible: boolean
+  isModelNameVisible: boolean
+  hasMultipleVehicles: boolean
+  isFaceVisible: boolean
   uploadedAt: Date
   isActive: boolean
   isHardcoreEligible: boolean
@@ -203,6 +245,12 @@ export type ImageWhereInput = {
   filename?: Prisma.StringFilter<"Image"> | string
   sourceUrl?: Prisma.StringNullableFilter<"Image"> | string | null
   attribution?: Prisma.StringNullableFilter<"Image"> | string | null
+  copyrightHolder?: Prisma.StringNullableFilter<"Image"> | string | null
+  isCropped?: Prisma.BoolFilter<"Image"> | boolean
+  isLogoVisible?: Prisma.BoolFilter<"Image"> | boolean
+  isModelNameVisible?: Prisma.BoolFilter<"Image"> | boolean
+  hasMultipleVehicles?: Prisma.BoolFilter<"Image"> | boolean
+  isFaceVisible?: Prisma.BoolFilter<"Image"> | boolean
   uploadedAt?: Prisma.DateTimeFilter<"Image"> | Date | string
   isActive?: Prisma.BoolFilter<"Image"> | boolean
   isHardcoreEligible?: Prisma.BoolFilter<"Image"> | boolean
@@ -217,6 +265,12 @@ export type ImageOrderByWithRelationInput = {
   filename?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   attribution?: Prisma.SortOrderInput | Prisma.SortOrder
+  copyrightHolder?: Prisma.SortOrderInput | Prisma.SortOrder
+  isCropped?: Prisma.SortOrder
+  isLogoVisible?: Prisma.SortOrder
+  isModelNameVisible?: Prisma.SortOrder
+  hasMultipleVehicles?: Prisma.SortOrder
+  isFaceVisible?: Prisma.SortOrder
   uploadedAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isHardcoreEligible?: Prisma.SortOrder
@@ -234,6 +288,12 @@ export type ImageWhereUniqueInput = Prisma.AtLeast<{
   vehicleId?: Prisma.StringFilter<"Image"> | string
   sourceUrl?: Prisma.StringNullableFilter<"Image"> | string | null
   attribution?: Prisma.StringNullableFilter<"Image"> | string | null
+  copyrightHolder?: Prisma.StringNullableFilter<"Image"> | string | null
+  isCropped?: Prisma.BoolFilter<"Image"> | boolean
+  isLogoVisible?: Prisma.BoolFilter<"Image"> | boolean
+  isModelNameVisible?: Prisma.BoolFilter<"Image"> | boolean
+  hasMultipleVehicles?: Prisma.BoolFilter<"Image"> | boolean
+  isFaceVisible?: Prisma.BoolFilter<"Image"> | boolean
   uploadedAt?: Prisma.DateTimeFilter<"Image"> | Date | string
   isActive?: Prisma.BoolFilter<"Image"> | boolean
   isHardcoreEligible?: Prisma.BoolFilter<"Image"> | boolean
@@ -248,6 +308,12 @@ export type ImageOrderByWithAggregationInput = {
   filename?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   attribution?: Prisma.SortOrderInput | Prisma.SortOrder
+  copyrightHolder?: Prisma.SortOrderInput | Prisma.SortOrder
+  isCropped?: Prisma.SortOrder
+  isLogoVisible?: Prisma.SortOrder
+  isModelNameVisible?: Prisma.SortOrder
+  hasMultipleVehicles?: Prisma.SortOrder
+  isFaceVisible?: Prisma.SortOrder
   uploadedAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isHardcoreEligible?: Prisma.SortOrder
@@ -265,6 +331,12 @@ export type ImageScalarWhereWithAggregatesInput = {
   filename?: Prisma.StringWithAggregatesFilter<"Image"> | string
   sourceUrl?: Prisma.StringNullableWithAggregatesFilter<"Image"> | string | null
   attribution?: Prisma.StringNullableWithAggregatesFilter<"Image"> | string | null
+  copyrightHolder?: Prisma.StringNullableWithAggregatesFilter<"Image"> | string | null
+  isCropped?: Prisma.BoolWithAggregatesFilter<"Image"> | boolean
+  isLogoVisible?: Prisma.BoolWithAggregatesFilter<"Image"> | boolean
+  isModelNameVisible?: Prisma.BoolWithAggregatesFilter<"Image"> | boolean
+  hasMultipleVehicles?: Prisma.BoolWithAggregatesFilter<"Image"> | boolean
+  isFaceVisible?: Prisma.BoolWithAggregatesFilter<"Image"> | boolean
   uploadedAt?: Prisma.DateTimeWithAggregatesFilter<"Image"> | Date | string
   isActive?: Prisma.BoolWithAggregatesFilter<"Image"> | boolean
   isHardcoreEligible?: Prisma.BoolWithAggregatesFilter<"Image"> | boolean
@@ -275,6 +347,12 @@ export type ImageCreateInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -289,6 +367,12 @@ export type ImageUncheckedCreateInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -301,6 +385,12 @@ export type ImageUpdateInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -315,6 +405,12 @@ export type ImageUncheckedUpdateInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -328,6 +424,12 @@ export type ImageCreateManyInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -338,6 +440,12 @@ export type ImageUpdateManyMutationInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -349,6 +457,12 @@ export type ImageUncheckedUpdateManyInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -370,6 +484,12 @@ export type ImageCountOrderByAggregateInput = {
   filename?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrder
   attribution?: Prisma.SortOrder
+  copyrightHolder?: Prisma.SortOrder
+  isCropped?: Prisma.SortOrder
+  isLogoVisible?: Prisma.SortOrder
+  isModelNameVisible?: Prisma.SortOrder
+  hasMultipleVehicles?: Prisma.SortOrder
+  isFaceVisible?: Prisma.SortOrder
   uploadedAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isHardcoreEligible?: Prisma.SortOrder
@@ -381,6 +501,12 @@ export type ImageMaxOrderByAggregateInput = {
   filename?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrder
   attribution?: Prisma.SortOrder
+  copyrightHolder?: Prisma.SortOrder
+  isCropped?: Prisma.SortOrder
+  isLogoVisible?: Prisma.SortOrder
+  isModelNameVisible?: Prisma.SortOrder
+  hasMultipleVehicles?: Prisma.SortOrder
+  isFaceVisible?: Prisma.SortOrder
   uploadedAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isHardcoreEligible?: Prisma.SortOrder
@@ -392,6 +518,12 @@ export type ImageMinOrderByAggregateInput = {
   filename?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrder
   attribution?: Prisma.SortOrder
+  copyrightHolder?: Prisma.SortOrder
+  isCropped?: Prisma.SortOrder
+  isLogoVisible?: Prisma.SortOrder
+  isModelNameVisible?: Prisma.SortOrder
+  hasMultipleVehicles?: Prisma.SortOrder
+  isFaceVisible?: Prisma.SortOrder
   uploadedAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isHardcoreEligible?: Prisma.SortOrder
@@ -444,12 +576,12 @@ export type ImageUncheckedUpdateManyWithoutVehicleNestedInput = {
   deleteMany?: Prisma.ImageScalarWhereInput | Prisma.ImageScalarWhereInput[]
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type DateTimeFieldUpdateOperationsInput = {
+  set?: Date | string
 }
 
 export type ImageCreateNestedOneWithoutStatsInput = {
@@ -485,6 +617,12 @@ export type ImageCreateWithoutVehicleInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -497,6 +635,12 @@ export type ImageUncheckedCreateWithoutVehicleInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -539,6 +683,12 @@ export type ImageScalarWhereInput = {
   filename?: Prisma.StringFilter<"Image"> | string
   sourceUrl?: Prisma.StringNullableFilter<"Image"> | string | null
   attribution?: Prisma.StringNullableFilter<"Image"> | string | null
+  copyrightHolder?: Prisma.StringNullableFilter<"Image"> | string | null
+  isCropped?: Prisma.BoolFilter<"Image"> | boolean
+  isLogoVisible?: Prisma.BoolFilter<"Image"> | boolean
+  isModelNameVisible?: Prisma.BoolFilter<"Image"> | boolean
+  hasMultipleVehicles?: Prisma.BoolFilter<"Image"> | boolean
+  isFaceVisible?: Prisma.BoolFilter<"Image"> | boolean
   uploadedAt?: Prisma.DateTimeFilter<"Image"> | Date | string
   isActive?: Prisma.BoolFilter<"Image"> | boolean
   isHardcoreEligible?: Prisma.BoolFilter<"Image"> | boolean
@@ -549,6 +699,12 @@ export type ImageCreateWithoutStatsInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -562,6 +718,12 @@ export type ImageUncheckedCreateWithoutStatsInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -589,6 +751,12 @@ export type ImageUpdateWithoutStatsInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -602,6 +770,12 @@ export type ImageUncheckedUpdateWithoutStatsInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -613,6 +787,12 @@ export type ImageCreateWithoutRoundsInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -626,6 +806,12 @@ export type ImageUncheckedCreateWithoutRoundsInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -653,6 +839,12 @@ export type ImageUpdateWithoutRoundsInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -666,6 +858,12 @@ export type ImageUncheckedUpdateWithoutRoundsInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -677,6 +875,12 @@ export type ImageCreateManyVehicleInput = {
   filename: string
   sourceUrl?: string | null
   attribution?: string | null
+  copyrightHolder?: string | null
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: Date | string
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -687,6 +891,12 @@ export type ImageUpdateWithoutVehicleInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -699,6 +909,12 @@ export type ImageUncheckedUpdateWithoutVehicleInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -711,6 +927,12 @@ export type ImageUncheckedUpdateManyWithoutVehicleInput = {
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attribution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCropped?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isLogoVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isModelNameVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hasMultipleVehicles?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isFaceVisible?: Prisma.BoolFieldUpdateOperationsInput | boolean
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHardcoreEligible?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -753,6 +975,12 @@ export type ImageSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   filename?: boolean
   sourceUrl?: boolean
   attribution?: boolean
+  copyrightHolder?: boolean
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: boolean
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -768,6 +996,12 @@ export type ImageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   filename?: boolean
   sourceUrl?: boolean
   attribution?: boolean
+  copyrightHolder?: boolean
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: boolean
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -780,6 +1014,12 @@ export type ImageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   filename?: boolean
   sourceUrl?: boolean
   attribution?: boolean
+  copyrightHolder?: boolean
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: boolean
   isActive?: boolean
   isHardcoreEligible?: boolean
@@ -792,12 +1032,18 @@ export type ImageSelectScalar = {
   filename?: boolean
   sourceUrl?: boolean
   attribution?: boolean
+  copyrightHolder?: boolean
+  isCropped?: boolean
+  isLogoVisible?: boolean
+  isModelNameVisible?: boolean
+  hasMultipleVehicles?: boolean
+  isFaceVisible?: boolean
   uploadedAt?: boolean
   isActive?: boolean
   isHardcoreEligible?: boolean
 }
 
-export type ImageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "vehicleId" | "filename" | "sourceUrl" | "attribution" | "uploadedAt" | "isActive" | "isHardcoreEligible", ExtArgs["result"]["image"]>
+export type ImageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "vehicleId" | "filename" | "sourceUrl" | "attribution" | "copyrightHolder" | "isCropped" | "isLogoVisible" | "isModelNameVisible" | "hasMultipleVehicles" | "isFaceVisible" | "uploadedAt" | "isActive" | "isHardcoreEligible", ExtArgs["result"]["image"]>
 export type ImageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   vehicle?: boolean | Prisma.VehicleDefaultArgs<ExtArgs>
   stats?: boolean | Prisma.Image$statsArgs<ExtArgs>
@@ -824,6 +1070,12 @@ export type $ImagePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     filename: string
     sourceUrl: string | null
     attribution: string | null
+    copyrightHolder: string | null
+    isCropped: boolean
+    isLogoVisible: boolean
+    isModelNameVisible: boolean
+    hasMultipleVehicles: boolean
+    isFaceVisible: boolean
     uploadedAt: Date
     isActive: boolean
     isHardcoreEligible: boolean
@@ -1258,6 +1510,12 @@ export interface ImageFieldRefs {
   readonly filename: Prisma.FieldRef<"Image", 'String'>
   readonly sourceUrl: Prisma.FieldRef<"Image", 'String'>
   readonly attribution: Prisma.FieldRef<"Image", 'String'>
+  readonly copyrightHolder: Prisma.FieldRef<"Image", 'String'>
+  readonly isCropped: Prisma.FieldRef<"Image", 'Boolean'>
+  readonly isLogoVisible: Prisma.FieldRef<"Image", 'Boolean'>
+  readonly isModelNameVisible: Prisma.FieldRef<"Image", 'Boolean'>
+  readonly hasMultipleVehicles: Prisma.FieldRef<"Image", 'Boolean'>
+  readonly isFaceVisible: Prisma.FieldRef<"Image", 'Boolean'>
   readonly uploadedAt: Prisma.FieldRef<"Image", 'DateTime'>
   readonly isActive: Prisma.FieldRef<"Image", 'Boolean'>
   readonly isHardcoreEligible: Prisma.FieldRef<"Image", 'Boolean'>

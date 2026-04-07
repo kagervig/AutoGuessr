@@ -105,13 +105,13 @@ function RoundResult({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-2xl"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
     >
       <motion.div
         initial={{ scale: 0.85, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="text-center max-w-sm w-full px-6"
+        className="text-center max-w-sm w-full px-6 overflow-y-auto max-h-screen py-6"
       >
         <div className={cn(
           "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl",
@@ -214,7 +214,6 @@ export default function GameScreen({ mode, username, filter }: Props) {
   // Zoom modes (hard + competitive)
   const [timerActive, setTimerActive] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
-  const [zoomedOut, setZoomedOut] = useState(false);
   const autoSubmitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
   const roundStartRef = useRef<number>(Date.now());
@@ -227,13 +226,14 @@ export default function GameScreen({ mode, username, filter }: Props) {
   const panelIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     const params = new URLSearchParams({ mode });
     if (username) params.set("username", username);
     if (filter) params.set("filter", filter);
 
     Promise.all([
-      fetch(`/api/game?${params.toString()}`).then((r) => r.json()),
-      fetch("/api/flags").then((r) => r.json()),
+      fetch(`/api/game?${params.toString()}`, { signal: controller.signal }).then((r) => r.json()),
+      fetch("/api/flags", { signal: controller.signal }).then((r) => r.json()),
     ])
       .then(([game, flags]) => {
         if (game.error) {
@@ -247,15 +247,24 @@ export default function GameScreen({ mode, username, filter }: Props) {
           setMediumYearGuessing(flags?.medium_year_guessing === true);
         }
       })
-      .catch(() => setError("Failed to load game. Please try again."))
+      .catch((err) => {
+        if (err.name !== "AbortError") setError("Failed to load game. Please try again.");
+      })
       .finally(() => setLoading(false));
+
+    return () => controller.abort();
   }, [mode, username, filter]);
 
   useEffect(() => {
     roundStartRef.current = Date.now();
-    if (gameData) currentRoundIdRef.current = gameData.rounds[currentIndex].roundId;
+    if (gameData) {
+      currentRoundIdRef.current = gameData.rounds[currentIndex].roundId;
+      const limit = gameData.timeLimitMs ?? TIME_LIMITS[mode];
+      if (limit) {
+        autoSubmitRef.current = setTimeout(() => handleTimeoutRef.current(), limit);
+      }
+    }
     setTimerActive(false);
-    setZoomedOut(false);
 
     if (mode === "hardcore") {
       setVisiblePanels(Array(9).fill(true));
@@ -282,7 +291,6 @@ export default function GameScreen({ mode, username, filter }: Props) {
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = requestAnimationFrame(() => {
           setTimerActive(true);
-          setZoomedOut(true);
         });
       });
     }
@@ -313,12 +321,11 @@ export default function GameScreen({ mode, username, filter }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundState]);
 
-  useEffect(() => {
-    if (!timerActive || mode !== "competitive" || !gameData) return;
-    const timeLimitMs = gameData.timeLimitMs ?? TIME_LIMITS.competitive;
-    autoSubmitRef.current = setTimeout(handleTimeout, timeLimitMs);
-    return () => { if (autoSubmitRef.current !== null) clearTimeout(autoSubmitRef.current); };
-  }, [timerActive, mode, gameData, handleTimeout]);
+  // Keep a ref to the latest handleTimeout so the round-reset effect can schedule
+  // it without taking a dependency on roundState (which would restart the timer
+  // on every state change mid-round).
+  const handleTimeoutRef = useRef(handleTimeout);
+  useEffect(() => { handleTimeoutRef.current = handleTimeout; }, [handleTimeout]);
 
   if (loading) {
     return (
@@ -626,7 +633,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
         <div className="space-y-4">
 
           {/* Car image */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             <motion.div
               key={currentIndex}
               initial={{ opacity: 0, scale: 0.96 }}
@@ -640,18 +647,11 @@ export default function GameScreen({ mode, username, filter }: Props) {
                 src={round.imageUrl}
                 alt="Identify this car"
                 loading="eager"
-                className="absolute inset-0 w-full h-full object-cover transition-[filter,transform]"
-                style={{
-                  ...(isZoomMode
-                    ? {
-                        transformOrigin: zoomOrigin,
-                        transform: zoomedOut ? "scale(1)" : "scale(8)",
-                        transition: zoomedOut
-                          ? `transform ${timeLimitMs}ms linear`
-                          : "none",
-                      }
-                    : {}),
-                }}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={isZoomMode && roundState === "answering"
+                  ? { transformOrigin: zoomOrigin, animation: `zoom-out ${timeLimitMs}ms linear forwards` }
+                  : undefined
+                }
                 draggable={false}
               />
 
@@ -685,18 +685,6 @@ export default function GameScreen({ mode, username, filter }: Props) {
                 {isHardcore ? "Blind" : `Round ${currentIndex + 1}`}
               </div>
 
-              {/* Result overlay */}
-              <AnimatePresence>
-                {roundState === "revealed" && reveal && (
-                  <RoundResult
-                    reveal={reveal}
-                    round={currentIndex + 1}
-                    totalRounds={gameData.rounds.length}
-                    totalScore={score}
-                    onNext={handleNext}
-                  />
-                )}
-              </AnimatePresence>
             </motion.div>
           </AnimatePresence>
 
@@ -763,6 +751,13 @@ export default function GameScreen({ mode, username, filter }: Props) {
                     onSubmit={handleHardSubmit}
                   />
                 )}
+
+                <button
+                  onClick={handleTimeout}
+                  className="mt-3 w-full py-2 rounded-xl border border-white/10 text-white/40 text-xs font-bold tracking-widest uppercase hover:border-white/20 hover:text-white/60 transition-all"
+                >
+                  Give Up
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -810,6 +805,18 @@ export default function GameScreen({ mode, username, filter }: Props) {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {roundState === "revealed" && reveal && (
+          <RoundResult
+            reveal={reveal}
+            round={currentIndex + 1}
+            totalRounds={gameData.rounds.length}
+            totalScore={score}
+            onNext={handleNext}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

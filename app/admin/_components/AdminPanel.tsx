@@ -39,6 +39,12 @@ interface StagingImage {
     categories: string[];
     isHardcoreEligible: boolean | null;
     notes: string | null;
+    copyrightHolder: string | null;
+    isCropped: boolean | null;
+    isLogoVisible: boolean | null;
+    isModelNameVisible: boolean | null;
+    hasMultipleVehicles: boolean | null;
+    isFaceVisible: boolean | null;
   };
   confirmed: {
     make: string | null;
@@ -98,6 +104,12 @@ interface EditForm {
   categories: string[];
   isHardcoreEligible: boolean;
   notes: string;
+  copyrightHolder: string;
+  isCropped: boolean;
+  isLogoVisible: boolean;
+  isModelNameVisible: boolean;
+  hasMultipleVehicles: boolean;
+  isFaceVisible: boolean;
 }
 
 function AgreementBar({
@@ -142,6 +154,12 @@ function emptyForm(): EditForm {
     categories: [],
     isHardcoreEligible: false,
     notes: "",
+    copyrightHolder: "",
+    isCropped: false,
+    isLogoVisible: false,
+    isModelNameVisible: false,
+    hasMultipleVehicles: false,
+    isFaceVisible: false,
   };
 }
 
@@ -159,6 +177,12 @@ function formFromImage(img: StagingImage): EditForm {
     categories: img.admin.categories ?? [],
     isHardcoreEligible: img.admin.isHardcoreEligible ?? false,
     notes: img.admin.notes ?? "",
+    copyrightHolder: img.admin.copyrightHolder ?? "",
+    isCropped: img.admin.isCropped ?? false,
+    isLogoVisible: img.admin.isLogoVisible ?? false,
+    isModelNameVisible: img.admin.isModelNameVisible ?? false,
+    hasMultipleVehicles: img.admin.hasMultipleVehicles ?? false,
+    isFaceVisible: img.admin.isFaceVisible ?? false,
   };
 }
 
@@ -167,7 +191,7 @@ export default function AdminPanel() {
   const [counts, setCounts] = useState<Partial<Record<StagingStatus, number>>>({});
   const [statusFilter, setStatusFilter] = useState<StagingStatus | "ALL">("ALL");
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editForm, setEditForm] = useState<EditForm>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -178,6 +202,7 @@ export default function AdminPanel() {
   const [trimOptions, setTrimOptions] = useState<string[]>([]);
   const [countryOptions, setCountryOptions] = useState<string[]>([]);
   const [regionOptions, setRegionOptions] = useState<string[]>([]);
+  const [copyrightHolderOptions, setCopyrightHolderOptions] = useState<string[]>([]);
   const [makeDefaults, setMakeDefaults] = useState<Record<string, { country: string; regionSlug: string }>>({});
 
   const fetchImages = useCallback(async () => {
@@ -196,26 +221,25 @@ export default function AdminPanel() {
 
   // Load static autocomplete options once on mount
   useEffect(() => {
+    const safeJson = (r: Response) => r.json().catch(() => null);
     fetch("/api/admin/autocomplete?field=make")
-      .then((r) => r.json())
-      .then(setMakeOptions);
+      .then(safeJson).then((d) => d && setMakeOptions(d));
     fetch("/api/admin/autocomplete?field=country")
-      .then((r) => r.json())
-      .then(setCountryOptions);
+      .then(safeJson).then((d) => d && setCountryOptions(d));
     fetch("/api/admin/autocomplete?field=make_defaults")
-      .then((r) => r.json())
-      .then(setMakeDefaults);
+      .then(safeJson).then((d) => d && setMakeDefaults(d));
+    fetch("/api/admin/autocomplete?field=copyright_holder")
+      .then(safeJson).then((d) => d && setCopyrightHolderOptions(d));
     fetch("/api/filters")
-      .then((r) => r.json())
-      .then((d) => setRegionOptions((d.regions ?? []).map((r: { slug: string }) => r.slug)));
+      .then(safeJson).then((d) => d && setRegionOptions((d.regions ?? []).map((r: { slug: string }) => r.slug)));
   }, []);
 
   // Reload model options when make changes
   useEffect(() => {
     const qs = editForm.make ? `&make=${encodeURIComponent(editForm.make)}` : "";
     fetch(`/api/admin/autocomplete?field=model${qs}`)
-      .then((r) => r.json())
-      .then(setModelOptions);
+      .then((r) => r.json().catch(() => null))
+      .then((d) => d && setModelOptions(d));
   }, [editForm.make]);
 
   // Auto-fill country and region when make is set and those fields are empty
@@ -245,13 +269,30 @@ export default function AdminPanel() {
     const make = editForm.make ? `&make=${encodeURIComponent(editForm.make)}` : "";
     const model = editForm.model ? `&model=${encodeURIComponent(editForm.model)}` : "";
     fetch(`/api/admin/autocomplete?field=trim${make}${model}`)
-      .then((r) => r.json())
-      .then(setTrimOptions);
+      .then((r) => r.json().catch(() => null))
+      .then((d) => d && setTrimOptions(d));
   }, [editForm.make, editForm.model]);
 
   function selectImage(img: StagingImage) {
-    setSelectedId(img.id);
+    setSelectedIds([img.id]);
     setEditForm(formFromImage(img));
+    setError(null);
+  }
+
+  function toggleImageSelection(id: string) {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) {
+        const next = prev.filter((i) => i !== id);
+        if (next.length === 1) {
+          const remaining = images.find((img) => img.id === next[0]);
+          if (remaining) setEditForm(formFromImage(remaining));
+        } else if (next.length === 0) {
+          setEditForm(emptyForm());
+        }
+        return next;
+      }
+      return [...prev, id];
+    });
     setError(null);
   }
 
@@ -295,6 +336,12 @@ export default function AdminPanel() {
     categories: editForm.categories,
     isHardcoreEligible: editForm.isHardcoreEligible,
     notes: editForm.notes || null,
+    copyrightHolder: editForm.copyrightHolder || null,
+    isCropped: editForm.isCropped,
+    isLogoVisible: editForm.isLogoVisible,
+    isModelNameVisible: editForm.isModelNameVisible,
+    hasMultipleVehicles: editForm.hasMultipleVehicles,
+    isFaceVisible: editForm.isFaceVisible,
   };
 
   async function saveEdit(id: string) {
@@ -309,9 +356,33 @@ export default function AdminPanel() {
     if (res.ok) {
       patchImage(await res.json());
     } else {
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
       setError(d.error ?? "Save failed");
     }
+  }
+
+  async function saveMultiple() {
+    setSaving(true);
+    setError(null);
+    let lastError: string | null = null;
+    try {
+      for (const id of selectedIds) {
+        const res = await fetch(`/api/admin/staging/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editPayload),
+        });
+        if (res.ok) {
+          patchImage(await res.json());
+        } else {
+          const d = await res.json().catch(() => ({}));
+          lastError = d.error ?? "Save failed";
+        }
+      }
+    } finally {
+      setSaving(false);
+    }
+    if (lastError) setError(lastError);
   }
 
   async function setStatus(id: string, status: StagingStatus) {
@@ -326,9 +397,9 @@ export default function AdminPanel() {
     setSaving(false);
     if (res.ok) {
       if (oldStatus) removeImage(id, oldStatus, status);
-      if (status === "REJECTED" || status === "PUBLISHED") setSelectedId(null);
+      if (status === "REJECTED" || status === "PUBLISHED") setSelectedIds([]);
     } else {
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
       setError(d.error ?? "Status update failed");
     }
   }
@@ -346,7 +417,7 @@ export default function AdminPanel() {
     setSaving(false);
 
     if (!saveRes.ok) {
-      const d = await saveRes.json();
+      const d = await saveRes.json().catch(() => ({}));
       setError(d.error ?? "Save failed");
       return;
     }
@@ -357,14 +428,15 @@ export default function AdminPanel() {
 
     if (res.ok) {
       if (oldStatus) removeImage(id, oldStatus, "PUBLISHED");
-      setSelectedId(null);
+      setSelectedIds([]);
     } else {
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
       setError(d.error ?? "Publish failed");
     }
   }
 
-  const selected = images.find((img) => img.id === selectedId) ?? null;
+  const isMultiSelect = selectedIds.length > 1;
+  const selected = selectedIds.length === 1 ? (images.find((img) => img.id === selectedIds[0]) ?? null) : null;
 
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]">
@@ -390,7 +462,7 @@ export default function AdminPanel() {
               key={s}
               onClick={() => {
                 setStatusFilter(s);
-                setSelectedId(null);
+                setSelectedIds([]);
               }}
               className={`px-3 py-2.5 text-sm border-b-2 transition-colors ${
                 statusFilter === s
@@ -416,22 +488,35 @@ export default function AdminPanel() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {images.map((img) => (
-                <button
+                <div
                   key={img.id}
-                  onClick={() => selectImage(img)}
-                  className={`group relative rounded-lg overflow-hidden border-2 text-left transition-all ${
-                    selectedId === img.id
+                  className={`group relative rounded-lg overflow-hidden border-2 text-left transition-all cursor-pointer ${
+                    selectedIds.includes(img.id)
                       ? "border-gray-900 shadow-md"
                       : "border-transparent hover:border-gray-300"
                   }`}
                 >
+                  {/* Checkbox for multi-select */}
+                  <div
+                    className="absolute top-1.5 left-1.5 z-10"
+                    onClick={(e) => { e.stopPropagation(); toggleImageSelection(img.id); }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(img.id)}
+                      onChange={() => {}}
+                      className="w-4 h-4 rounded cursor-pointer accent-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={selectedIds.includes(img.id) ? { opacity: 1 } : {}}
+                    />
+                  </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={img.imageUrl}
                     alt={img.filename}
+                    onClick={() => selectImage(img)}
                     className="w-full aspect-[4/3] object-cover bg-gray-100"
                   />
-                  <div className="p-1.5 bg-white">
+                  <div className="p-1.5 bg-white" onClick={() => selectImage(img)}>
                     <span
                       className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLOURS[img.status]}`}
                     >
@@ -449,25 +534,50 @@ export default function AdminPanel() {
                       </p>
                     )}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}
         </div>
 
         {/* Detail panel */}
-        {selected && (
+        {(selected || isMultiSelect) && (
           <div className="w-96 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0">
             <div className="p-4 space-y-4">
-              {/* Image preview */}
+              {/* Multi-select header */}
+              {isMultiSelect && (
+                <div className="bg-blue-50 rounded-lg px-3 py-2.5 space-y-2">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">{selectedIds.length} images selected</p>
+                    <p className="text-xs text-blue-600 mt-0.5">Changes will be applied to all selected images.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedIds.map((id) => {
+                      const img = images.find((i) => i.id === id);
+                      if (!img) return null;
+                      return (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          key={id}
+                          src={img.imageUrl}
+                          alt={img.filename}
+                          className="w-16 h-12 object-cover rounded border border-blue-200"
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Image preview — single select only */}
+              {selected && (
+                <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selected.imageUrl}
                 alt={selected.filename}
                 className="w-full aspect-[4/3] object-cover rounded-lg bg-gray-100"
               />
-
-              {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
 
               {/* AI suggestions */}
               {(selected.ai.make || selected.ai.model) && (
@@ -528,6 +638,10 @@ export default function AdminPanel() {
                   )}
                 </div>
               )}
+                </>
+              )}
+
+              {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
 
               {/* Edit form */}
               <div className="space-y-2">
@@ -688,16 +802,86 @@ export default function AdminPanel() {
                   />
                 </div>
 
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                    Image metadata
+                  </p>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-0.5">Copyright holder</label>
+                      <Combobox
+                        variant="admin"
+                        value={editForm.copyrightHolder}
+                        onChange={(v) => setEditForm((f) => ({ ...f, copyrightHolder: v }))}
+                        options={copyrightHolderOptions}
+                        placeholder="e.g. Wikimedia Commons"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editForm.isCropped}
+                        onChange={(e) => setEditForm((f) => ({ ...f, isCropped: e.target.checked }))}
+                        className="rounded"
+                      />
+                      Cropped (partial view)
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editForm.isLogoVisible}
+                        onChange={(e) => setEditForm((f) => ({ ...f, isLogoVisible: e.target.checked }))}
+                        className="rounded"
+                      />
+                      Logo visible
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editForm.isModelNameVisible}
+                        onChange={(e) =>
+                          setEditForm((f) => ({ ...f, isModelNameVisible: e.target.checked }))
+                        }
+                        className="rounded"
+                      />
+                      Model name visible
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editForm.hasMultipleVehicles}
+                        onChange={(e) =>
+                          setEditForm((f) => ({ ...f, hasMultipleVehicles: e.target.checked }))
+                        }
+                        className="rounded"
+                      />
+                      Multiple vehicles in image
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editForm.isFaceVisible}
+                        onChange={(e) =>
+                          setEditForm((f) => ({ ...f, isFaceVisible: e.target.checked }))
+                        }
+                        className="rounded"
+                      />
+                      Face visible
+                    </label>
+                  </div>
+                </div>
+
                 <button
-                  onClick={() => saveEdit(selected.id)}
+                  onClick={() => isMultiSelect ? saveMultiple() : saveEdit(selected!.id)}
                   disabled={saving || publishing}
                   className="w-full text-sm bg-gray-900 text-white rounded px-3 py-2 hover:bg-gray-700 disabled:opacity-50"
                 >
-                  {saving ? "Saving…" : "Save changes"}
+                  {saving ? "Saving…" : isMultiSelect ? `Apply to ${selectedIds.length} images` : "Save changes"}
                 </button>
               </div>
 
-              {/* Actions */}
+              {/* Actions — single select only */}
+              {selected && (
               <div className="space-y-2 pt-2 border-t border-gray-100">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Actions</p>
                 {selected.status !== "COMMUNITY_REVIEW" && (
@@ -739,6 +923,7 @@ export default function AdminPanel() {
                   </button>
                 )}
               </div>
+              )}
             </div>
           </div>
         )}

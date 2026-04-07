@@ -15,7 +15,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const {
     make, model, year, trim, bodyStyle,
     rarity, era, regionSlug, countryOfOrigin, categories, isHardcoreEligible,
-    notes, status,
+    notes, copyrightHolder, isCropped, isLogoVisible, isModelNameVisible,
+    hasMultipleVehicles, isFaceVisible, status,
   } = body;
 
   const VALID_STATUSES: StagingStatus[] = [
@@ -45,6 +46,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
       ...(categories !== undefined && { adminCategories: Array.isArray(categories) ? categories : [] }),
       ...(isHardcoreEligible !== undefined && { adminIsHardcoreEligible: Boolean(isHardcoreEligible) }),
       ...(notes !== undefined && { adminNotes: notes || null }),
+      ...(copyrightHolder !== undefined && { adminCopyrightHolder: copyrightHolder || null }),
+      ...(isCropped !== undefined && { adminIsCropped: Boolean(isCropped) }),
+      ...(isLogoVisible !== undefined && { adminIsLogoVisible: Boolean(isLogoVisible) }),
+      ...(isModelNameVisible !== undefined && { adminIsModelNameVisible: Boolean(isModelNameVisible) }),
+      ...(hasMultipleVehicles !== undefined && { adminHasMultipleVehicles: Boolean(hasMultipleVehicles) }),
+      ...(isFaceVisible !== undefined && { adminIsFaceVisible: Boolean(isFaceVisible) }),
       ...(status !== undefined && { status }),
       reviewedAt: new Date(),
     },
@@ -70,6 +77,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
       categories: updated.adminCategories,
       isHardcoreEligible: updated.adminIsHardcoreEligible,
       notes: updated.adminNotes,
+      copyrightHolder: updated.adminCopyrightHolder,
+      isCropped: updated.adminIsCropped,
+      isLogoVisible: updated.adminIsLogoVisible,
+      isModelNameVisible: updated.adminIsModelNameVisible,
+      hasMultipleVehicles: updated.adminHasMultipleVehicles,
+      isFaceVisible: updated.adminIsFaceVisible,
     },
     confirmed: {
       make: updated.confirmedMake,
