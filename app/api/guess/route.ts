@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { fuzzyMatch, scoreRound, TIME_LIMITS } from "@/app/lib/game";
+import { fuzzyMatch, proLevelBonus, scoreRound, TIME_LIMITS } from "@/app/lib/game";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -108,6 +108,19 @@ export async function POST(request: NextRequest) {
 
   const isCorrect = makeMatch && modelMatch;
 
+  // Fetch current stats before recording to compute the pro bonus on historical data only
+  const existingStats = await prisma.imageStats.findUnique({
+    where: { imageId: round.image.id },
+    select: { correctGuesses: true, incorrectGuesses: true },
+  });
+
+  const proBonus =
+    isCorrect && existingStats
+      ? proLevelBonus(existingStats.correctGuesses, existingStats.incorrectGuesses)
+      : 0;
+
+  const totalPointsEarned = scoring.pointsEarned + proBonus;
+
   const [guess] = await prisma.$transaction([
     prisma.guess.create({
       data: {
@@ -123,8 +136,9 @@ export async function POST(request: NextRequest) {
         modelPoints: scoring.modelPoints,
         yearBonus: scoring.yearBonus,
         timeBonus: scoring.timeBonus,
+        proBonus,
         modeMultiplier: scoring.modeMultiplier,
-        pointsEarned: scoring.pointsEarned,
+        pointsEarned: totalPointsEarned,
       },
     }),
     prisma.imageStats.upsert({
@@ -148,5 +162,7 @@ export async function POST(request: NextRequest) {
     yearDelta,
     vehicle: { make: vehicle.make, model: vehicle.model, year: vehicle.year },
     ...scoring,
+    proBonus,
+    pointsEarned: totalPointsEarned,
   });
 }

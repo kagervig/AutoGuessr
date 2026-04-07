@@ -127,6 +127,19 @@ export function scoreRound({
   return { makePoints, modelPoints, yearBonus, timeBonus, modeMultiplier, pointsEarned };
 }
 
+// Returns a flat bonus awarded when correctly identifying a statistically hard image.
+// Thresholds are based on the image's historical incorrect-guess ratio.
+export function proLevelBonus(correctGuesses: number, incorrectGuesses: number): number {
+  const total = correctGuesses + incorrectGuesses;
+  if (total === 0) return 0;
+  const incorrectRatio = incorrectGuesses / total;
+  if (incorrectRatio > 0.95) return 1000;
+  if (incorrectRatio > 0.90) return 500;
+  if (incorrectRatio > 0.70) return 300;
+  if (incorrectRatio > 0.50) return 100;
+  return 0;
+}
+
 export const TIME_LIMITS: Record<string, number> = {
   easy: 30_000,
   medium: 45_000,

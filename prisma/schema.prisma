@@ -109,17 +109,23 @@ model VehicleAlias {
 }
 
 model Image {
-  id                 String      @id @default(cuid())
-  vehicleId          String
-  filename           String      @unique
-  sourceUrl          String?
-  attribution        String?
-  uploadedAt         DateTime    @default(now())
-  isActive           Boolean     @default(true)
-  isHardcoreEligible Boolean     @default(false)
-  vehicle            Vehicle     @relation(fields: [vehicleId], references: [id])
-  stats              ImageStats?
-  rounds             Round[]
+  id                   String      @id @default(cuid())
+  vehicleId            String
+  filename             String      @unique
+  sourceUrl            String?
+  attribution          String?
+  copyrightHolder      String?
+  isCropped            Boolean     @default(false)
+  isLogoVisible        Boolean     @default(false)
+  isModelNameVisible   Boolean     @default(false)
+  hasMultipleVehicles  Boolean     @default(false)
+  isFaceVisible        Boolean     @default(false)
+  uploadedAt           DateTime    @default(now())
+  isActive             Boolean     @default(true)
+  isHardcoreEligible   Boolean     @default(false)
+  vehicle              Vehicle     @relation(fields: [vehicleId], references: [id])
+  stats                ImageStats?
+  rounds               Round[]
 }
 
 model ImageStats {
@@ -207,6 +213,7 @@ model Guess {
   modelPoints      Int      @default(0)
   yearBonus        Int?
   timeBonus        Int      @default(0)
+  proBonus         Int      @default(0)
   modeMultiplier   Float
   pointsEarned     Int
   round            Round    @relation(fields: [roundId], references: [id])
@@ -254,6 +261,12 @@ model StagingImage {
   adminCategories          String[]
   adminIsHardcoreEligible  Boolean?
   adminNotes               String?
+  adminCopyrightHolder     String?
+  adminIsCropped           Boolean?
+  adminIsLogoVisible       Boolean?
+  adminIsModelNameVisible  Boolean?
+  adminHasMultipleVehicles Boolean?
+  adminIsFaceVisible       Boolean?
   reviewedAt               DateTime?
   // Community-confirmed values (set when a field reaches 5 unique agreements)
   confirmedMake      String?

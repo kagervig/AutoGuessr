@@ -50,6 +50,16 @@ export async function GET(request: NextRequest) {
       return Response.json(rows.map((r) => r.countryOfOrigin));
     }
 
+    case "copyright_holder": {
+      const rows = await prisma.image.findMany({
+        where: { copyrightHolder: { not: null } },
+        select: { copyrightHolder: true },
+        distinct: ["copyrightHolder"],
+        orderBy: { copyrightHolder: "asc" },
+      });
+      return Response.json(rows.flatMap((r) => (r.copyrightHolder ? [r.copyrightHolder] : [])));
+    }
+
     case "make_defaults": {
       const rows = await prisma.vehicle.findMany({
         select: { make: true, countryOfOrigin: true, region: { select: { slug: true } } },
@@ -64,6 +74,6 @@ export async function GET(request: NextRequest) {
     }
 
     default:
-      return Response.json({ error: "field must be one of: make, model, trim, country, make_defaults" }, { status: 400 });
+      return Response.json({ error: "field must be one of: make, model, trim, country, make_defaults, copyright_holder" }, { status: 400 });
   }
 }

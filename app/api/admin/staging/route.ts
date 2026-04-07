@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     prisma.stagingImage.findMany({
       where: statusParam ? { status: statusParam } : undefined,
       include: { suggestions: true },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
     }),
     prisma.stagingImage.groupBy({
       by: ["status"],
@@ -60,6 +60,12 @@ export async function GET(request: NextRequest) {
         categories: img.adminCategories,
         isHardcoreEligible: img.adminIsHardcoreEligible,
         notes: img.adminNotes,
+        copyrightHolder: img.adminCopyrightHolder,
+        isCropped: img.adminIsCropped,
+        isLogoVisible: img.adminIsLogoVisible,
+        isModelNameVisible: img.adminIsModelNameVisible,
+        hasMultipleVehicles: img.adminHasMultipleVehicles,
+        isFaceVisible: img.adminIsFaceVisible,
       },
       confirmed: {
         make: img.confirmedMake,

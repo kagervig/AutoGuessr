@@ -35,6 +35,7 @@ export type GuessAvgAggregateOutputType = {
   modelPoints: number | null
   yearBonus: number | null
   timeBonus: number | null
+  proBonus: number | null
   modeMultiplier: number | null
   pointsEarned: number | null
 }
@@ -48,6 +49,7 @@ export type GuessSumAggregateOutputType = {
   modelPoints: number | null
   yearBonus: number | null
   timeBonus: number | null
+  proBonus: number | null
   modeMultiplier: number | null
   pointsEarned: number | null
 }
@@ -66,6 +68,7 @@ export type GuessMinAggregateOutputType = {
   modelPoints: number | null
   yearBonus: number | null
   timeBonus: number | null
+  proBonus: number | null
   modeMultiplier: number | null
   pointsEarned: number | null
 }
@@ -84,6 +87,7 @@ export type GuessMaxAggregateOutputType = {
   modelPoints: number | null
   yearBonus: number | null
   timeBonus: number | null
+  proBonus: number | null
   modeMultiplier: number | null
   pointsEarned: number | null
 }
@@ -102,6 +106,7 @@ export type GuessCountAggregateOutputType = {
   modelPoints: number
   yearBonus: number
   timeBonus: number
+  proBonus: number
   modeMultiplier: number
   pointsEarned: number
   _all: number
@@ -117,6 +122,7 @@ export type GuessAvgAggregateInputType = {
   modelPoints?: true
   yearBonus?: true
   timeBonus?: true
+  proBonus?: true
   modeMultiplier?: true
   pointsEarned?: true
 }
@@ -130,6 +136,7 @@ export type GuessSumAggregateInputType = {
   modelPoints?: true
   yearBonus?: true
   timeBonus?: true
+  proBonus?: true
   modeMultiplier?: true
   pointsEarned?: true
 }
@@ -148,6 +155,7 @@ export type GuessMinAggregateInputType = {
   modelPoints?: true
   yearBonus?: true
   timeBonus?: true
+  proBonus?: true
   modeMultiplier?: true
   pointsEarned?: true
 }
@@ -166,6 +174,7 @@ export type GuessMaxAggregateInputType = {
   modelPoints?: true
   yearBonus?: true
   timeBonus?: true
+  proBonus?: true
   modeMultiplier?: true
   pointsEarned?: true
 }
@@ -184,6 +193,7 @@ export type GuessCountAggregateInputType = {
   modelPoints?: true
   yearBonus?: true
   timeBonus?: true
+  proBonus?: true
   modeMultiplier?: true
   pointsEarned?: true
   _all?: true
@@ -289,6 +299,7 @@ export type GuessGroupByOutputType = {
   modelPoints: number
   yearBonus: number | null
   timeBonus: number
+  proBonus: number
   modeMultiplier: number
   pointsEarned: number
   _count: GuessCountAggregateOutputType | null
@@ -330,6 +341,7 @@ export type GuessWhereInput = {
   modelPoints?: Prisma.IntFilter<"Guess"> | number
   yearBonus?: Prisma.IntNullableFilter<"Guess"> | number | null
   timeBonus?: Prisma.IntFilter<"Guess"> | number
+  proBonus?: Prisma.IntFilter<"Guess"> | number
   modeMultiplier?: Prisma.FloatFilter<"Guess"> | number
   pointsEarned?: Prisma.IntFilter<"Guess"> | number
   round?: Prisma.XOR<Prisma.RoundScalarRelationFilter, Prisma.RoundWhereInput>
@@ -350,6 +362,7 @@ export type GuessOrderByWithRelationInput = {
   modelPoints?: Prisma.SortOrder
   yearBonus?: Prisma.SortOrderInput | Prisma.SortOrder
   timeBonus?: Prisma.SortOrder
+  proBonus?: Prisma.SortOrder
   modeMultiplier?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
   round?: Prisma.RoundOrderByWithRelationInput
@@ -373,6 +386,7 @@ export type GuessWhereUniqueInput = Prisma.AtLeast<{
   modelPoints?: Prisma.IntFilter<"Guess"> | number
   yearBonus?: Prisma.IntNullableFilter<"Guess"> | number | null
   timeBonus?: Prisma.IntFilter<"Guess"> | number
+  proBonus?: Prisma.IntFilter<"Guess"> | number
   modeMultiplier?: Prisma.FloatFilter<"Guess"> | number
   pointsEarned?: Prisma.IntFilter<"Guess"> | number
   round?: Prisma.XOR<Prisma.RoundScalarRelationFilter, Prisma.RoundWhereInput>
@@ -393,6 +407,7 @@ export type GuessOrderByWithAggregationInput = {
   modelPoints?: Prisma.SortOrder
   yearBonus?: Prisma.SortOrderInput | Prisma.SortOrder
   timeBonus?: Prisma.SortOrder
+  proBonus?: Prisma.SortOrder
   modeMultiplier?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
   _count?: Prisma.GuessCountOrderByAggregateInput
@@ -419,6 +434,7 @@ export type GuessScalarWhereWithAggregatesInput = {
   modelPoints?: Prisma.IntWithAggregatesFilter<"Guess"> | number
   yearBonus?: Prisma.IntNullableWithAggregatesFilter<"Guess"> | number | null
   timeBonus?: Prisma.IntWithAggregatesFilter<"Guess"> | number
+  proBonus?: Prisma.IntWithAggregatesFilter<"Guess"> | number
   modeMultiplier?: Prisma.FloatWithAggregatesFilter<"Guess"> | number
   pointsEarned?: Prisma.IntWithAggregatesFilter<"Guess"> | number
 }
@@ -435,6 +451,7 @@ export type GuessCreateInput = {
   modelPoints?: number
   yearBonus?: number | null
   timeBonus?: number
+  proBonus?: number
   modeMultiplier: number
   pointsEarned: number
   round: Prisma.RoundCreateNestedOneWithoutGuessInput
@@ -455,6 +472,7 @@ export type GuessUncheckedCreateInput = {
   modelPoints?: number
   yearBonus?: number | null
   timeBonus?: number
+  proBonus?: number
   modeMultiplier: number
   pointsEarned: number
 }
@@ -471,6 +489,7 @@ export type GuessUpdateInput = {
   modelPoints?: Prisma.IntFieldUpdateOperationsInput | number
   yearBonus?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timeBonus?: Prisma.IntFieldUpdateOperationsInput | number
+  proBonus?: Prisma.IntFieldUpdateOperationsInput | number
   modeMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   round?: Prisma.RoundUpdateOneRequiredWithoutGuessNestedInput
@@ -491,6 +510,7 @@ export type GuessUncheckedUpdateInput = {
   modelPoints?: Prisma.IntFieldUpdateOperationsInput | number
   yearBonus?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timeBonus?: Prisma.IntFieldUpdateOperationsInput | number
+  proBonus?: Prisma.IntFieldUpdateOperationsInput | number
   modeMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -509,6 +529,7 @@ export type GuessCreateManyInput = {
   modelPoints?: number
   yearBonus?: number | null
   timeBonus?: number
+  proBonus?: number
   modeMultiplier: number
   pointsEarned: number
 }
@@ -525,6 +546,7 @@ export type GuessUpdateManyMutationInput = {
   modelPoints?: Prisma.IntFieldUpdateOperationsInput | number
   yearBonus?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timeBonus?: Prisma.IntFieldUpdateOperationsInput | number
+  proBonus?: Prisma.IntFieldUpdateOperationsInput | number
   modeMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -543,6 +565,7 @@ export type GuessUncheckedUpdateManyInput = {
   modelPoints?: Prisma.IntFieldUpdateOperationsInput | number
   yearBonus?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timeBonus?: Prisma.IntFieldUpdateOperationsInput | number
+  proBonus?: Prisma.IntFieldUpdateOperationsInput | number
   modeMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -576,6 +599,7 @@ export type GuessCountOrderByAggregateInput = {
   modelPoints?: Prisma.SortOrder
   yearBonus?: Prisma.SortOrder
   timeBonus?: Prisma.SortOrder
+  proBonus?: Prisma.SortOrder
   modeMultiplier?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
 }
@@ -589,6 +613,7 @@ export type GuessAvgOrderByAggregateInput = {
   modelPoints?: Prisma.SortOrder
   yearBonus?: Prisma.SortOrder
   timeBonus?: Prisma.SortOrder
+  proBonus?: Prisma.SortOrder
   modeMultiplier?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
 }
@@ -607,6 +632,7 @@ export type GuessMaxOrderByAggregateInput = {
   modelPoints?: Prisma.SortOrder
   yearBonus?: Prisma.SortOrder
   timeBonus?: Prisma.SortOrder
+  proBonus?: Prisma.SortOrder
   modeMultiplier?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
 }
@@ -625,6 +651,7 @@ export type GuessMinOrderByAggregateInput = {
   modelPoints?: Prisma.SortOrder
   yearBonus?: Prisma.SortOrder
   timeBonus?: Prisma.SortOrder
+  proBonus?: Prisma.SortOrder
   modeMultiplier?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
 }
@@ -638,6 +665,7 @@ export type GuessSumOrderByAggregateInput = {
   modelPoints?: Prisma.SortOrder
   yearBonus?: Prisma.SortOrder
   timeBonus?: Prisma.SortOrder
+  proBonus?: Prisma.SortOrder
   modeMultiplier?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
 }
@@ -736,6 +764,7 @@ export type GuessCreateWithoutGuessedVehicleInput = {
   modelPoints?: number
   yearBonus?: number | null
   timeBonus?: number
+  proBonus?: number
   modeMultiplier: number
   pointsEarned: number
   round: Prisma.RoundCreateNestedOneWithoutGuessInput
@@ -754,6 +783,7 @@ export type GuessUncheckedCreateWithoutGuessedVehicleInput = {
   modelPoints?: number
   yearBonus?: number | null
   timeBonus?: number
+  proBonus?: number
   modeMultiplier: number
   pointsEarned: number
 }
@@ -801,6 +831,7 @@ export type GuessScalarWhereInput = {
   modelPoints?: Prisma.IntFilter<"Guess"> | number
   yearBonus?: Prisma.IntNullableFilter<"Guess"> | number | null
   timeBonus?: Prisma.IntFilter<"Guess"> | number
+  proBonus?: Prisma.IntFilter<"Guess"> | number
   modeMultiplier?: Prisma.FloatFilter<"Guess"> | number
   pointsEarned?: Prisma.IntFilter<"Guess"> | number
 }
@@ -817,6 +848,7 @@ export type GuessCreateWithoutRoundInput = {
   modelPoints?: number
   yearBonus?: number | null
   timeBonus?: number
+  proBonus?: number
   modeMultiplier: number
   pointsEarned: number
   guessedVehicle?: Prisma.VehicleCreateNestedOneWithoutGuessesInput
@@ -835,6 +867,7 @@ export type GuessUncheckedCreateWithoutRoundInput = {
   modelPoints?: number
   yearBonus?: number | null
   timeBonus?: number
+  proBonus?: number
   modeMultiplier: number
   pointsEarned: number
 }
@@ -867,6 +900,7 @@ export type GuessUpdateWithoutRoundInput = {
   modelPoints?: Prisma.IntFieldUpdateOperationsInput | number
   yearBonus?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timeBonus?: Prisma.IntFieldUpdateOperationsInput | number
+  proBonus?: Prisma.IntFieldUpdateOperationsInput | number
   modeMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   guessedVehicle?: Prisma.VehicleUpdateOneWithoutGuessesNestedInput
@@ -885,6 +919,7 @@ export type GuessUncheckedUpdateWithoutRoundInput = {
   modelPoints?: Prisma.IntFieldUpdateOperationsInput | number
   yearBonus?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timeBonus?: Prisma.IntFieldUpdateOperationsInput | number
+  proBonus?: Prisma.IntFieldUpdateOperationsInput | number
   modeMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -902,6 +937,7 @@ export type GuessCreateManyGuessedVehicleInput = {
   modelPoints?: number
   yearBonus?: number | null
   timeBonus?: number
+  proBonus?: number
   modeMultiplier: number
   pointsEarned: number
 }
@@ -918,6 +954,7 @@ export type GuessUpdateWithoutGuessedVehicleInput = {
   modelPoints?: Prisma.IntFieldUpdateOperationsInput | number
   yearBonus?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timeBonus?: Prisma.IntFieldUpdateOperationsInput | number
+  proBonus?: Prisma.IntFieldUpdateOperationsInput | number
   modeMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
   round?: Prisma.RoundUpdateOneRequiredWithoutGuessNestedInput
@@ -936,6 +973,7 @@ export type GuessUncheckedUpdateWithoutGuessedVehicleInput = {
   modelPoints?: Prisma.IntFieldUpdateOperationsInput | number
   yearBonus?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timeBonus?: Prisma.IntFieldUpdateOperationsInput | number
+  proBonus?: Prisma.IntFieldUpdateOperationsInput | number
   modeMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -953,6 +991,7 @@ export type GuessUncheckedUpdateManyWithoutGuessedVehicleInput = {
   modelPoints?: Prisma.IntFieldUpdateOperationsInput | number
   yearBonus?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timeBonus?: Prisma.IntFieldUpdateOperationsInput | number
+  proBonus?: Prisma.IntFieldUpdateOperationsInput | number
   modeMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
 }
@@ -973,6 +1012,7 @@ export type GuessSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   modelPoints?: boolean
   yearBonus?: boolean
   timeBonus?: boolean
+  proBonus?: boolean
   modeMultiplier?: boolean
   pointsEarned?: boolean
   round?: boolean | Prisma.RoundDefaultArgs<ExtArgs>
@@ -993,6 +1033,7 @@ export type GuessSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   modelPoints?: boolean
   yearBonus?: boolean
   timeBonus?: boolean
+  proBonus?: boolean
   modeMultiplier?: boolean
   pointsEarned?: boolean
   round?: boolean | Prisma.RoundDefaultArgs<ExtArgs>
@@ -1013,6 +1054,7 @@ export type GuessSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   modelPoints?: boolean
   yearBonus?: boolean
   timeBonus?: boolean
+  proBonus?: boolean
   modeMultiplier?: boolean
   pointsEarned?: boolean
   round?: boolean | Prisma.RoundDefaultArgs<ExtArgs>
@@ -1033,11 +1075,12 @@ export type GuessSelectScalar = {
   modelPoints?: boolean
   yearBonus?: boolean
   timeBonus?: boolean
+  proBonus?: boolean
   modeMultiplier?: boolean
   pointsEarned?: boolean
 }
 
-export type GuessOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "roundId" | "rawInput" | "guessedVehicleId" | "isCorrect" | "partialCredit" | "yearDelta" | "timeTakenMs" | "zoomLevelAtGuess" | "makePoints" | "modelPoints" | "yearBonus" | "timeBonus" | "modeMultiplier" | "pointsEarned", ExtArgs["result"]["guess"]>
+export type GuessOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "roundId" | "rawInput" | "guessedVehicleId" | "isCorrect" | "partialCredit" | "yearDelta" | "timeTakenMs" | "zoomLevelAtGuess" | "makePoints" | "modelPoints" | "yearBonus" | "timeBonus" | "proBonus" | "modeMultiplier" | "pointsEarned", ExtArgs["result"]["guess"]>
 export type GuessInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   round?: boolean | Prisma.RoundDefaultArgs<ExtArgs>
   guessedVehicle?: boolean | Prisma.Guess$guessedVehicleArgs<ExtArgs>
@@ -1071,6 +1114,7 @@ export type $GuessPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     modelPoints: number
     yearBonus: number | null
     timeBonus: number
+    proBonus: number
     modeMultiplier: number
     pointsEarned: number
   }, ExtArgs["result"]["guess"]>
@@ -1511,6 +1555,7 @@ export interface GuessFieldRefs {
   readonly modelPoints: Prisma.FieldRef<"Guess", 'Int'>
   readonly yearBonus: Prisma.FieldRef<"Guess", 'Int'>
   readonly timeBonus: Prisma.FieldRef<"Guess", 'Int'>
+  readonly proBonus: Prisma.FieldRef<"Guess", 'Int'>
   readonly modeMultiplier: Prisma.FieldRef<"Guess", 'Float'>
   readonly pointsEarned: Prisma.FieldRef<"Guess", 'Int'>
 }

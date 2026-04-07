@@ -63,6 +63,12 @@ export type StagingImageMinAggregateOutputType = {
   adminCountryOfOrigin: string | null
   adminIsHardcoreEligible: boolean | null
   adminNotes: string | null
+  adminCopyrightHolder: string | null
+  adminIsCropped: boolean | null
+  adminIsLogoVisible: boolean | null
+  adminIsModelNameVisible: boolean | null
+  adminHasMultipleVehicles: boolean | null
+  adminIsFaceVisible: boolean | null
   reviewedAt: Date | null
   confirmedMake: string | null
   confirmedModel: string | null
@@ -96,6 +102,12 @@ export type StagingImageMaxAggregateOutputType = {
   adminCountryOfOrigin: string | null
   adminIsHardcoreEligible: boolean | null
   adminNotes: string | null
+  adminCopyrightHolder: string | null
+  adminIsCropped: boolean | null
+  adminIsLogoVisible: boolean | null
+  adminIsModelNameVisible: boolean | null
+  adminHasMultipleVehicles: boolean | null
+  adminIsFaceVisible: boolean | null
   reviewedAt: Date | null
   confirmedMake: string | null
   confirmedModel: string | null
@@ -130,6 +142,12 @@ export type StagingImageCountAggregateOutputType = {
   adminCategories: number
   adminIsHardcoreEligible: number
   adminNotes: number
+  adminCopyrightHolder: number
+  adminIsCropped: number
+  adminIsLogoVisible: number
+  adminIsModelNameVisible: number
+  adminHasMultipleVehicles: number
+  adminIsFaceVisible: number
   reviewedAt: number
   confirmedMake: number
   confirmedModel: number
@@ -179,6 +197,12 @@ export type StagingImageMinAggregateInputType = {
   adminCountryOfOrigin?: true
   adminIsHardcoreEligible?: true
   adminNotes?: true
+  adminCopyrightHolder?: true
+  adminIsCropped?: true
+  adminIsLogoVisible?: true
+  adminIsModelNameVisible?: true
+  adminHasMultipleVehicles?: true
+  adminIsFaceVisible?: true
   reviewedAt?: true
   confirmedMake?: true
   confirmedModel?: true
@@ -212,6 +236,12 @@ export type StagingImageMaxAggregateInputType = {
   adminCountryOfOrigin?: true
   adminIsHardcoreEligible?: true
   adminNotes?: true
+  adminCopyrightHolder?: true
+  adminIsCropped?: true
+  adminIsLogoVisible?: true
+  adminIsModelNameVisible?: true
+  adminHasMultipleVehicles?: true
+  adminIsFaceVisible?: true
   reviewedAt?: true
   confirmedMake?: true
   confirmedModel?: true
@@ -246,6 +276,12 @@ export type StagingImageCountAggregateInputType = {
   adminCategories?: true
   adminIsHardcoreEligible?: true
   adminNotes?: true
+  adminCopyrightHolder?: true
+  adminIsCropped?: true
+  adminIsLogoVisible?: true
+  adminIsModelNameVisible?: true
+  adminHasMultipleVehicles?: true
+  adminIsFaceVisible?: true
   reviewedAt?: true
   confirmedMake?: true
   confirmedModel?: true
@@ -367,6 +403,12 @@ export type StagingImageGroupByOutputType = {
   adminCategories: string[]
   adminIsHardcoreEligible: boolean | null
   adminNotes: string | null
+  adminCopyrightHolder: string | null
+  adminIsCropped: boolean | null
+  adminIsLogoVisible: boolean | null
+  adminIsModelNameVisible: boolean | null
+  adminHasMultipleVehicles: boolean | null
+  adminIsFaceVisible: boolean | null
   reviewedAt: Date | null
   confirmedMake: string | null
   confirmedModel: string | null
@@ -424,6 +466,12 @@ export type StagingImageWhereInput = {
   adminCategories?: Prisma.StringNullableListFilter<"StagingImage">
   adminIsHardcoreEligible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
   adminNotes?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminCopyrightHolder?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminIsCropped?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
+  adminIsLogoVisible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
+  adminIsModelNameVisible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
+  adminHasMultipleVehicles?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
+  adminIsFaceVisible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
   reviewedAt?: Prisma.DateTimeNullableFilter<"StagingImage"> | Date | string | null
   confirmedMake?: Prisma.StringNullableFilter<"StagingImage"> | string | null
   confirmedModel?: Prisma.StringNullableFilter<"StagingImage"> | string | null
@@ -459,6 +507,12 @@ export type StagingImageOrderByWithRelationInput = {
   adminCategories?: Prisma.SortOrder
   adminIsHardcoreEligible?: Prisma.SortOrderInput | Prisma.SortOrder
   adminNotes?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminCopyrightHolder?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminIsCropped?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminIsLogoVisible?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminIsModelNameVisible?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminHasMultipleVehicles?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminIsFaceVisible?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedMake?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedModel?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -497,6 +551,12 @@ export type StagingImageWhereUniqueInput = Prisma.AtLeast<{
   adminCategories?: Prisma.StringNullableListFilter<"StagingImage">
   adminIsHardcoreEligible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
   adminNotes?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminCopyrightHolder?: Prisma.StringNullableFilter<"StagingImage"> | string | null
+  adminIsCropped?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
+  adminIsLogoVisible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
+  adminIsModelNameVisible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
+  adminHasMultipleVehicles?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
+  adminIsFaceVisible?: Prisma.BoolNullableFilter<"StagingImage"> | boolean | null
   reviewedAt?: Prisma.DateTimeNullableFilter<"StagingImage"> | Date | string | null
   confirmedMake?: Prisma.StringNullableFilter<"StagingImage"> | string | null
   confirmedModel?: Prisma.StringNullableFilter<"StagingImage"> | string | null
@@ -532,6 +592,12 @@ export type StagingImageOrderByWithAggregationInput = {
   adminCategories?: Prisma.SortOrder
   adminIsHardcoreEligible?: Prisma.SortOrderInput | Prisma.SortOrder
   adminNotes?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminCopyrightHolder?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminIsCropped?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminIsLogoVisible?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminIsModelNameVisible?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminHasMultipleVehicles?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminIsFaceVisible?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedMake?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedModel?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -574,6 +640,12 @@ export type StagingImageScalarWhereWithAggregatesInput = {
   adminCategories?: Prisma.StringNullableListFilter<"StagingImage">
   adminIsHardcoreEligible?: Prisma.BoolNullableWithAggregatesFilter<"StagingImage"> | boolean | null
   adminNotes?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
+  adminCopyrightHolder?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
+  adminIsCropped?: Prisma.BoolNullableWithAggregatesFilter<"StagingImage"> | boolean | null
+  adminIsLogoVisible?: Prisma.BoolNullableWithAggregatesFilter<"StagingImage"> | boolean | null
+  adminIsModelNameVisible?: Prisma.BoolNullableWithAggregatesFilter<"StagingImage"> | boolean | null
+  adminHasMultipleVehicles?: Prisma.BoolNullableWithAggregatesFilter<"StagingImage"> | boolean | null
+  adminIsFaceVisible?: Prisma.BoolNullableWithAggregatesFilter<"StagingImage"> | boolean | null
   reviewedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"StagingImage"> | Date | string | null
   confirmedMake?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
   confirmedModel?: Prisma.StringNullableWithAggregatesFilter<"StagingImage"> | string | null
@@ -608,6 +680,12 @@ export type StagingImageCreateInput = {
   adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
+  adminCopyrightHolder?: string | null
+  adminIsCropped?: boolean | null
+  adminIsLogoVisible?: boolean | null
+  adminIsModelNameVisible?: boolean | null
+  adminHasMultipleVehicles?: boolean | null
+  adminIsFaceVisible?: boolean | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
   confirmedModel?: string | null
@@ -643,6 +721,12 @@ export type StagingImageUncheckedCreateInput = {
   adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
+  adminCopyrightHolder?: string | null
+  adminIsCropped?: boolean | null
+  adminIsLogoVisible?: boolean | null
+  adminIsModelNameVisible?: boolean | null
+  adminHasMultipleVehicles?: boolean | null
+  adminIsFaceVisible?: boolean | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
   confirmedModel?: string | null
@@ -678,6 +762,12 @@ export type StagingImageUpdateInput = {
   adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCopyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminIsCropped?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsLogoVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsModelNameVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminHasMultipleVehicles?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsFaceVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -713,6 +803,12 @@ export type StagingImageUncheckedUpdateInput = {
   adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCopyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminIsCropped?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsLogoVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsModelNameVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminHasMultipleVehicles?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsFaceVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -748,6 +844,12 @@ export type StagingImageCreateManyInput = {
   adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
+  adminCopyrightHolder?: string | null
+  adminIsCropped?: boolean | null
+  adminIsLogoVisible?: boolean | null
+  adminIsModelNameVisible?: boolean | null
+  adminHasMultipleVehicles?: boolean | null
+  adminIsFaceVisible?: boolean | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
   confirmedModel?: string | null
@@ -782,6 +884,12 @@ export type StagingImageUpdateManyMutationInput = {
   adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCopyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminIsCropped?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsLogoVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsModelNameVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminHasMultipleVehicles?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsFaceVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -816,6 +924,12 @@ export type StagingImageUncheckedUpdateManyInput = {
   adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCopyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminIsCropped?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsLogoVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsModelNameVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminHasMultipleVehicles?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsFaceVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -850,6 +964,12 @@ export type StagingImageCountOrderByAggregateInput = {
   adminCategories?: Prisma.SortOrder
   adminIsHardcoreEligible?: Prisma.SortOrder
   adminNotes?: Prisma.SortOrder
+  adminCopyrightHolder?: Prisma.SortOrder
+  adminIsCropped?: Prisma.SortOrder
+  adminIsLogoVisible?: Prisma.SortOrder
+  adminIsModelNameVisible?: Prisma.SortOrder
+  adminHasMultipleVehicles?: Prisma.SortOrder
+  adminIsFaceVisible?: Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
   confirmedMake?: Prisma.SortOrder
   confirmedModel?: Prisma.SortOrder
@@ -890,6 +1010,12 @@ export type StagingImageMaxOrderByAggregateInput = {
   adminCountryOfOrigin?: Prisma.SortOrder
   adminIsHardcoreEligible?: Prisma.SortOrder
   adminNotes?: Prisma.SortOrder
+  adminCopyrightHolder?: Prisma.SortOrder
+  adminIsCropped?: Prisma.SortOrder
+  adminIsLogoVisible?: Prisma.SortOrder
+  adminIsModelNameVisible?: Prisma.SortOrder
+  adminHasMultipleVehicles?: Prisma.SortOrder
+  adminIsFaceVisible?: Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
   confirmedMake?: Prisma.SortOrder
   confirmedModel?: Prisma.SortOrder
@@ -923,6 +1049,12 @@ export type StagingImageMinOrderByAggregateInput = {
   adminCountryOfOrigin?: Prisma.SortOrder
   adminIsHardcoreEligible?: Prisma.SortOrder
   adminNotes?: Prisma.SortOrder
+  adminCopyrightHolder?: Prisma.SortOrder
+  adminIsCropped?: Prisma.SortOrder
+  adminIsLogoVisible?: Prisma.SortOrder
+  adminIsModelNameVisible?: Prisma.SortOrder
+  adminHasMultipleVehicles?: Prisma.SortOrder
+  adminIsFaceVisible?: Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
   confirmedMake?: Prisma.SortOrder
   confirmedModel?: Prisma.SortOrder
@@ -1000,6 +1132,12 @@ export type StagingImageCreateWithoutSuggestionsInput = {
   adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
+  adminCopyrightHolder?: string | null
+  adminIsCropped?: boolean | null
+  adminIsLogoVisible?: boolean | null
+  adminIsModelNameVisible?: boolean | null
+  adminHasMultipleVehicles?: boolean | null
+  adminIsFaceVisible?: boolean | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
   confirmedModel?: string | null
@@ -1034,6 +1172,12 @@ export type StagingImageUncheckedCreateWithoutSuggestionsInput = {
   adminCategories?: Prisma.StagingImageCreateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: boolean | null
   adminNotes?: string | null
+  adminCopyrightHolder?: string | null
+  adminIsCropped?: boolean | null
+  adminIsLogoVisible?: boolean | null
+  adminIsModelNameVisible?: boolean | null
+  adminHasMultipleVehicles?: boolean | null
+  adminIsFaceVisible?: boolean | null
   reviewedAt?: Date | string | null
   confirmedMake?: string | null
   confirmedModel?: string | null
@@ -1084,6 +1228,12 @@ export type StagingImageUpdateWithoutSuggestionsInput = {
   adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCopyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminIsCropped?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsLogoVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsModelNameVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminHasMultipleVehicles?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsFaceVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1118,6 +1268,12 @@ export type StagingImageUncheckedUpdateWithoutSuggestionsInput = {
   adminCategories?: Prisma.StagingImageUpdateadminCategoriesInput | string[]
   adminIsHardcoreEligible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminCopyrightHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminIsCropped?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsLogoVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsModelNameVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminHasMultipleVehicles?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  adminIsFaceVisible?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1183,6 +1339,12 @@ export type StagingImageSelect<ExtArgs extends runtime.Types.Extensions.Internal
   adminCategories?: boolean
   adminIsHardcoreEligible?: boolean
   adminNotes?: boolean
+  adminCopyrightHolder?: boolean
+  adminIsCropped?: boolean
+  adminIsLogoVisible?: boolean
+  adminIsModelNameVisible?: boolean
+  adminHasMultipleVehicles?: boolean
+  adminIsFaceVisible?: boolean
   reviewedAt?: boolean
   confirmedMake?: boolean
   confirmedModel?: boolean
@@ -1219,6 +1381,12 @@ export type StagingImageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   adminCategories?: boolean
   adminIsHardcoreEligible?: boolean
   adminNotes?: boolean
+  adminCopyrightHolder?: boolean
+  adminIsCropped?: boolean
+  adminIsLogoVisible?: boolean
+  adminIsModelNameVisible?: boolean
+  adminHasMultipleVehicles?: boolean
+  adminIsFaceVisible?: boolean
   reviewedAt?: boolean
   confirmedMake?: boolean
   confirmedModel?: boolean
@@ -1253,6 +1421,12 @@ export type StagingImageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   adminCategories?: boolean
   adminIsHardcoreEligible?: boolean
   adminNotes?: boolean
+  adminCopyrightHolder?: boolean
+  adminIsCropped?: boolean
+  adminIsLogoVisible?: boolean
+  adminIsModelNameVisible?: boolean
+  adminHasMultipleVehicles?: boolean
+  adminIsFaceVisible?: boolean
   reviewedAt?: boolean
   confirmedMake?: boolean
   confirmedModel?: boolean
@@ -1287,6 +1461,12 @@ export type StagingImageSelectScalar = {
   adminCategories?: boolean
   adminIsHardcoreEligible?: boolean
   adminNotes?: boolean
+  adminCopyrightHolder?: boolean
+  adminIsCropped?: boolean
+  adminIsLogoVisible?: boolean
+  adminIsModelNameVisible?: boolean
+  adminHasMultipleVehicles?: boolean
+  adminIsFaceVisible?: boolean
   reviewedAt?: boolean
   confirmedMake?: boolean
   confirmedModel?: boolean
@@ -1297,7 +1477,7 @@ export type StagingImageSelectScalar = {
   createdAt?: boolean
 }
 
-export type StagingImageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cloudinaryPublicId" | "filename" | "sourceUrl" | "attribution" | "aiMake" | "aiModel" | "aiYear" | "aiBodyStyle" | "aiConfidence" | "aiTaggedAt" | "adminMake" | "adminModel" | "adminYear" | "adminTrim" | "adminBodyStyle" | "adminRarity" | "adminEra" | "adminRegionSlug" | "adminCountryOfOrigin" | "adminCategories" | "adminIsHardcoreEligible" | "adminNotes" | "reviewedAt" | "confirmedMake" | "confirmedModel" | "confirmedYear" | "confirmedTrim" | "status" | "submittedBy" | "createdAt", ExtArgs["result"]["stagingImage"]>
+export type StagingImageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cloudinaryPublicId" | "filename" | "sourceUrl" | "attribution" | "aiMake" | "aiModel" | "aiYear" | "aiBodyStyle" | "aiConfidence" | "aiTaggedAt" | "adminMake" | "adminModel" | "adminYear" | "adminTrim" | "adminBodyStyle" | "adminRarity" | "adminEra" | "adminRegionSlug" | "adminCountryOfOrigin" | "adminCategories" | "adminIsHardcoreEligible" | "adminNotes" | "adminCopyrightHolder" | "adminIsCropped" | "adminIsLogoVisible" | "adminIsModelNameVisible" | "adminHasMultipleVehicles" | "adminIsFaceVisible" | "reviewedAt" | "confirmedMake" | "confirmedModel" | "confirmedYear" | "confirmedTrim" | "status" | "submittedBy" | "createdAt", ExtArgs["result"]["stagingImage"]>
 export type StagingImageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   suggestions?: boolean | Prisma.StagingImage$suggestionsArgs<ExtArgs>
   _count?: boolean | Prisma.StagingImageCountOutputTypeDefaultArgs<ExtArgs>
@@ -1334,6 +1514,12 @@ export type $StagingImagePayload<ExtArgs extends runtime.Types.Extensions.Intern
     adminCategories: string[]
     adminIsHardcoreEligible: boolean | null
     adminNotes: string | null
+    adminCopyrightHolder: string | null
+    adminIsCropped: boolean | null
+    adminIsLogoVisible: boolean | null
+    adminIsModelNameVisible: boolean | null
+    adminHasMultipleVehicles: boolean | null
+    adminIsFaceVisible: boolean | null
     reviewedAt: Date | null
     confirmedMake: string | null
     confirmedModel: string | null
@@ -1789,6 +1975,12 @@ export interface StagingImageFieldRefs {
   readonly adminCategories: Prisma.FieldRef<"StagingImage", 'String[]'>
   readonly adminIsHardcoreEligible: Prisma.FieldRef<"StagingImage", 'Boolean'>
   readonly adminNotes: Prisma.FieldRef<"StagingImage", 'String'>
+  readonly adminCopyrightHolder: Prisma.FieldRef<"StagingImage", 'String'>
+  readonly adminIsCropped: Prisma.FieldRef<"StagingImage", 'Boolean'>
+  readonly adminIsLogoVisible: Prisma.FieldRef<"StagingImage", 'Boolean'>
+  readonly adminIsModelNameVisible: Prisma.FieldRef<"StagingImage", 'Boolean'>
+  readonly adminHasMultipleVehicles: Prisma.FieldRef<"StagingImage", 'Boolean'>
+  readonly adminIsFaceVisible: Prisma.FieldRef<"StagingImage", 'Boolean'>
   readonly reviewedAt: Prisma.FieldRef<"StagingImage", 'DateTime'>
   readonly confirmedMake: Prisma.FieldRef<"StagingImage", 'String'>
   readonly confirmedModel: Prisma.FieldRef<"StagingImage", 'String'>
