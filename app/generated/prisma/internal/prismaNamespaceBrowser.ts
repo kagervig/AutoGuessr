@@ -207,7 +207,8 @@ export const GameSessionScalarFieldEnum = {
   filterConfig: 'filterConfig',
   startedAt: 'startedAt',
   endedAt: 'endedAt',
-  finalScore: 'finalScore'
+  finalScore: 'finalScore',
+  initials: 'initials'
 } as const
 
 export type GameSessionScalarFieldEnum = (typeof GameSessionScalarFieldEnum)[keyof typeof GameSessionScalarFieldEnum]

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Flag, RotateCcw, ArrowLeft, Trophy } from "lucide-react";
+import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle } from "lucide-react";
 import { MODES } from "@/app/lib/constants";
 import { Tachometer } from "@/app/components/ui/Tachometer";
 import { cn } from "@/app/lib/utils";
@@ -62,10 +62,116 @@ function calcGrade(pct: number): { grade: string; color: string } {
   return { grade: "D", color: "text-muted-foreground" };
 }
 
+// Retro arcade-style 3-character initials entry
+function InitialsEntry({
+  sessionId,
+  onSubmitted,
+}: {
+  sessionId: string;
+  onSubmitted: () => void;
+}) {
+  const [letters, setLetters] = useState(["", "", ""]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
+
+  const initials = letters.join("");
+  const canSubmit = initials.length >= 1 && !submitting;
+
+  function handleChange(index: number, raw: string) {
+    const letter = raw.toUpperCase().replace(/[^A-Z]/g, "").slice(-1);
+    const next = [...letters];
+    next[index] = letter;
+    setLetters(next);
+    if (letter && index < 2) {
+      inputRefs[index + 1].current?.focus();
+    }
+  }
+
+  function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Backspace" && !letters[index] && index > 0) {
+      const next = [...letters];
+      next[index - 1] = "";
+      setLetters(next);
+      inputRefs[index - 1].current?.focus();
+    }
+    if (e.key === "Enter" && canSubmit) {
+      submit();
+    }
+  }
+
+  async function submit() {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/session/initials", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, initials: initials.padEnd(3, "_").slice(0, 3) }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "Failed to save");
+        setSubmitting(false);
+        return;
+      }
+      onSubmitted();
+    } catch {
+      setError("Network error");
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="mt-6 space-y-4">
+      <p className="text-xs font-mono tracking-widest uppercase text-muted-foreground text-center">
+        Enter your initials
+      </p>
+      <div className="flex justify-center gap-3">
+        {inputRefs.map((ref, i) => (
+          <input
+            key={i}
+            ref={ref}
+            type="text"
+            inputMode="text"
+            maxLength={1}
+            value={letters[i]}
+            onChange={(e) => handleChange(i, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
+            aria-label={`Initial ${i + 1}`}
+            className={cn(
+              "w-14 h-16 rounded-xl border-2 bg-white/5 text-center text-3xl font-black font-mono uppercase tracking-wider text-white transition-colors outline-none",
+              letters[i]
+                ? "border-primary"
+                : "border-white/20 focus:border-primary/60"
+            )}
+            autoFocus={i === 0}
+          />
+        ))}
+      </div>
+      {error && <p className="text-center text-xs text-red-400">{error}</p>}
+      <div className="flex justify-center">
+        <button
+          onClick={submit}
+          disabled={!canSubmit}
+          className="bg-primary text-white font-black tracking-widest uppercase px-8 py-3 rounded-full hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {submitting ? "Saving…" : "Submit"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ResultsScreen({ sessionId, mode, username }: Props) {
   const router = useRouter();
   const [session, setSession] = useState<SessionData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [initialsSubmitted, setInitialsSubmitted] = useState(false);
 
   useEffect(() => {
     fetch(`/api/session?sessionId=${sessionId}`)
@@ -108,6 +214,7 @@ export default function ResultsScreen({ sessionId, mode, username }: Props) {
   const approxMax = total * 2200;
   const { grade, color: gradeColor } = calcGrade(score / approxMax);
   const modeLabel = MODE_LABELS[mode] || mode;
+  const showLeaderboard = mode !== "practice" && score > 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6">
@@ -151,6 +258,33 @@ export default function ResultsScreen({ sessionId, mode, username }: Props) {
             </p>
           )}
 
+          {/* Initials entry or confirmation */}
+          {showLeaderboard && !initialsSubmitted && (
+            <InitialsEntry
+              sessionId={sessionId}
+              onSubmitted={() => setInitialsSubmitted(true)}
+            />
+          )}
+
+          {showLeaderboard && initialsSubmitted && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-6 space-y-3"
+            >
+              <div className="flex items-center justify-center gap-2 text-green-400 text-sm font-bold tracking-wider uppercase">
+                <CheckCircle className="w-4 h-4" />
+                Score saved to leaderboard
+              </div>
+              <button
+                onClick={() => router.push(`/leaderboard?mode=${mode}`)}
+                className="flex items-center gap-2 mx-auto text-sm text-muted-foreground hover:text-white transition-colors"
+              >
+                <Trophy className="w-4 h-4" /> View leaderboard
+              </button>
+            </motion.div>
+          )}
+
           <div className="flex gap-3 justify-center mt-8">
             <button
               onClick={() => {
@@ -168,15 +302,6 @@ export default function ResultsScreen({ sessionId, mode, username }: Props) {
               <ArrowLeft className="w-4 h-4" /> Garage
             </button>
           </div>
-
-          {username && mode !== "practice" && (
-            <button
-              onClick={() => router.push(`/leaderboard?mode=${mode}`)}
-              className="mt-4 flex items-center gap-2 mx-auto text-sm text-muted-foreground hover:text-white transition-colors"
-            >
-              <Trophy className="w-4 h-4" /> View leaderboard
-            </button>
-          )}
         </motion.div>
 
         {/* Round breakdown */}

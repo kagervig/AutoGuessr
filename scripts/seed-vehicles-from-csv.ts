@@ -31,6 +31,7 @@ import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../app/generated/prisma/client";
 import type { BodyStyle, Era } from "../app/generated/prisma/client";
+import { eraFromYear } from "../app/lib/constants";
 
 const dryRun = process.argv.includes("--dry-run");
 
@@ -72,12 +73,6 @@ const COUNTRY_TO_REGION: Record<string, string> = {
   "India": "east_asia",
 };
 
-function eraFromYear(year: number): Era {
-  if (year < 1970) return "classic";
-  if (year < 2000) return "retro";
-  if (year < 2015) return "modern";
-  return "contemporary";
-}
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 

@@ -18,7 +18,6 @@ export default function MediumModeInput({ makes, showYear, disabled, onSubmit }:
   const [loadingModels, setLoadingModels] = useState(false);
 
   useEffect(() => {
-    setModel("");
     setModels([]);
     if (!make) return;
     setLoadingModels(true);
@@ -28,7 +27,7 @@ export default function MediumModeInput({ makes, showYear, disabled, onSubmit }:
       .finally(() => setLoadingModels(false));
   }, [make]);
 
-  const canSubmit = !!make && !!model && (!showYear || !!year);
+  const canSubmit = !!make || !!model;
 
   return (
     <div className="space-y-3">
@@ -43,8 +42,8 @@ export default function MediumModeInput({ makes, showYear, disabled, onSubmit }:
         value={model}
         onChange={setModel}
         options={models}
-        placeholder={make ? (loadingModels ? "Loading…" : "Model") : "Select make first"}
-        disabled={disabled || !make}
+        placeholder={loadingModels ? "Loading…" : "Model (e.g. Mustang)"}
+        disabled={disabled}
       />
       {showYear && (
         <input

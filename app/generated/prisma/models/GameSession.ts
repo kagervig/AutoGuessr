@@ -41,6 +41,7 @@ export type GameSessionMinAggregateOutputType = {
   startedAt: Date | null
   endedAt: Date | null
   finalScore: number | null
+  initials: string | null
 }
 
 export type GameSessionMaxAggregateOutputType = {
@@ -50,6 +51,7 @@ export type GameSessionMaxAggregateOutputType = {
   startedAt: Date | null
   endedAt: Date | null
   finalScore: number | null
+  initials: string | null
 }
 
 export type GameSessionCountAggregateOutputType = {
@@ -60,6 +62,7 @@ export type GameSessionCountAggregateOutputType = {
   startedAt: number
   endedAt: number
   finalScore: number
+  initials: number
   _all: number
 }
 
@@ -79,6 +82,7 @@ export type GameSessionMinAggregateInputType = {
   startedAt?: true
   endedAt?: true
   finalScore?: true
+  initials?: true
 }
 
 export type GameSessionMaxAggregateInputType = {
@@ -88,6 +92,7 @@ export type GameSessionMaxAggregateInputType = {
   startedAt?: true
   endedAt?: true
   finalScore?: true
+  initials?: true
 }
 
 export type GameSessionCountAggregateInputType = {
@@ -98,6 +103,7 @@ export type GameSessionCountAggregateInputType = {
   startedAt?: true
   endedAt?: true
   finalScore?: true
+  initials?: true
   _all?: true
 }
 
@@ -195,6 +201,7 @@ export type GameSessionGroupByOutputType = {
   startedAt: Date
   endedAt: Date | null
   finalScore: number | null
+  initials: string | null
   _count: GameSessionCountAggregateOutputType | null
   _avg: GameSessionAvgAggregateOutputType | null
   _sum: GameSessionSumAggregateOutputType | null
@@ -228,6 +235,7 @@ export type GameSessionWhereInput = {
   startedAt?: Prisma.DateTimeFilter<"GameSession"> | Date | string
   endedAt?: Prisma.DateTimeNullableFilter<"GameSession"> | Date | string | null
   finalScore?: Prisma.IntNullableFilter<"GameSession"> | number | null
+  initials?: Prisma.StringNullableFilter<"GameSession"> | string | null
   player?: Prisma.XOR<Prisma.PlayerNullableScalarRelationFilter, Prisma.PlayerWhereInput> | null
   rounds?: Prisma.RoundListRelationFilter
 }
@@ -240,6 +248,7 @@ export type GameSessionOrderByWithRelationInput = {
   startedAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   finalScore?: Prisma.SortOrderInput | Prisma.SortOrder
+  initials?: Prisma.SortOrderInput | Prisma.SortOrder
   player?: Prisma.PlayerOrderByWithRelationInput
   rounds?: Prisma.RoundOrderByRelationAggregateInput
 }
@@ -255,6 +264,7 @@ export type GameSessionWhereUniqueInput = Prisma.AtLeast<{
   startedAt?: Prisma.DateTimeFilter<"GameSession"> | Date | string
   endedAt?: Prisma.DateTimeNullableFilter<"GameSession"> | Date | string | null
   finalScore?: Prisma.IntNullableFilter<"GameSession"> | number | null
+  initials?: Prisma.StringNullableFilter<"GameSession"> | string | null
   player?: Prisma.XOR<Prisma.PlayerNullableScalarRelationFilter, Prisma.PlayerWhereInput> | null
   rounds?: Prisma.RoundListRelationFilter
 }, "id">
@@ -267,6 +277,7 @@ export type GameSessionOrderByWithAggregationInput = {
   startedAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   finalScore?: Prisma.SortOrderInput | Prisma.SortOrder
+  initials?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.GameSessionCountOrderByAggregateInput
   _avg?: Prisma.GameSessionAvgOrderByAggregateInput
   _max?: Prisma.GameSessionMaxOrderByAggregateInput
@@ -285,6 +296,7 @@ export type GameSessionScalarWhereWithAggregatesInput = {
   startedAt?: Prisma.DateTimeWithAggregatesFilter<"GameSession"> | Date | string
   endedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"GameSession"> | Date | string | null
   finalScore?: Prisma.IntNullableWithAggregatesFilter<"GameSession"> | number | null
+  initials?: Prisma.StringNullableWithAggregatesFilter<"GameSession"> | string | null
 }
 
 export type GameSessionCreateInput = {
@@ -294,6 +306,7 @@ export type GameSessionCreateInput = {
   startedAt?: Date | string
   endedAt?: Date | string | null
   finalScore?: number | null
+  initials?: string | null
   player?: Prisma.PlayerCreateNestedOneWithoutSessionsInput
   rounds?: Prisma.RoundCreateNestedManyWithoutSessionInput
 }
@@ -306,6 +319,7 @@ export type GameSessionUncheckedCreateInput = {
   startedAt?: Date | string
   endedAt?: Date | string | null
   finalScore?: number | null
+  initials?: string | null
   rounds?: Prisma.RoundUncheckedCreateNestedManyWithoutSessionInput
 }
 
@@ -316,6 +330,7 @@ export type GameSessionUpdateInput = {
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  initials?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   player?: Prisma.PlayerUpdateOneWithoutSessionsNestedInput
   rounds?: Prisma.RoundUpdateManyWithoutSessionNestedInput
 }
@@ -328,6 +343,7 @@ export type GameSessionUncheckedUpdateInput = {
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  initials?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rounds?: Prisma.RoundUncheckedUpdateManyWithoutSessionNestedInput
 }
 
@@ -339,6 +355,7 @@ export type GameSessionCreateManyInput = {
   startedAt?: Date | string
   endedAt?: Date | string | null
   finalScore?: number | null
+  initials?: string | null
 }
 
 export type GameSessionUpdateManyMutationInput = {
@@ -348,6 +365,7 @@ export type GameSessionUpdateManyMutationInput = {
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  initials?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type GameSessionUncheckedUpdateManyInput = {
@@ -358,6 +376,7 @@ export type GameSessionUncheckedUpdateManyInput = {
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  initials?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type GameSessionListRelationFilter = {
@@ -378,6 +397,7 @@ export type GameSessionCountOrderByAggregateInput = {
   startedAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrder
   finalScore?: Prisma.SortOrder
+  initials?: Prisma.SortOrder
 }
 
 export type GameSessionAvgOrderByAggregateInput = {
@@ -391,6 +411,7 @@ export type GameSessionMaxOrderByAggregateInput = {
   startedAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrder
   finalScore?: Prisma.SortOrder
+  initials?: Prisma.SortOrder
 }
 
 export type GameSessionMinOrderByAggregateInput = {
@@ -400,6 +421,7 @@ export type GameSessionMinOrderByAggregateInput = {
   startedAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrder
   finalScore?: Prisma.SortOrder
+  initials?: Prisma.SortOrder
 }
 
 export type GameSessionSumOrderByAggregateInput = {
@@ -478,6 +500,7 @@ export type GameSessionCreateWithoutPlayerInput = {
   startedAt?: Date | string
   endedAt?: Date | string | null
   finalScore?: number | null
+  initials?: string | null
   rounds?: Prisma.RoundCreateNestedManyWithoutSessionInput
 }
 
@@ -488,6 +511,7 @@ export type GameSessionUncheckedCreateWithoutPlayerInput = {
   startedAt?: Date | string
   endedAt?: Date | string | null
   finalScore?: number | null
+  initials?: string | null
   rounds?: Prisma.RoundUncheckedCreateNestedManyWithoutSessionInput
 }
 
@@ -528,6 +552,7 @@ export type GameSessionScalarWhereInput = {
   startedAt?: Prisma.DateTimeFilter<"GameSession"> | Date | string
   endedAt?: Prisma.DateTimeNullableFilter<"GameSession"> | Date | string | null
   finalScore?: Prisma.IntNullableFilter<"GameSession"> | number | null
+  initials?: Prisma.StringNullableFilter<"GameSession"> | string | null
 }
 
 export type GameSessionCreateWithoutRoundsInput = {
@@ -537,6 +562,7 @@ export type GameSessionCreateWithoutRoundsInput = {
   startedAt?: Date | string
   endedAt?: Date | string | null
   finalScore?: number | null
+  initials?: string | null
   player?: Prisma.PlayerCreateNestedOneWithoutSessionsInput
 }
 
@@ -548,6 +574,7 @@ export type GameSessionUncheckedCreateWithoutRoundsInput = {
   startedAt?: Date | string
   endedAt?: Date | string | null
   finalScore?: number | null
+  initials?: string | null
 }
 
 export type GameSessionCreateOrConnectWithoutRoundsInput = {
@@ -573,6 +600,7 @@ export type GameSessionUpdateWithoutRoundsInput = {
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  initials?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   player?: Prisma.PlayerUpdateOneWithoutSessionsNestedInput
 }
 
@@ -584,6 +612,7 @@ export type GameSessionUncheckedUpdateWithoutRoundsInput = {
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  initials?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type GameSessionCreateManyPlayerInput = {
@@ -593,6 +622,7 @@ export type GameSessionCreateManyPlayerInput = {
   startedAt?: Date | string
   endedAt?: Date | string | null
   finalScore?: number | null
+  initials?: string | null
 }
 
 export type GameSessionUpdateWithoutPlayerInput = {
@@ -602,6 +632,7 @@ export type GameSessionUpdateWithoutPlayerInput = {
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  initials?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rounds?: Prisma.RoundUpdateManyWithoutSessionNestedInput
 }
 
@@ -612,6 +643,7 @@ export type GameSessionUncheckedUpdateWithoutPlayerInput = {
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  initials?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rounds?: Prisma.RoundUncheckedUpdateManyWithoutSessionNestedInput
 }
 
@@ -622,6 +654,7 @@ export type GameSessionUncheckedUpdateManyWithoutPlayerInput = {
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  initials?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -663,6 +696,7 @@ export type GameSessionSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   startedAt?: boolean
   endedAt?: boolean
   finalScore?: boolean
+  initials?: boolean
   player?: boolean | Prisma.GameSession$playerArgs<ExtArgs>
   rounds?: boolean | Prisma.GameSession$roundsArgs<ExtArgs>
   _count?: boolean | Prisma.GameSessionCountOutputTypeDefaultArgs<ExtArgs>
@@ -676,6 +710,7 @@ export type GameSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   startedAt?: boolean
   endedAt?: boolean
   finalScore?: boolean
+  initials?: boolean
   player?: boolean | Prisma.GameSession$playerArgs<ExtArgs>
 }, ExtArgs["result"]["gameSession"]>
 
@@ -687,6 +722,7 @@ export type GameSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   startedAt?: boolean
   endedAt?: boolean
   finalScore?: boolean
+  initials?: boolean
   player?: boolean | Prisma.GameSession$playerArgs<ExtArgs>
 }, ExtArgs["result"]["gameSession"]>
 
@@ -698,9 +734,10 @@ export type GameSessionSelectScalar = {
   startedAt?: boolean
   endedAt?: boolean
   finalScore?: boolean
+  initials?: boolean
 }
 
-export type GameSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "playerId" | "mode" | "filterConfig" | "startedAt" | "endedAt" | "finalScore", ExtArgs["result"]["gameSession"]>
+export type GameSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "playerId" | "mode" | "filterConfig" | "startedAt" | "endedAt" | "finalScore" | "initials", ExtArgs["result"]["gameSession"]>
 export type GameSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   player?: boolean | Prisma.GameSession$playerArgs<ExtArgs>
   rounds?: boolean | Prisma.GameSession$roundsArgs<ExtArgs>
@@ -727,6 +764,7 @@ export type $GameSessionPayload<ExtArgs extends runtime.Types.Extensions.Interna
     startedAt: Date
     endedAt: Date | null
     finalScore: number | null
+    initials: string | null
   }, ExtArgs["result"]["gameSession"]>
   composites: {}
 }
@@ -1159,6 +1197,7 @@ export interface GameSessionFieldRefs {
   readonly startedAt: Prisma.FieldRef<"GameSession", 'DateTime'>
   readonly endedAt: Prisma.FieldRef<"GameSession", 'DateTime'>
   readonly finalScore: Prisma.FieldRef<"GameSession", 'Int'>
+  readonly initials: Prisma.FieldRef<"GameSession", 'String'>
 }
     
 
