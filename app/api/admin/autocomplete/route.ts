@@ -9,22 +9,28 @@ export async function GET(request: NextRequest) {
 
   switch (field) {
     case "make": {
-      const rows = await prisma.vehicle.findMany({
-        select: { make: true },
-        distinct: ["make"],
-        orderBy: { make: "asc" },
-      });
-      return Response.json(rows.map((r) => r.make));
+      const [vehicleRows, knownMakes] = await Promise.all([
+        prisma.vehicle.findMany({ select: { make: true }, distinct: ["make"] }),
+        prisma.knownMake.findMany({ select: { name: true } }),
+      ]);
+      const allMakes = [...new Set([...vehicleRows.map((r) => r.make), ...knownMakes.map((k) => k.name)])].sort();
+      return Response.json(allMakes);
     }
 
     case "model": {
-      const rows = await prisma.vehicle.findMany({
-        where: make ? { make: { equals: make, mode: "insensitive" } } : undefined,
-        select: { model: true },
-        distinct: ["model"],
-        orderBy: { model: "asc" },
-      });
-      return Response.json(rows.map((r) => r.model));
+      const [vehicleRows, knownModels] = await Promise.all([
+        prisma.vehicle.findMany({
+          where: make ? { make: { equals: make, mode: "insensitive" } } : undefined,
+          select: { model: true },
+          distinct: ["model"],
+        }),
+        prisma.knownModel.findMany({
+          where: make ? { make: { equals: make, mode: "insensitive" } } : undefined,
+          select: { name: true },
+        }),
+      ]);
+      const allModels = [...new Set([...vehicleRows.map((r) => r.model), ...knownModels.map((k) => k.name)])].sort();
+      return Response.json(allModels);
     }
 
     case "trim": {

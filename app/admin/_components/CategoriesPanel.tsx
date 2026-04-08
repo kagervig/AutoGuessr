@@ -38,7 +38,7 @@ function LabelEditor({
       onChange={(e) => setDraft(e.target.value)}
       onKeyDown={handleKeyDown}
       onBlur={onCancel}
-      className="text-sm border border-gray-300 rounded px-2 py-0.5 focus:outline-none focus:border-gray-500"
+      className="text-sm text-gray-900 border border-gray-300 rounded px-2 py-0.5 focus:outline-none focus:border-gray-500"
     />
   );
 }
@@ -121,13 +121,13 @@ export default function CategoriesPanel() {
             value={newSlug}
             onChange={(e) => setNewSlug(e.target.value)}
             placeholder="slug (e.g. muscle)"
-            className="text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 w-40"
+            className="text-sm text-gray-900 border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 w-40"
           />
           <input
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder="Label (e.g. Muscle Cars)"
-            className="text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 flex-1"
+            className="text-sm text-gray-900 border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 flex-1"
             onKeyDown={(e) => { if (e.key === "Enter") createCategory(); }}
           />
           <button

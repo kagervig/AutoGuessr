@@ -11,6 +11,7 @@ import {
   Timer,
   Wrench,
   Power,
+  Users,
 } from "lucide-react";
 import { MODES, COUNTRIES, FALLBACK_CATEGORIES, FALLBACK_REGIONS } from "@/app/lib/constants";
 import type { ModeId } from "@/app/lib/constants";
@@ -196,6 +197,15 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
                 )}
               />
             ))}
+            <ModeCard
+              id="community"
+              title="Community"
+              description="Help identify mystery cars. Vote on suggestions from other players."
+              icon={<Users className="w-6 h-6" />}
+              selected={false}
+              onClick={() => router.push("/identify")}
+              className="md:col-span-3"
+            />
           </div>
         </motion.div>
 

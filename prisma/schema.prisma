@@ -228,6 +228,17 @@ model FeatureFlag {
   updatedAt   DateTime @updatedAt
 }
 
+model KnownMake {
+  name String @id
+}
+
+model KnownModel {
+  make String
+  name String
+
+  @@id([make, name])
+}
+
 enum StagingStatus {
   PENDING_REVIEW
   COMMUNITY_REVIEW
@@ -283,17 +294,31 @@ model StagingImage {
 }
 
 model CommunityIdentification {
-  id             String       @id @default(cuid())
+  id             String          @id @default(cuid())
   stagingImageId String
   username       String
   suggestedMake  String?
   suggestedModel String?
   suggestedYear  Int?
   suggestedTrim  String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  stagingImage   StagingImage @relation(fields: [stagingImageId], references: [id])
+  upvotes        Int             @default(0)
+  downvotes      Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  stagingImage   StagingImage    @relation(fields: [stagingImageId], references: [id])
+  votes          CommunityVote[]
 
   // One suggestion record per user per image (updated in place)
   @@unique([stagingImageId, username])
+}
+
+model CommunityVote {
+  id           String                  @id @default(cuid())
+  suggestionId String
+  username     String
+  isUpvote     Boolean
+  createdAt    DateTime                @default(now())
+  suggestion   CommunityIdentification @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+
+  @@unique([suggestionId, username])
 }
