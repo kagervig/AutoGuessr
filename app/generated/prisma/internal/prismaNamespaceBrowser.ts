@@ -65,8 +65,11 @@ export const ModelName = {
   Round: 'Round',
   Guess: 'Guess',
   FeatureFlag: 'FeatureFlag',
+  KnownMake: 'KnownMake',
+  KnownModel: 'KnownModel',
   StagingImage: 'StagingImage',
-  CommunityIdentification: 'CommunityIdentification'
+  CommunityIdentification: 'CommunityIdentification',
+  CommunityVote: 'CommunityVote'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -266,6 +269,21 @@ export const FeatureFlagScalarFieldEnum = {
 export type FeatureFlagScalarFieldEnum = (typeof FeatureFlagScalarFieldEnum)[keyof typeof FeatureFlagScalarFieldEnum]
 
 
+export const KnownMakeScalarFieldEnum = {
+  name: 'name'
+} as const
+
+export type KnownMakeScalarFieldEnum = (typeof KnownMakeScalarFieldEnum)[keyof typeof KnownMakeScalarFieldEnum]
+
+
+export const KnownModelScalarFieldEnum = {
+  make: 'make',
+  name: 'name'
+} as const
+
+export type KnownModelScalarFieldEnum = (typeof KnownModelScalarFieldEnum)[keyof typeof KnownModelScalarFieldEnum]
+
+
 export const StagingImageScalarFieldEnum = {
   id: 'id',
   cloudinaryPublicId: 'cloudinaryPublicId',
@@ -318,11 +336,24 @@ export const CommunityIdentificationScalarFieldEnum = {
   suggestedModel: 'suggestedModel',
   suggestedYear: 'suggestedYear',
   suggestedTrim: 'suggestedTrim',
+  upvotes: 'upvotes',
+  downvotes: 'downvotes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type CommunityIdentificationScalarFieldEnum = (typeof CommunityIdentificationScalarFieldEnum)[keyof typeof CommunityIdentificationScalarFieldEnum]
+
+
+export const CommunityVoteScalarFieldEnum = {
+  id: 'id',
+  suggestionId: 'suggestionId',
+  username: 'username',
+  isUpvote: 'isUpvote',
+  createdAt: 'createdAt'
+} as const
+
+export type CommunityVoteScalarFieldEnum = (typeof CommunityVoteScalarFieldEnum)[keyof typeof CommunityVoteScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -120,5 +120,16 @@ export async function POST(_request: NextRequest, { params }: Params) {
     data: { status: "PUBLISHED", reviewedAt: new Date() },
   });
 
+  await prisma.knownMake.upsert({
+    where: { name: make },
+    create: { name: make },
+    update: {},
+  });
+  await prisma.knownModel.upsert({
+    where: { make_name: { make, name: model } },
+    create: { make, name: model },
+    update: {},
+  });
+
   return Response.json({ vehicleId: vehicle.id, imageId: image.id });
 }

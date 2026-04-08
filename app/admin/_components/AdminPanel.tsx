@@ -94,7 +94,6 @@ const BODY_STYLES = [
 ];
 const ERAS = ["classic", "retro", "modern", "contemporary"];
 const RARITIES = ["common", "uncommon", "rare", "ultra_rare"];
-const CATEGORIES = ["muscle", "supercar", "electric", "classic", "sports", "luxury"];
 
 interface EditForm {
   make: string;
@@ -213,6 +212,7 @@ export default function AdminPanel() {
   const [countryOptions, setCountryOptions] = useState<string[]>([]);
   const [regionOptions, setRegionOptions] = useState<string[]>([]);
   const [copyrightHolderOptions, setCopyrightHolderOptions] = useState<string[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<{ slug: string; label: string }[]>([]);
   const [makeDefaults, setMakeDefaults] = useState<Record<string, { country: string; regionSlug: string }>>({});
 
   const fetchImages = useCallback(async () => {
@@ -242,6 +242,8 @@ export default function AdminPanel() {
       .then(safeJson).then((d) => d && setCopyrightHolderOptions(d));
     fetch("/api/filters")
       .then(safeJson).then((d) => d && setRegionOptions((d.regions ?? []).map((r: { slug: string }) => r.slug)));
+    fetch("/api/admin/categories")
+      .then(safeJson).then((d) => d && setCategoryOptions(d.map((c: { slug: string; label: string }) => ({ slug: c.slug, label: c.label }))));
   }, []);
 
   // Reload model options when make changes
@@ -389,10 +391,38 @@ export default function AdminPanel() {
     let lastError: string | null = null;
     try {
       for (const id of selectedIds) {
+        const img = images.find((i) => i.id === id);
+        if (!img) continue;
+
+        // Flags always apply across all selected images.
+        // Text fields only apply if the image has no existing admin value for that field.
+        const payload: Record<string, unknown> = {
+          isHardcoreEligible: editForm.isHardcoreEligible,
+          isCropped: editForm.isCropped,
+          isLogoVisible: editForm.isLogoVisible,
+          isModelNameVisible: editForm.isModelNameVisible,
+          hasMultipleVehicles: editForm.hasMultipleVehicles,
+          isFaceVisible: editForm.isFaceVisible,
+          isVehicleUnmodified: editForm.isVehicleUnmodified,
+        };
+
+        if (!img.admin.make) payload.make = editForm.make || null;
+        if (!img.admin.model) payload.model = editForm.model || null;
+        if (!img.admin.year) payload.year = editForm.year || null;
+        if (!img.admin.trim) payload.trim = editForm.trim || null;
+        if (!img.admin.bodyStyle) payload.bodyStyle = editForm.bodyStyle || null;
+        if (!img.admin.rarity) payload.rarity = editForm.rarity || null;
+        if (!img.admin.era) payload.era = editForm.era || null;
+        if (!img.admin.regionSlug) payload.regionSlug = editForm.regionSlug || null;
+        if (!img.admin.countryOfOrigin) payload.countryOfOrigin = editForm.countryOfOrigin || null;
+        if (!img.admin.categories?.length) payload.categories = editForm.categories;
+        if (!img.admin.notes) payload.notes = editForm.notes || null;
+        if (!img.admin.copyrightHolder) payload.copyrightHolder = editForm.copyrightHolder || null;
+
         const res = await fetch(`/api/admin/staging/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(editPayload),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
           patchImage(await res.json());
@@ -816,7 +846,7 @@ export default function AdminPanel() {
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Categories</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {CATEGORIES.map((slug) => (
+                    {categoryOptions.map(({ slug, label }) => (
                       <button
                         key={slug}
                         type="button"
@@ -827,7 +857,7 @@ export default function AdminPanel() {
                             : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
                         }`}
                       >
-                        {slug}
+                        {label}
                       </button>
                     ))}
                   </div>

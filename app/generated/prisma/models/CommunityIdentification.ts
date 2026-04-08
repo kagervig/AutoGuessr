@@ -28,10 +28,14 @@ export type AggregateCommunityIdentification = {
 
 export type CommunityIdentificationAvgAggregateOutputType = {
   suggestedYear: number | null
+  upvotes: number | null
+  downvotes: number | null
 }
 
 export type CommunityIdentificationSumAggregateOutputType = {
   suggestedYear: number | null
+  upvotes: number | null
+  downvotes: number | null
 }
 
 export type CommunityIdentificationMinAggregateOutputType = {
@@ -42,6 +46,8 @@ export type CommunityIdentificationMinAggregateOutputType = {
   suggestedModel: string | null
   suggestedYear: number | null
   suggestedTrim: string | null
+  upvotes: number | null
+  downvotes: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -54,6 +60,8 @@ export type CommunityIdentificationMaxAggregateOutputType = {
   suggestedModel: string | null
   suggestedYear: number | null
   suggestedTrim: string | null
+  upvotes: number | null
+  downvotes: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -66,6 +74,8 @@ export type CommunityIdentificationCountAggregateOutputType = {
   suggestedModel: number
   suggestedYear: number
   suggestedTrim: number
+  upvotes: number
+  downvotes: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -74,10 +84,14 @@ export type CommunityIdentificationCountAggregateOutputType = {
 
 export type CommunityIdentificationAvgAggregateInputType = {
   suggestedYear?: true
+  upvotes?: true
+  downvotes?: true
 }
 
 export type CommunityIdentificationSumAggregateInputType = {
   suggestedYear?: true
+  upvotes?: true
+  downvotes?: true
 }
 
 export type CommunityIdentificationMinAggregateInputType = {
@@ -88,6 +102,8 @@ export type CommunityIdentificationMinAggregateInputType = {
   suggestedModel?: true
   suggestedYear?: true
   suggestedTrim?: true
+  upvotes?: true
+  downvotes?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -100,6 +116,8 @@ export type CommunityIdentificationMaxAggregateInputType = {
   suggestedModel?: true
   suggestedYear?: true
   suggestedTrim?: true
+  upvotes?: true
+  downvotes?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -112,6 +130,8 @@ export type CommunityIdentificationCountAggregateInputType = {
   suggestedModel?: true
   suggestedYear?: true
   suggestedTrim?: true
+  upvotes?: true
+  downvotes?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -211,6 +231,8 @@ export type CommunityIdentificationGroupByOutputType = {
   suggestedModel: string | null
   suggestedYear: number | null
   suggestedTrim: string | null
+  upvotes: number
+  downvotes: number
   createdAt: Date
   updatedAt: Date
   _count: CommunityIdentificationCountAggregateOutputType | null
@@ -246,9 +268,12 @@ export type CommunityIdentificationWhereInput = {
   suggestedModel?: Prisma.StringNullableFilter<"CommunityIdentification"> | string | null
   suggestedYear?: Prisma.IntNullableFilter<"CommunityIdentification"> | number | null
   suggestedTrim?: Prisma.StringNullableFilter<"CommunityIdentification"> | string | null
+  upvotes?: Prisma.IntFilter<"CommunityIdentification"> | number
+  downvotes?: Prisma.IntFilter<"CommunityIdentification"> | number
   createdAt?: Prisma.DateTimeFilter<"CommunityIdentification"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CommunityIdentification"> | Date | string
   stagingImage?: Prisma.XOR<Prisma.StagingImageScalarRelationFilter, Prisma.StagingImageWhereInput>
+  votes?: Prisma.CommunityVoteListRelationFilter
 }
 
 export type CommunityIdentificationOrderByWithRelationInput = {
@@ -259,9 +284,12 @@ export type CommunityIdentificationOrderByWithRelationInput = {
   suggestedModel?: Prisma.SortOrderInput | Prisma.SortOrder
   suggestedYear?: Prisma.SortOrderInput | Prisma.SortOrder
   suggestedTrim?: Prisma.SortOrderInput | Prisma.SortOrder
+  upvotes?: Prisma.SortOrder
+  downvotes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   stagingImage?: Prisma.StagingImageOrderByWithRelationInput
+  votes?: Prisma.CommunityVoteOrderByRelationAggregateInput
 }
 
 export type CommunityIdentificationWhereUniqueInput = Prisma.AtLeast<{
@@ -276,9 +304,12 @@ export type CommunityIdentificationWhereUniqueInput = Prisma.AtLeast<{
   suggestedModel?: Prisma.StringNullableFilter<"CommunityIdentification"> | string | null
   suggestedYear?: Prisma.IntNullableFilter<"CommunityIdentification"> | number | null
   suggestedTrim?: Prisma.StringNullableFilter<"CommunityIdentification"> | string | null
+  upvotes?: Prisma.IntFilter<"CommunityIdentification"> | number
+  downvotes?: Prisma.IntFilter<"CommunityIdentification"> | number
   createdAt?: Prisma.DateTimeFilter<"CommunityIdentification"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CommunityIdentification"> | Date | string
   stagingImage?: Prisma.XOR<Prisma.StagingImageScalarRelationFilter, Prisma.StagingImageWhereInput>
+  votes?: Prisma.CommunityVoteListRelationFilter
 }, "id" | "stagingImageId_username">
 
 export type CommunityIdentificationOrderByWithAggregationInput = {
@@ -289,6 +320,8 @@ export type CommunityIdentificationOrderByWithAggregationInput = {
   suggestedModel?: Prisma.SortOrderInput | Prisma.SortOrder
   suggestedYear?: Prisma.SortOrderInput | Prisma.SortOrder
   suggestedTrim?: Prisma.SortOrderInput | Prisma.SortOrder
+  upvotes?: Prisma.SortOrder
+  downvotes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.CommunityIdentificationCountOrderByAggregateInput
@@ -309,6 +342,8 @@ export type CommunityIdentificationScalarWhereWithAggregatesInput = {
   suggestedModel?: Prisma.StringNullableWithAggregatesFilter<"CommunityIdentification"> | string | null
   suggestedYear?: Prisma.IntNullableWithAggregatesFilter<"CommunityIdentification"> | number | null
   suggestedTrim?: Prisma.StringNullableWithAggregatesFilter<"CommunityIdentification"> | string | null
+  upvotes?: Prisma.IntWithAggregatesFilter<"CommunityIdentification"> | number
+  downvotes?: Prisma.IntWithAggregatesFilter<"CommunityIdentification"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CommunityIdentification"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"CommunityIdentification"> | Date | string
 }
@@ -320,9 +355,12 @@ export type CommunityIdentificationCreateInput = {
   suggestedModel?: string | null
   suggestedYear?: number | null
   suggestedTrim?: string | null
+  upvotes?: number
+  downvotes?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   stagingImage: Prisma.StagingImageCreateNestedOneWithoutSuggestionsInput
+  votes?: Prisma.CommunityVoteCreateNestedManyWithoutSuggestionInput
 }
 
 export type CommunityIdentificationUncheckedCreateInput = {
@@ -333,8 +371,11 @@ export type CommunityIdentificationUncheckedCreateInput = {
   suggestedModel?: string | null
   suggestedYear?: number | null
   suggestedTrim?: string | null
+  upvotes?: number
+  downvotes?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  votes?: Prisma.CommunityVoteUncheckedCreateNestedManyWithoutSuggestionInput
 }
 
 export type CommunityIdentificationUpdateInput = {
@@ -344,9 +385,12 @@ export type CommunityIdentificationUpdateInput = {
   suggestedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suggestedYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suggestedTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  upvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  downvotes?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stagingImage?: Prisma.StagingImageUpdateOneRequiredWithoutSuggestionsNestedInput
+  votes?: Prisma.CommunityVoteUpdateManyWithoutSuggestionNestedInput
 }
 
 export type CommunityIdentificationUncheckedUpdateInput = {
@@ -357,8 +401,11 @@ export type CommunityIdentificationUncheckedUpdateInput = {
   suggestedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suggestedYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suggestedTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  upvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  downvotes?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  votes?: Prisma.CommunityVoteUncheckedUpdateManyWithoutSuggestionNestedInput
 }
 
 export type CommunityIdentificationCreateManyInput = {
@@ -369,6 +416,8 @@ export type CommunityIdentificationCreateManyInput = {
   suggestedModel?: string | null
   suggestedYear?: number | null
   suggestedTrim?: string | null
+  upvotes?: number
+  downvotes?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -380,6 +429,8 @@ export type CommunityIdentificationUpdateManyMutationInput = {
   suggestedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suggestedYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suggestedTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  upvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  downvotes?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -392,6 +443,8 @@ export type CommunityIdentificationUncheckedUpdateManyInput = {
   suggestedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suggestedYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suggestedTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  upvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  downvotes?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -419,12 +472,16 @@ export type CommunityIdentificationCountOrderByAggregateInput = {
   suggestedModel?: Prisma.SortOrder
   suggestedYear?: Prisma.SortOrder
   suggestedTrim?: Prisma.SortOrder
+  upvotes?: Prisma.SortOrder
+  downvotes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type CommunityIdentificationAvgOrderByAggregateInput = {
   suggestedYear?: Prisma.SortOrder
+  upvotes?: Prisma.SortOrder
+  downvotes?: Prisma.SortOrder
 }
 
 export type CommunityIdentificationMaxOrderByAggregateInput = {
@@ -435,6 +492,8 @@ export type CommunityIdentificationMaxOrderByAggregateInput = {
   suggestedModel?: Prisma.SortOrder
   suggestedYear?: Prisma.SortOrder
   suggestedTrim?: Prisma.SortOrder
+  upvotes?: Prisma.SortOrder
+  downvotes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -447,12 +506,21 @@ export type CommunityIdentificationMinOrderByAggregateInput = {
   suggestedModel?: Prisma.SortOrder
   suggestedYear?: Prisma.SortOrder
   suggestedTrim?: Prisma.SortOrder
+  upvotes?: Prisma.SortOrder
+  downvotes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type CommunityIdentificationSumOrderByAggregateInput = {
   suggestedYear?: Prisma.SortOrder
+  upvotes?: Prisma.SortOrder
+  downvotes?: Prisma.SortOrder
+}
+
+export type CommunityIdentificationScalarRelationFilter = {
+  is?: Prisma.CommunityIdentificationWhereInput
+  isNot?: Prisma.CommunityIdentificationWhereInput
 }
 
 export type CommunityIdentificationCreateNestedManyWithoutStagingImageInput = {
@@ -497,6 +565,20 @@ export type CommunityIdentificationUncheckedUpdateManyWithoutStagingImageNestedI
   deleteMany?: Prisma.CommunityIdentificationScalarWhereInput | Prisma.CommunityIdentificationScalarWhereInput[]
 }
 
+export type CommunityIdentificationCreateNestedOneWithoutVotesInput = {
+  create?: Prisma.XOR<Prisma.CommunityIdentificationCreateWithoutVotesInput, Prisma.CommunityIdentificationUncheckedCreateWithoutVotesInput>
+  connectOrCreate?: Prisma.CommunityIdentificationCreateOrConnectWithoutVotesInput
+  connect?: Prisma.CommunityIdentificationWhereUniqueInput
+}
+
+export type CommunityIdentificationUpdateOneRequiredWithoutVotesNestedInput = {
+  create?: Prisma.XOR<Prisma.CommunityIdentificationCreateWithoutVotesInput, Prisma.CommunityIdentificationUncheckedCreateWithoutVotesInput>
+  connectOrCreate?: Prisma.CommunityIdentificationCreateOrConnectWithoutVotesInput
+  upsert?: Prisma.CommunityIdentificationUpsertWithoutVotesInput
+  connect?: Prisma.CommunityIdentificationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CommunityIdentificationUpdateToOneWithWhereWithoutVotesInput, Prisma.CommunityIdentificationUpdateWithoutVotesInput>, Prisma.CommunityIdentificationUncheckedUpdateWithoutVotesInput>
+}
+
 export type CommunityIdentificationCreateWithoutStagingImageInput = {
   id?: string
   username: string
@@ -504,8 +586,11 @@ export type CommunityIdentificationCreateWithoutStagingImageInput = {
   suggestedModel?: string | null
   suggestedYear?: number | null
   suggestedTrim?: string | null
+  upvotes?: number
+  downvotes?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  votes?: Prisma.CommunityVoteCreateNestedManyWithoutSuggestionInput
 }
 
 export type CommunityIdentificationUncheckedCreateWithoutStagingImageInput = {
@@ -515,8 +600,11 @@ export type CommunityIdentificationUncheckedCreateWithoutStagingImageInput = {
   suggestedModel?: string | null
   suggestedYear?: number | null
   suggestedTrim?: string | null
+  upvotes?: number
+  downvotes?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  votes?: Prisma.CommunityVoteUncheckedCreateNestedManyWithoutSuggestionInput
 }
 
 export type CommunityIdentificationCreateOrConnectWithoutStagingImageInput = {
@@ -556,8 +644,82 @@ export type CommunityIdentificationScalarWhereInput = {
   suggestedModel?: Prisma.StringNullableFilter<"CommunityIdentification"> | string | null
   suggestedYear?: Prisma.IntNullableFilter<"CommunityIdentification"> | number | null
   suggestedTrim?: Prisma.StringNullableFilter<"CommunityIdentification"> | string | null
+  upvotes?: Prisma.IntFilter<"CommunityIdentification"> | number
+  downvotes?: Prisma.IntFilter<"CommunityIdentification"> | number
   createdAt?: Prisma.DateTimeFilter<"CommunityIdentification"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CommunityIdentification"> | Date | string
+}
+
+export type CommunityIdentificationCreateWithoutVotesInput = {
+  id?: string
+  username: string
+  suggestedMake?: string | null
+  suggestedModel?: string | null
+  suggestedYear?: number | null
+  suggestedTrim?: string | null
+  upvotes?: number
+  downvotes?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  stagingImage: Prisma.StagingImageCreateNestedOneWithoutSuggestionsInput
+}
+
+export type CommunityIdentificationUncheckedCreateWithoutVotesInput = {
+  id?: string
+  stagingImageId: string
+  username: string
+  suggestedMake?: string | null
+  suggestedModel?: string | null
+  suggestedYear?: number | null
+  suggestedTrim?: string | null
+  upvotes?: number
+  downvotes?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type CommunityIdentificationCreateOrConnectWithoutVotesInput = {
+  where: Prisma.CommunityIdentificationWhereUniqueInput
+  create: Prisma.XOR<Prisma.CommunityIdentificationCreateWithoutVotesInput, Prisma.CommunityIdentificationUncheckedCreateWithoutVotesInput>
+}
+
+export type CommunityIdentificationUpsertWithoutVotesInput = {
+  update: Prisma.XOR<Prisma.CommunityIdentificationUpdateWithoutVotesInput, Prisma.CommunityIdentificationUncheckedUpdateWithoutVotesInput>
+  create: Prisma.XOR<Prisma.CommunityIdentificationCreateWithoutVotesInput, Prisma.CommunityIdentificationUncheckedCreateWithoutVotesInput>
+  where?: Prisma.CommunityIdentificationWhereInput
+}
+
+export type CommunityIdentificationUpdateToOneWithWhereWithoutVotesInput = {
+  where?: Prisma.CommunityIdentificationWhereInput
+  data: Prisma.XOR<Prisma.CommunityIdentificationUpdateWithoutVotesInput, Prisma.CommunityIdentificationUncheckedUpdateWithoutVotesInput>
+}
+
+export type CommunityIdentificationUpdateWithoutVotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suggestedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suggestedYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  suggestedTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  upvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  downvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  stagingImage?: Prisma.StagingImageUpdateOneRequiredWithoutSuggestionsNestedInput
+}
+
+export type CommunityIdentificationUncheckedUpdateWithoutVotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  stagingImageId?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suggestedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suggestedYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  suggestedTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  upvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  downvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type CommunityIdentificationCreateManyStagingImageInput = {
@@ -567,6 +729,8 @@ export type CommunityIdentificationCreateManyStagingImageInput = {
   suggestedModel?: string | null
   suggestedYear?: number | null
   suggestedTrim?: string | null
+  upvotes?: number
+  downvotes?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -578,8 +742,11 @@ export type CommunityIdentificationUpdateWithoutStagingImageInput = {
   suggestedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suggestedYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suggestedTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  upvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  downvotes?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  votes?: Prisma.CommunityVoteUpdateManyWithoutSuggestionNestedInput
 }
 
 export type CommunityIdentificationUncheckedUpdateWithoutStagingImageInput = {
@@ -589,8 +756,11 @@ export type CommunityIdentificationUncheckedUpdateWithoutStagingImageInput = {
   suggestedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suggestedYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suggestedTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  upvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  downvotes?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  votes?: Prisma.CommunityVoteUncheckedUpdateManyWithoutSuggestionNestedInput
 }
 
 export type CommunityIdentificationUncheckedUpdateManyWithoutStagingImageInput = {
@@ -600,10 +770,41 @@ export type CommunityIdentificationUncheckedUpdateManyWithoutStagingImageInput =
   suggestedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   suggestedYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suggestedTrim?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  upvotes?: Prisma.IntFieldUpdateOperationsInput | number
+  downvotes?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+
+/**
+ * Count Type CommunityIdentificationCountOutputType
+ */
+
+export type CommunityIdentificationCountOutputType = {
+  votes: number
+}
+
+export type CommunityIdentificationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  votes?: boolean | CommunityIdentificationCountOutputTypeCountVotesArgs
+}
+
+/**
+ * CommunityIdentificationCountOutputType without action
+ */
+export type CommunityIdentificationCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CommunityIdentificationCountOutputType
+   */
+  select?: Prisma.CommunityIdentificationCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * CommunityIdentificationCountOutputType without action
+ */
+export type CommunityIdentificationCountOutputTypeCountVotesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CommunityVoteWhereInput
+}
 
 
 export type CommunityIdentificationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -614,9 +815,13 @@ export type CommunityIdentificationSelect<ExtArgs extends runtime.Types.Extensio
   suggestedModel?: boolean
   suggestedYear?: boolean
   suggestedTrim?: boolean
+  upvotes?: boolean
+  downvotes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   stagingImage?: boolean | Prisma.StagingImageDefaultArgs<ExtArgs>
+  votes?: boolean | Prisma.CommunityIdentification$votesArgs<ExtArgs>
+  _count?: boolean | Prisma.CommunityIdentificationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["communityIdentification"]>
 
 export type CommunityIdentificationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -627,6 +832,8 @@ export type CommunityIdentificationSelectCreateManyAndReturn<ExtArgs extends run
   suggestedModel?: boolean
   suggestedYear?: boolean
   suggestedTrim?: boolean
+  upvotes?: boolean
+  downvotes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   stagingImage?: boolean | Prisma.StagingImageDefaultArgs<ExtArgs>
@@ -640,6 +847,8 @@ export type CommunityIdentificationSelectUpdateManyAndReturn<ExtArgs extends run
   suggestedModel?: boolean
   suggestedYear?: boolean
   suggestedTrim?: boolean
+  upvotes?: boolean
+  downvotes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   stagingImage?: boolean | Prisma.StagingImageDefaultArgs<ExtArgs>
@@ -653,13 +862,17 @@ export type CommunityIdentificationSelectScalar = {
   suggestedModel?: boolean
   suggestedYear?: boolean
   suggestedTrim?: boolean
+  upvotes?: boolean
+  downvotes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type CommunityIdentificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stagingImageId" | "username" | "suggestedMake" | "suggestedModel" | "suggestedYear" | "suggestedTrim" | "createdAt" | "updatedAt", ExtArgs["result"]["communityIdentification"]>
+export type CommunityIdentificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stagingImageId" | "username" | "suggestedMake" | "suggestedModel" | "suggestedYear" | "suggestedTrim" | "upvotes" | "downvotes" | "createdAt" | "updatedAt", ExtArgs["result"]["communityIdentification"]>
 export type CommunityIdentificationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   stagingImage?: boolean | Prisma.StagingImageDefaultArgs<ExtArgs>
+  votes?: boolean | Prisma.CommunityIdentification$votesArgs<ExtArgs>
+  _count?: boolean | Prisma.CommunityIdentificationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CommunityIdentificationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   stagingImage?: boolean | Prisma.StagingImageDefaultArgs<ExtArgs>
@@ -672,6 +885,7 @@ export type $CommunityIdentificationPayload<ExtArgs extends runtime.Types.Extens
   name: "CommunityIdentification"
   objects: {
     stagingImage: Prisma.$StagingImagePayload<ExtArgs>
+    votes: Prisma.$CommunityVotePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -681,6 +895,8 @@ export type $CommunityIdentificationPayload<ExtArgs extends runtime.Types.Extens
     suggestedModel: string | null
     suggestedYear: number | null
     suggestedTrim: string | null
+    upvotes: number
+    downvotes: number
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["communityIdentification"]>
@@ -1078,6 +1294,7 @@ readonly fields: CommunityIdentificationFieldRefs;
 export interface Prisma__CommunityIdentificationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   stagingImage<T extends Prisma.StagingImageDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StagingImageDefaultArgs<ExtArgs>>): Prisma.Prisma__StagingImageClient<runtime.Types.Result.GetResult<Prisma.$StagingImagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  votes<T extends Prisma.CommunityIdentification$votesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CommunityIdentification$votesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommunityVotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1114,6 +1331,8 @@ export interface CommunityIdentificationFieldRefs {
   readonly suggestedModel: Prisma.FieldRef<"CommunityIdentification", 'String'>
   readonly suggestedYear: Prisma.FieldRef<"CommunityIdentification", 'Int'>
   readonly suggestedTrim: Prisma.FieldRef<"CommunityIdentification", 'String'>
+  readonly upvotes: Prisma.FieldRef<"CommunityIdentification", 'Int'>
+  readonly downvotes: Prisma.FieldRef<"CommunityIdentification", 'Int'>
   readonly createdAt: Prisma.FieldRef<"CommunityIdentification", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"CommunityIdentification", 'DateTime'>
 }
@@ -1514,6 +1733,30 @@ export type CommunityIdentificationDeleteManyArgs<ExtArgs extends runtime.Types.
    * Limit how many CommunityIdentifications to delete.
    */
   limit?: number
+}
+
+/**
+ * CommunityIdentification.votes
+ */
+export type CommunityIdentification$votesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CommunityVote
+   */
+  select?: Prisma.CommunityVoteSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CommunityVote
+   */
+  omit?: Prisma.CommunityVoteOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CommunityVoteInclude<ExtArgs> | null
+  where?: Prisma.CommunityVoteWhereInput
+  orderBy?: Prisma.CommunityVoteOrderByWithRelationInput | Prisma.CommunityVoteOrderByWithRelationInput[]
+  cursor?: Prisma.CommunityVoteWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CommunityVoteScalarFieldEnum | Prisma.CommunityVoteScalarFieldEnum[]
 }
 
 /**

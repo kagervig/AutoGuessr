@@ -2,6 +2,8 @@ import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
 
+const DOWNVOTE_THRESHOLD = 5;
+
 export async function GET() {
   const images = await prisma.stagingImage.findMany({
     where: { status: "COMMUNITY_REVIEW" },
@@ -11,6 +13,22 @@ export async function GET() {
 
   const response = images.map((img) => {
     const agreements = computeAgreements(img.suggestions);
+
+    const suggestions = img.suggestions
+      .filter((s) => s.downvotes < DOWNVOTE_THRESHOLD)
+      .map((s) => ({
+        id: s.id,
+        username: s.username,
+        suggestedMake: s.suggestedMake,
+        suggestedModel: s.suggestedModel,
+        suggestedYear: s.suggestedYear,
+        suggestedTrim: s.suggestedTrim,
+        upvotes: s.upvotes,
+        downvotes: s.downvotes,
+        netVotes: s.upvotes - s.downvotes,
+      }))
+      .sort((a, b) => b.netVotes - a.netVotes);
+
     return {
       id: img.id,
       imageUrl: imageUrl(img.cloudinaryPublicId, img.id),
@@ -19,6 +37,7 @@ export async function GET() {
         model: img.aiModel,
         year: img.aiYear,
       },
+      suggestions,
       agreements: {
         make: {
           value: agreements.make?.value ?? null,
@@ -45,7 +64,6 @@ export async function GET() {
           threshold: CONFIRMATION_THRESHOLD,
         },
       },
-      suggestionCount: img.suggestions.length,
     };
   });
 

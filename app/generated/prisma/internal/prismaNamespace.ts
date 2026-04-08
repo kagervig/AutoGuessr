@@ -398,8 +398,11 @@ export const ModelName = {
   Round: 'Round',
   Guess: 'Guess',
   FeatureFlag: 'FeatureFlag',
+  KnownMake: 'KnownMake',
+  KnownModel: 'KnownModel',
   StagingImage: 'StagingImage',
-  CommunityIdentification: 'CommunityIdentification'
+  CommunityIdentification: 'CommunityIdentification',
+  CommunityVote: 'CommunityVote'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -415,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "region" | "vehicle" | "category" | "vehicleCategory" | "vehicleAlias" | "image" | "imageStats" | "player" | "playerStats" | "playerDimensionStats" | "gameSession" | "round" | "guess" | "featureFlag" | "stagingImage" | "communityIdentification"
+    modelProps: "region" | "vehicle" | "category" | "vehicleCategory" | "vehicleAlias" | "image" | "imageStats" | "player" | "playerStats" | "playerDimensionStats" | "gameSession" | "round" | "guess" | "featureFlag" | "knownMake" | "knownModel" | "stagingImage" | "communityIdentification" | "communityVote"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1455,6 +1458,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    KnownMake: {
+      payload: Prisma.$KnownMakePayload<ExtArgs>
+      fields: Prisma.KnownMakeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.KnownMakeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.KnownMakeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload>
+        }
+        findFirst: {
+          args: Prisma.KnownMakeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.KnownMakeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload>
+        }
+        findMany: {
+          args: Prisma.KnownMakeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload>[]
+        }
+        create: {
+          args: Prisma.KnownMakeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload>
+        }
+        createMany: {
+          args: Prisma.KnownMakeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.KnownMakeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload>[]
+        }
+        delete: {
+          args: Prisma.KnownMakeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload>
+        }
+        update: {
+          args: Prisma.KnownMakeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload>
+        }
+        deleteMany: {
+          args: Prisma.KnownMakeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.KnownMakeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.KnownMakeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload>[]
+        }
+        upsert: {
+          args: Prisma.KnownMakeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownMakePayload>
+        }
+        aggregate: {
+          args: Prisma.KnownMakeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateKnownMake>
+        }
+        groupBy: {
+          args: Prisma.KnownMakeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.KnownMakeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.KnownMakeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.KnownMakeCountAggregateOutputType> | number
+        }
+      }
+    }
+    KnownModel: {
+      payload: Prisma.$KnownModelPayload<ExtArgs>
+      fields: Prisma.KnownModelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.KnownModelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.KnownModelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload>
+        }
+        findFirst: {
+          args: Prisma.KnownModelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.KnownModelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload>
+        }
+        findMany: {
+          args: Prisma.KnownModelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload>[]
+        }
+        create: {
+          args: Prisma.KnownModelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload>
+        }
+        createMany: {
+          args: Prisma.KnownModelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.KnownModelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload>[]
+        }
+        delete: {
+          args: Prisma.KnownModelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload>
+        }
+        update: {
+          args: Prisma.KnownModelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload>
+        }
+        deleteMany: {
+          args: Prisma.KnownModelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.KnownModelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.KnownModelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload>[]
+        }
+        upsert: {
+          args: Prisma.KnownModelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$KnownModelPayload>
+        }
+        aggregate: {
+          args: Prisma.KnownModelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateKnownModel>
+        }
+        groupBy: {
+          args: Prisma.KnownModelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.KnownModelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.KnownModelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.KnownModelCountAggregateOutputType> | number
+        }
+      }
+    }
     StagingImage: {
       payload: Prisma.$StagingImagePayload<ExtArgs>
       fields: Prisma.StagingImageFieldRefs
@@ -1600,6 +1751,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.CommunityIdentificationCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.CommunityIdentificationCountAggregateOutputType> | number
+        }
+      }
+    }
+    CommunityVote: {
+      payload: Prisma.$CommunityVotePayload<ExtArgs>
+      fields: Prisma.CommunityVoteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CommunityVoteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CommunityVoteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload>
+        }
+        findFirst: {
+          args: Prisma.CommunityVoteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CommunityVoteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload>
+        }
+        findMany: {
+          args: Prisma.CommunityVoteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload>[]
+        }
+        create: {
+          args: Prisma.CommunityVoteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload>
+        }
+        createMany: {
+          args: Prisma.CommunityVoteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CommunityVoteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload>[]
+        }
+        delete: {
+          args: Prisma.CommunityVoteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload>
+        }
+        update: {
+          args: Prisma.CommunityVoteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload>
+        }
+        deleteMany: {
+          args: Prisma.CommunityVoteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CommunityVoteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CommunityVoteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload>[]
+        }
+        upsert: {
+          args: Prisma.CommunityVoteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunityVotePayload>
+        }
+        aggregate: {
+          args: Prisma.CommunityVoteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCommunityVote>
+        }
+        groupBy: {
+          args: Prisma.CommunityVoteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommunityVoteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CommunityVoteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommunityVoteCountAggregateOutputType> | number
         }
       }
     }
@@ -1823,6 +2048,21 @@ export const FeatureFlagScalarFieldEnum = {
 export type FeatureFlagScalarFieldEnum = (typeof FeatureFlagScalarFieldEnum)[keyof typeof FeatureFlagScalarFieldEnum]
 
 
+export const KnownMakeScalarFieldEnum = {
+  name: 'name'
+} as const
+
+export type KnownMakeScalarFieldEnum = (typeof KnownMakeScalarFieldEnum)[keyof typeof KnownMakeScalarFieldEnum]
+
+
+export const KnownModelScalarFieldEnum = {
+  make: 'make',
+  name: 'name'
+} as const
+
+export type KnownModelScalarFieldEnum = (typeof KnownModelScalarFieldEnum)[keyof typeof KnownModelScalarFieldEnum]
+
+
 export const StagingImageScalarFieldEnum = {
   id: 'id',
   cloudinaryPublicId: 'cloudinaryPublicId',
@@ -1875,11 +2115,24 @@ export const CommunityIdentificationScalarFieldEnum = {
   suggestedModel: 'suggestedModel',
   suggestedYear: 'suggestedYear',
   suggestedTrim: 'suggestedTrim',
+  upvotes: 'upvotes',
+  downvotes: 'downvotes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type CommunityIdentificationScalarFieldEnum = (typeof CommunityIdentificationScalarFieldEnum)[keyof typeof CommunityIdentificationScalarFieldEnum]
+
+
+export const CommunityVoteScalarFieldEnum = {
+  id: 'id',
+  suggestionId: 'suggestionId',
+  username: 'username',
+  isUpvote: 'isUpvote',
+  createdAt: 'createdAt'
+} as const
+
+export type CommunityVoteScalarFieldEnum = (typeof CommunityVoteScalarFieldEnum)[keyof typeof CommunityVoteScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2211,8 +2464,11 @@ export type GlobalOmitConfig = {
   round?: Prisma.RoundOmit
   guess?: Prisma.GuessOmit
   featureFlag?: Prisma.FeatureFlagOmit
+  knownMake?: Prisma.KnownMakeOmit
+  knownModel?: Prisma.KnownModelOmit
   stagingImage?: Prisma.StagingImageOmit
   communityIdentification?: Prisma.CommunityIdentificationOmit
+  communityVote?: Prisma.CommunityVoteOmit
 }
 
 /* Types for Logging */

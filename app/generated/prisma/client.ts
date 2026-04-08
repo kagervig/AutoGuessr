@@ -112,6 +112,16 @@ export type Guess = Prisma.GuessModel
  */
 export type FeatureFlag = Prisma.FeatureFlagModel
 /**
+ * Model KnownMake
+ * 
+ */
+export type KnownMake = Prisma.KnownMakeModel
+/**
+ * Model KnownModel
+ * 
+ */
+export type KnownModel = Prisma.KnownModelModel
+/**
  * Model StagingImage
  * 
  */
@@ -121,3 +131,8 @@ export type StagingImage = Prisma.StagingImageModel
  * 
  */
 export type CommunityIdentification = Prisma.CommunityIdentificationModel
+/**
+ * Model CommunityVote
+ * 
+ */
+export type CommunityVote = Prisma.CommunityVoteModel
