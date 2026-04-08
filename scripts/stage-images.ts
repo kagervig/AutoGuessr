@@ -42,7 +42,7 @@ if (!fs.existsSync(resolvedFolder) || !fs.statSync(resolvedFolder).isDirectory()
   process.exit(1);
 }
 
-const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"]);
+const IMAGE_EXTENSIONS = new Set([".HEIC", ".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"]);
 
 // ── Cloudinary setup ──────────────────────────────────────────────────────────
 
@@ -84,11 +84,11 @@ async function uploadToStaging(filePath: string, publicId: string): Promise<numb
         } else {
           const savings = Math.round((1 - result.bytes / originalBytes) * 100);
           console.log(
-            `  Uploaded: ${publicId} | ${(originalBytes / 1024).toFixed(1)}KB → ${(result.bytes / 1024).toFixed(1)}KB (${savings}% smaller)`
+            `  Uploaded: ${publicId} | ${(originalBytes / 1024).toFixed(1)}KB → ${(result.bytes / 1024).toFixed(1)}KB (${savings}% smaller)`,
           );
           resolve(result.bytes);
         }
-      }
+      },
     );
     createReadStream(filePath).pipe(stream);
   });

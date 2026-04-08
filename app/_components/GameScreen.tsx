@@ -68,21 +68,32 @@ interface CompletedRound {
   isCorrect: boolean;
 }
 
+interface PointsBreakdown {
+  makePoints: number;
+  modelPoints: number;
+  yearBonus: number | null;
+  timeBonus: number;
+  modeMultiplier: number;
+  proBonus: number;
+}
+
 interface RevealInfo {
   correctLabel: string;
   guessLabel: string;
   isCorrect: boolean;
   pointsEarned: number;
+  breakdown?: PointsBreakdown;
 }
 
 interface Props {
   mode: string;
   username: string;
   filter: string;
+  cfToken?: string;
 }
 
 const HARD_MODES = ["hard", "hardcore", "competitive"];
-const CHOICE_MODES = ["easy", "practice"];
+const CHOICE_MODES = ["easy", "practice", "medium"];
 
 // ─── RoundResult overlay ───────────────────────────────────────────────────
 
@@ -136,7 +147,57 @@ function RoundResult({
         )}
         {reveal.isCorrect && <div className="mb-4" />}
 
-        {reveal.pointsEarned > 0 && (
+        {reveal.pointsEarned > 0 && reveal.breakdown ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 mb-6 text-left"
+          >
+            <div className="space-y-1 text-sm font-mono">
+              {reveal.breakdown.makePoints > 0 && (
+                <div className="flex justify-between text-white/70">
+                  <span>Make</span>
+                  <span>+{reveal.breakdown.makePoints}</span>
+                </div>
+              )}
+              {reveal.breakdown.modelPoints > 0 && (
+                <div className="flex justify-between text-white/70">
+                  <span>Model</span>
+                  <span>+{reveal.breakdown.modelPoints}</span>
+                </div>
+              )}
+              {reveal.breakdown.yearBonus != null && reveal.breakdown.yearBonus > 0 && (
+                <div className="flex justify-between text-white/70">
+                  <span>Year</span>
+                  <span>+{reveal.breakdown.yearBonus}</span>
+                </div>
+              )}
+              {reveal.breakdown.timeBonus > 0 && (
+                <div className="flex justify-between text-white/70">
+                  <span>Speed bonus</span>
+                  <span>+{reveal.breakdown.timeBonus}</span>
+                </div>
+              )}
+              {reveal.breakdown.modeMultiplier > 1 && (
+                <div className="flex justify-between text-yellow-400/80 pt-1 border-t border-white/10">
+                  <span>Difficulty ×{reveal.breakdown.modeMultiplier.toFixed(1)}</span>
+                  <span></span>
+                </div>
+              )}
+              {reveal.breakdown.proBonus > 0 && (
+                <div className="flex justify-between text-yellow-400/80">
+                  <span>Rare find</span>
+                  <span>+{reveal.breakdown.proBonus}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-primary font-black text-base pt-2 border-t border-white/20">
+                <span>Total</span>
+                <span>+{reveal.pointsEarned.toLocaleString()}</span>
+              </div>
+            </div>
+          </motion.div>
+        ) : reveal.pointsEarned > 0 ? (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -146,8 +207,9 @@ function RoundResult({
             <Zap className="w-5 h-5" />
             +{reveal.pointsEarned.toLocaleString()} pts
           </motion.div>
+        ) : (
+          <div className="mb-6" />
         )}
-        {reveal.pointsEarned === 0 && <div className="mb-6" />}
 
         <div className="text-xs text-muted-foreground mb-8 font-mono">
           TOTAL: {totalScore.toLocaleString()}
@@ -195,7 +257,7 @@ function RevealBar({ timerActive, roundState, timeLimitMs }: {
 
 // ─── Main Game component ───────────────────────────────────────────────────
 
-export default function GameScreen({ mode, username, filter }: Props) {
+export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const router = useRouter();
 
   const [gameData, setGameData] = useState<GameData | null>(null);
@@ -230,6 +292,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
     const params = new URLSearchParams({ mode });
     if (username) params.set("username", username);
     if (filter) params.set("filter", filter);
+    if (cfToken) params.set("cf_token", cfToken);
 
     Promise.all([
       fetch(`/api/game?${params.toString()}`, { signal: controller.signal }).then((r) => r.json()),
@@ -267,9 +330,12 @@ export default function GameScreen({ mode, username, filter }: Props) {
     setTimerActive(false);
 
     if (mode === "hardcore") {
-      setVisiblePanels(Array(9).fill(true));
-      panelOrderRef.current = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
-      panelIndexRef.current = 0;
+      const order = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+      const initialPanels = Array(9).fill(true);
+      initialPanels[order[0]] = false;
+      setVisiblePanels(initialPanels);
+      panelOrderRef.current = order;
+      panelIndexRef.current = 1;
       panelIntervalRef.current = setInterval(() => {
         const idx = panelOrderRef.current[panelIndexRef.current];
         panelIndexRef.current++;
@@ -369,12 +435,14 @@ export default function GameScreen({ mode, username, filter }: Props) {
     guessLabel,
     pointsEarned,
     vehicle,
+    breakdown,
   }: {
     makeCorrect: boolean;
     modelCorrect: boolean;
     guessLabel: string;
     pointsEarned: number;
     vehicle?: VehicleInfo;
+    breakdown?: PointsBreakdown;
   }) {
     if (autoSubmitRef.current !== null) {
       clearTimeout(autoSubmitRef.current);
@@ -391,7 +459,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
     const correctLabel = HARD_MODES.includes(mode) ? `${year} ${make} ${model}`.trim() : `${make} ${model}`.trim();
 
     setScore((s) => s + pointsEarned);
-    setReveal({ correctLabel, guessLabel, isCorrect: makeCorrect && modelCorrect, pointsEarned });
+    setReveal({ correctLabel, guessLabel, isCorrect: makeCorrect && modelCorrect, pointsEarned, breakdown });
     setCompletedRounds((prev) => [...prev, { imageUrl: round.imageUrl, correctLabel, isCorrect: makeCorrect && modelCorrect }]);
     setRoundState("revealed");
   }
@@ -412,7 +480,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
         resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
       }
-      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle });
+      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
     } catch {
       resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
@@ -440,7 +508,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
         resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
       }
-      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle });
+      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
     } catch {
       resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
@@ -465,6 +533,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
           guessedModel: model,
           guessedYear: parseInt(year) || undefined,
           timeTakenMs: elapsedMs,
+          panelsRevealed: mode === "hardcore" ? panelIndexRef.current : undefined,
         }),
       });
       const data = await res.json();
@@ -472,7 +541,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
         resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
       }
-      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle });
+      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
     } catch {
       resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
@@ -682,7 +751,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
 
               {/* Round label */}
               <div className="absolute top-4 left-4 glass-panel px-3 py-1 rounded-full text-xs font-bold tracking-widest text-white/70 uppercase">
-                {isHardcore ? "Blind" : `Round ${currentIndex + 1}`}
+                {isHardcore ? "Hardcore" : `Round ${currentIndex + 1}`}
               </div>
 
             </motion.div>
@@ -700,7 +769,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
               >
                 <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
                   {mode === "easy" && "Choose the correct make & model"}
-                  {mode === "medium" && "Type make & model — partial credit for either"}
+                  {mode === "medium" && "Choose the correct make & model"}
                   {(mode === "hard" || mode === "hardcore") && "Type make, model & year exactly"}
                   {mode === "competitive" && "Identify before the image reveals!"}
                   {mode === "practice" && "Choose the correct make & model"}
@@ -796,7 +865,7 @@ export default function GameScreen({ mode, username, filter }: Props) {
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {mode === "easy" && "Pick the right car from 4 choices."}
-              {mode === "medium" && "Type the make and model. Partial credit for either field alone."}
+              {mode === "medium" && "Pick the right car from 4 choices. Filtered to your chosen collection."}
               {mode === "hard" && "Type make, model, and year as the image zooms out."}
               {mode === "hardcore" && "Same as Expert. Panels are removed every 5 seconds to reveal the car."}
               {mode === "competitive" && "Race the clock — faster answers earn bonus points."}

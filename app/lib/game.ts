@@ -36,6 +36,10 @@ export interface Choice {
   label: string;
 }
 
+export type VehicleForDistractor = Pick<Vehicle, "id" | "era" | "make" | "model"> & {
+  categorySlugs?: string[];
+};
+
 // Fisher-Yates shuffle — returns a new array
 export function shuffle<T>(arr: T[]): T[] {
   const result = [...arr];
@@ -47,16 +51,55 @@ export function shuffle<T>(arr: T[]): T[] {
 }
 
 // Pick `count` distractor vehicles for a given correct vehicle.
-// Prefers vehicles from the same era to keep choices plausible.
+//
+// Priority order:
+//   1. At most 1 same-make vehicle (brand confusion is plausible)
+//   2. Same-category, different make (e.g. other supercars, other muscle cars)
+//   3. Same-era, different make
+//   4. Anything else
+//
+// Deduplicates by make+model to prevent identical labels in the answer choices.
 export function selectDistractors(
-  correct: Pick<Vehicle, "id" | "era">,
-  pool: Pick<Vehicle, "id" | "era" | "make" | "model">[],
+  correct: VehicleForDistractor,
+  pool: VehicleForDistractor[],
   count = 3
-): Pick<Vehicle, "id" | "era" | "make" | "model">[] {
-  const others = pool.filter((v) => v.id !== correct.id);
-  const sameEra = others.filter((v) => v.era === correct.era);
-  const candidates = sameEra.length >= count ? sameEra : others;
-  return shuffle(candidates).slice(0, count);
+): VehicleForDistractor[] {
+  const others = pool.filter(
+    (v) => v.id !== correct.id && !(v.make === correct.make && v.model === correct.model)
+  );
+
+  const correctCategories = new Set(correct.categorySlugs ?? []);
+
+  const sameMake            = shuffle(others.filter((v) => v.make === correct.make));
+  const sameCategoryDiffMake = shuffle(others.filter(
+    (v) => v.make !== correct.make && (v.categorySlugs ?? []).some((s) => correctCategories.has(s))
+  ));
+  const sameEraDiffMake     = shuffle(others.filter((v) => v.make !== correct.make && v.era === correct.era));
+  const fallback            = shuffle(others.filter((v) => v.make !== correct.make));
+
+  const seen = new Set<string>();
+  const result: VehicleForDistractor[] = [];
+
+  function fill(candidates: VehicleForDistractor[], max?: number) {
+    let added = 0;
+    for (const v of candidates) {
+      if (result.length >= count) break;
+      if (max !== undefined && added >= max) break;
+      const key = `${v.make}|${v.model}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(v);
+        added++;
+      }
+    }
+  }
+
+  fill(sameMake, 1);
+  fill(sameCategoryDiffMake);
+  fill(sameEraDiffMake);
+  fill(fallback);
+
+  return result;
 }
 
 export function vehicleLabel(vehicle: Pick<Vehicle, "make" | "model">): string {
@@ -78,6 +121,7 @@ export function scoreRound({
   elapsedMs,
   timeLimitMs,
   mode,
+  panelsRevealed,
 }: {
   makeCorrect: boolean;
   modelCorrect: boolean;
@@ -85,6 +129,7 @@ export function scoreRound({
   elapsedMs: number;
   timeLimitMs: number;
   mode: string;
+  panelsRevealed?: number;
 }): {
   makePoints: number;
   modelPoints: number;
@@ -113,13 +158,20 @@ export function scoreRound({
 
   const multipliers: Record<string, number> = {
     easy: 1.0,
-    medium: 1.3,
+    medium: 1.0,
     hard: 1.7,
-    hardcore: 2.2,
     competitive: 2.0,
     practice: 0,
   };
-  const modeMultiplier = multipliers[mode] ?? 1.0;
+
+  let modeMultiplier: number;
+  if (mode === "hardcore" && panelsRevealed !== undefined) {
+    // Scale from 4.0 (1 panel revealed) down to 1.0 (all 9 panels revealed)
+    const clamped = Math.max(1, Math.min(9, panelsRevealed));
+    modeMultiplier = 1.0 + 3.0 * (9 - clamped) / 8;
+  } else {
+    modeMultiplier = multipliers[mode] ?? 1.0;
+  }
 
   const base = makePoints + modelPoints + (yearBonus ?? 0) + timeBonus;
   const pointsEarned = mode === "practice" ? 0 : Math.floor(base * modeMultiplier);

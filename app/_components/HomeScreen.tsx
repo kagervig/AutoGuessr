@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import { motion } from "framer-motion";
 import {
   ShieldCheck,
@@ -58,6 +59,7 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [categories, setCategories] = useState<FilterOption[]>(FALLBACK_CATEGORIES);
   const [regions, setRegions] = useState<FilterOption[]>(FALLBACK_REGIONS);
+  const [countries, setCountries] = useState<{ code: string; label: string }[]>([...COUNTRIES]);
   const [filterError, setFilterError] = useState<string | null>(initialFilterError ?? null);
   const [practiceStats, setPracticeStats] = useState<DimensionStat[]>([]);
 
@@ -67,6 +69,7 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
       .then((data) => {
         if (data.categories?.length) setCategories(data.categories);
         if (data.regions?.length) setRegions(data.regions);
+        if (data.countries?.length) setCountries(data.countries);
       })
       .catch(() => {
         // Fallback data already set as initial state
@@ -86,8 +89,32 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
       .catch(() => {});
   }, [username]);
 
+  const isProd = process.env.NODE_ENV === "production";
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    (window as unknown as Record<string, unknown>).onTurnstileVerified = (token: string) => setTurnstileToken(token);
+    return () => {
+      delete (window as unknown as Record<string, unknown>).onTurnstileVerified;
+    };
+  }, []);
+
+  const isCustomMode = selectedMode === "medium" || selectedMode === "practice";
+  const hasFilter =
+    selectedCategories.length > 0 ||
+    selectedRegions.length > 0 ||
+    selectedCountries.length > 0;
+
+  useEffect(() => {
+    if (isCustomMode) {
+      filterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isCustomMode]);
+
   function handleStart() {
     if (!selectedMode) return;
+    if (isCustomMode && !hasFilter) return;
 
     if (username.trim()) {
       document.cookie = `autoguessr_username=${encodeURIComponent(username.trim())}; max-age=${60 * 60 * 24 * 365}; path=/`;
@@ -102,6 +129,7 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
     const params = new URLSearchParams({ mode: selectedMode });
     if (username.trim()) params.set("username", username.trim());
     params.set("filter", encodeURIComponent(JSON.stringify(filterConfig)));
+    if (turnstileToken) params.set("cf_token", turnstileToken);
 
     router.push(`/game?${params.toString()}`);
   }
@@ -211,6 +239,7 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
 
         {/* Filters */}
         <motion.div
+          ref={filterRef}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
@@ -220,8 +249,19 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
               Vehicle Filters
             </h2>
             <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
-            <span className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Optional</span>
+            <span className={cn(
+              "text-xs font-bold tracking-widest uppercase",
+              isCustomMode ? "text-primary" : "text-muted-foreground"
+            )}>
+              {isCustomMode ? "Required" : "Optional"}
+            </span>
           </div>
+
+          {isCustomMode && (
+            <p className="text-sm text-muted-foreground mb-6 -mt-4">
+              Pick as many filters as you like to test your knowledge in your niche — minimum of one required.
+            </p>
+          )}
 
           <div className="space-y-4">
             <FilterGroup
@@ -238,7 +278,7 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
             />
             <FilterGroup
               title="COUNTRIES"
-              options={COUNTRIES.map((c) => ({ label: c.label, value: c.code }))}
+              options={countries.map((c) => ({ label: c.label, value: c.code }))}
               selectedValues={selectedCountries}
               onChange={setSelectedCountries}
             />
@@ -292,29 +332,59 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
           </motion.section>
         )}
 
+        {/* Legal links */}
+        <div className="flex items-center justify-center gap-6 pt-4 pb-2">
+          <a
+            href="/terms"
+            className="text-xs text-muted-foreground hover:text-white transition-colors tracking-wider"
+          >
+            Terms of Service
+          </a>
+          <span className="text-white/10">|</span>
+          <a
+            href="/privacy"
+            className="text-xs text-muted-foreground hover:text-white transition-colors tracking-wider"
+          >
+            Privacy Policy
+          </a>
+        </div>
+
         {/* Bottom padding for sticky CTA */}
         <div className="h-32" />
       </section>
 
       {/* Sticky Bottom CTA */}
-      <div className="fixed bottom-0 inset-x-0 z-50 p-6 glass-panel border-t border-white/10 flex justify-center">
+      <div className="fixed bottom-0 inset-x-0 z-50 p-6 glass-panel border-t border-white/10 flex flex-col items-center gap-3">
+        {isProd && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+          <div className={cn("transition-opacity duration-300", turnstileToken ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
+            <div
+              className="cf-turnstile"
+              data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+              data-callback="onTurnstileVerified"
+              data-theme="dark"
+              data-size="compact"
+            />
+          </div>
+        )}
         <button
           onClick={handleStart}
-          disabled={!selectedMode}
+          disabled={!selectedMode || (isCustomMode && !hasFilter) || (isProd && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !turnstileToken)}
           className={cn(
             "group relative px-12 py-5 rounded-full font-display font-black text-xl tracking-widest uppercase transition-all duration-500 overflow-hidden flex items-center gap-3",
-            selectedMode
+            selectedMode && (!isCustomMode || hasFilter) && (!isProd || !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || turnstileToken)
               ? "bg-primary text-white shadow-[0_0_40px_rgba(220,38,38,0.4)] hover:shadow-[0_0_60px_rgba(220,38,38,0.6)] hover:scale-105 active:scale-95"
               : "bg-white/5 text-white/30 cursor-not-allowed border border-white/10"
           )}
         >
-          {selectedMode && (
+          {selectedMode && (!isCustomMode || hasFilter) && (!isProd || !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || turnstileToken) && (
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
           )}
-          <Power className={cn("w-6 h-6", selectedMode && "animate-pulse")} />
+          <Power className={cn("w-6 h-6", selectedMode && (!isCustomMode || hasFilter) && (!isProd || !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || turnstileToken) && "animate-pulse")} />
           <span>Start Engine</span>
         </button>
       </div>
+
+      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" />
     </div>
   );
 }

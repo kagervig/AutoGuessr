@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
     guessedYear,
     timeTakenMs,
     zoomLevelAtGuess,
+    panelsRevealed,
   } = body as {
     roundId: string;
     rawInput: string;
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
     guessedYear?: number;
     timeTakenMs?: number;
     zoomLevelAtGuess?: number;
+    panelsRevealed?: number;
   };
 
   if (!roundId) {
@@ -104,6 +106,7 @@ export async function POST(request: NextRequest) {
     elapsedMs: timeTakenMs ?? timeLimitMs,
     timeLimitMs,
     mode,
+    panelsRevealed,
   });
 
   const isCorrect = makeMatch && modelMatch;
