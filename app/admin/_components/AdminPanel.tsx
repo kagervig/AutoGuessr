@@ -242,9 +242,14 @@ export default function AdminPanel() {
       .then(safeJson).then((d) => d && setCopyrightHolderOptions(d));
     fetch("/api/filters")
       .then(safeJson).then((d) => d && setRegionOptions((d.regions ?? []).map((r: { slug: string }) => r.slug)));
-    fetch("/api/admin/categories")
-      .then(safeJson).then((d) => d && setCategoryOptions(d.map((c: { slug: string; label: string }) => ({ slug: c.slug, label: c.label }))));
   }, []);
+
+  useEffect(() => {
+    if (activePage !== "staging") return;
+    fetch("/api/admin/categories")
+      .then((r) => r.json().catch(() => null))
+      .then((d) => d && setCategoryOptions(d.map((c: { slug: string; label: string }) => ({ slug: c.slug, label: c.label }))));
+  }, [activePage]);
 
   // Reload model options when make changes
   useEffect(() => {
