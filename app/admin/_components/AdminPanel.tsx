@@ -5,8 +5,9 @@ import Combobox from "@/app/_components/Combobox";
 import { eraFromYear } from "@/app/lib/constants";
 import MakesModelsPanel from "./MakesModelsPanel";
 import CategoriesPanel from "./CategoriesPanel";
+import StatsPanel from "./StatsPanel";
 
-type AdminPage = "staging" | "makes-models" | "categories";
+type AdminPage = "staging" | "makes-models" | "categories" | "stats";
 
 type StagingStatus = "PENDING_REVIEW" | "COMMUNITY_REVIEW" | "READY" | "PUBLISHED" | "REJECTED";
 
@@ -506,6 +507,7 @@ export default function AdminPanel() {
                 ["staging", "Staging"],
                 ["makes-models", "Makes & Models"],
                 ["categories", "Categories"],
+                ["stats", "Stats"],
               ] as [AdminPage, string][]
             ).map(([page, label]) => (
               <button
@@ -529,6 +531,7 @@ export default function AdminPanel() {
 
       {activePage === "makes-models" && <MakesModelsPanel />}
       {activePage === "categories" && <CategoriesPanel />}
+      {activePage === "stats" && <StatsPanel />}
 
       {activePage === "staging" && (
       <>

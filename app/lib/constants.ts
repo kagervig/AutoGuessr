@@ -6,8 +6,8 @@ export const MODES = [
   },
   {
     id: "medium",
-    label: "Pro",
-    description: "Select make and model from comprehensive dropdowns.",
+    label: "Custom",
+    description: "Choose a category, region, or country — then identify cars from that collection.",
   },
   {
     id: "hard",
@@ -16,7 +16,7 @@ export const MODES = [
   },
   {
     id: "hardcore",
-    label: "Blind",
+    label: "Hardcore",
     description: "Expert rules, but images are heavily obscured.",
   },
   {

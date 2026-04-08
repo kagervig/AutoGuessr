@@ -110,6 +110,24 @@ npx tsx scripts/import-cars.ts --file ./path/to/cars.csv [--dry-run] [--skip-exi
 
 CSV columns: `make, model, year, trim, country_of_origin, region_slug, body_style, era, rarity, categories, source_url, attribution, is_hardcore_eligible, image_path`
 
+## Database maintenance
+
+### Find and merge duplicate vehicles
+
+The game displays answer choices as `make model` (e.g. "Ford Mustang") with no year, so two Vehicle records with the same make+model will appear as identical choices. Run this periodically, or any time you suspect duplicates:
+
+```bash
+# Preview what would be merged (no changes written)
+npx tsx scripts/dedupe-vehicles.ts
+
+# Apply the merges
+npx tsx scripts/dedupe-vehicles.ts --apply
+```
+
+For each group of duplicates, the vehicle with the most images is kept as the primary. All images, categories, aliases, and guesses from the other records are reassigned to it, then the duplicates are deleted.
+
+The answer-choice selection logic also deduplicates by `make+model` at query time, so even if duplicates exist in the DB they will not appear as two identical choices in the same question. Running the dedupe script is still recommended to keep the vehicle table clean.
+
 ## Admin panel
 
 Available at `/admin`. HTTP Basic Auth — username `admin`, password is `ADMIN_PASSWORD` from your environment.

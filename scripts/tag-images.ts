@@ -135,7 +135,10 @@ const SYSTEM_INSTRUCTION = `You are a car identification expert. Given a photo, 
 Rules:
 - Return ONLY valid JSON. No markdown fences, no explanation outside the JSON.
 - If multiple cars are visible, identify the most prominent one.
-- If you cannot identify the car at all, return the object with empty strings and null year and confidence 0.1.`;
+- If you cannot identify the car at all, return the object with empty strings and null year and confidence 0.1.
+- Use the full 0.0–1.0 confidence range honestly. Reserve 0.85–1.0 for cases where make, model, AND year are all clearly identifiable. Use 0.5–0.84 for partial identification (e.g. make is clear but year range is wide). Use 0.2–0.49 when the identification is a plausible guess. Use below 0.2 when you are largely uncertain.
+- If less than 40% of the car body is visible in the frame (e.g. heavily cropped, partially obscured, or a very distant shot), reduce your confidence by at least 0.2 from what you would otherwise assign.
+- Cars manufactured before 1960 are rare and easy to misidentify. If the car appears to be from before 1960, reduce your confidence by at least 0.15 from what you would otherwise assign.`;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -152,6 +155,133 @@ interface GeminiTag {
   is_face_visible: boolean;
   is_vehicle_unmodified: boolean;
   notes: string;
+}
+
+// ── Make → origin lookup ──────────────────────────────────────────────────────
+
+interface MakeOrigin {
+  countryOfOrigin: string;
+  regionSlug: string;
+}
+
+const MAKE_ORIGIN_MAP: Record<string, MakeOrigin> = {
+  // United States
+  "Ford":         { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Chevrolet":    { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Dodge":        { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Jeep":         { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Chrysler":     { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Buick":        { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Cadillac":     { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Lincoln":      { countryOfOrigin: "US", regionSlug: "north_america" },
+  "GMC":          { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Pontiac":      { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Oldsmobile":   { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Mercury":      { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Plymouth":     { countryOfOrigin: "US", regionSlug: "north_america" },
+  "AMC":          { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Shelby":       { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Tesla":        { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Rivian":       { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Lucid":        { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Hummer":       { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Saturn":       { countryOfOrigin: "US", regionSlug: "north_america" },
+  "SSC":          { countryOfOrigin: "US", regionSlug: "north_america" },
+  "Saleen":       { countryOfOrigin: "US", regionSlug: "north_america" },
+  // Germany
+  "BMW":          { countryOfOrigin: "DE", regionSlug: "europe" },
+  "Mercedes-Benz":{ countryOfOrigin: "DE", regionSlug: "europe" },
+  "Mercedes":     { countryOfOrigin: "DE", regionSlug: "europe" },
+  "Audi":         { countryOfOrigin: "DE", regionSlug: "europe" },
+  "Volkswagen":   { countryOfOrigin: "DE", regionSlug: "europe" },
+  "VW":           { countryOfOrigin: "DE", regionSlug: "europe" },
+  "Porsche":      { countryOfOrigin: "DE", regionSlug: "europe" },
+  "Opel":         { countryOfOrigin: "DE", regionSlug: "europe" },
+  "Maybach":      { countryOfOrigin: "DE", regionSlug: "europe" },
+  // Italy
+  "Ferrari":      { countryOfOrigin: "IT", regionSlug: "europe" },
+  "Lamborghini":  { countryOfOrigin: "IT", regionSlug: "europe" },
+  "Maserati":     { countryOfOrigin: "IT", regionSlug: "europe" },
+  "Alfa Romeo":   { countryOfOrigin: "IT", regionSlug: "europe" },
+  "Fiat":         { countryOfOrigin: "IT", regionSlug: "europe" },
+  "Lancia":       { countryOfOrigin: "IT", regionSlug: "europe" },
+  "Pagani":       { countryOfOrigin: "IT", regionSlug: "europe" },
+  "De Tomaso":    { countryOfOrigin: "IT", regionSlug: "europe" },
+  // France
+  "Bugatti":      { countryOfOrigin: "FR", regionSlug: "europe" },
+  "Renault":      { countryOfOrigin: "FR", regionSlug: "europe" },
+  "Peugeot":      { countryOfOrigin: "FR", regionSlug: "europe" },
+  "Citroën":      { countryOfOrigin: "FR", regionSlug: "europe" },
+  "Citroen":      { countryOfOrigin: "FR", regionSlug: "europe" },
+  "DS":           { countryOfOrigin: "FR", regionSlug: "europe" },
+  "Alpine":       { countryOfOrigin: "FR", regionSlug: "europe" },
+  // Sweden
+  "Volvo":        { countryOfOrigin: "SE", regionSlug: "europe" },
+  "Saab":         { countryOfOrigin: "SE", regionSlug: "europe" },
+  "Koenigsegg":   { countryOfOrigin: "SE", regionSlug: "europe" },
+  // Czech Republic
+  "Skoda":        { countryOfOrigin: "CZ", regionSlug: "europe" },
+  "Škoda":        { countryOfOrigin: "CZ", regionSlug: "europe" },
+  // Romania
+  "Dacia":        { countryOfOrigin: "RO", regionSlug: "europe" },
+  // Spain
+  "SEAT":         { countryOfOrigin: "ES", regionSlug: "europe" },
+  // Netherlands
+  "Spyker":       { countryOfOrigin: "NL", regionSlug: "europe" },
+  // United Kingdom
+  "McLaren":      { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Aston Martin": { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Jaguar":       { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Land Rover":   { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Bentley":      { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Rolls-Royce":  { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Mini":         { countryOfOrigin: "GB", regionSlug: "uk" },
+  "MINI":         { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Lotus":        { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Morgan":       { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Noble":        { countryOfOrigin: "GB", regionSlug: "uk" },
+  "TVR":          { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Caterham":     { countryOfOrigin: "GB", regionSlug: "uk" },
+  "Ariel":        { countryOfOrigin: "GB", regionSlug: "uk" },
+  // Japan (JDM)
+  "Toyota":       { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Nissan":       { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Honda":        { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Mazda":        { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Mitsubishi":   { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Subaru":       { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Suzuki":       { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Daihatsu":     { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Isuzu":        { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Lexus":        { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Infiniti":     { countryOfOrigin: "JP", regionSlug: "jdm" },
+  "Acura":        { countryOfOrigin: "JP", regionSlug: "jdm" },
+  // South Korea
+  "Hyundai":      { countryOfOrigin: "KR", regionSlug: "east_asia" },
+  "Kia":          { countryOfOrigin: "KR", regionSlug: "east_asia" },
+  "Genesis":      { countryOfOrigin: "KR", regionSlug: "east_asia" },
+  // China
+  "BYD":          { countryOfOrigin: "CN", regionSlug: "east_asia" },
+  "Nio":          { countryOfOrigin: "CN", regionSlug: "east_asia" },
+  "NIO":          { countryOfOrigin: "CN", regionSlug: "east_asia" },
+  "Xpeng":        { countryOfOrigin: "CN", regionSlug: "east_asia" },
+  "Geely":        { countryOfOrigin: "CN", regionSlug: "east_asia" },
+  "Great Wall":   { countryOfOrigin: "CN", regionSlug: "east_asia" },
+  "Haval":        { countryOfOrigin: "CN", regionSlug: "east_asia" },
+  "Chery":        { countryOfOrigin: "CN", regionSlug: "east_asia" },
+  // Australia
+  "Holden":       { countryOfOrigin: "AU", regionSlug: "australia" },
+  "HSV":          { countryOfOrigin: "AU", regionSlug: "australia" },
+};
+
+function lookupMakeOrigin(make: string): MakeOrigin | null {
+  // Try exact match first, then case-insensitive
+  if (MAKE_ORIGIN_MAP[make]) return MAKE_ORIGIN_MAP[make];
+  const lower = make.toLowerCase();
+  for (const [key, value] of Object.entries(MAKE_ORIGIN_MAP)) {
+    if (key.toLowerCase() === lower) return value;
+  }
+  return null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -229,6 +359,99 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
     console.warn(`  Could not parse response:`, text.slice(0, 300));
     return null;
   }
+}
+
+// ── Autopublish ───────────────────────────────────────────────────────────────
+
+const AUTOPUBLISH_CONFIDENCE_THRESHOLD = 0.95;
+
+const VALID_BODY_STYLES = [
+  "coupe", "sedan", "convertible", "hatchback", "wagon",
+  "suv", "truck", "pickup", "van", "roadster", "targa", "compact", "special_purpose",
+];
+
+async function autopublish(prisma: PrismaClient, stagingId: string, tag: GeminiTag): Promise<boolean> {
+  if (!tag.make || !tag.model || !tag.year) return false;
+
+  const origin = lookupMakeOrigin(tag.make);
+  if (!origin) {
+    console.log(`    ↳ Autopublish skipped — unknown make origin for "${tag.make}"`);
+    return false;
+  }
+
+  const region = await prisma.region.findUnique({ where: { slug: origin.regionSlug } });
+  if (!region) {
+    console.log(`    ↳ Autopublish skipped — region not found: "${origin.regionSlug}"`);
+    return false;
+  }
+
+  const staging = await prisma.stagingImage.findUnique({ where: { id: stagingId } });
+  if (!staging || staging.status === "PUBLISHED") return false;
+
+  const bodyStyle = tag.body_style && VALID_BODY_STYLES.includes(tag.body_style)
+    ? tag.body_style
+    : "sedan";
+
+  const vehicle = await prisma.vehicle.create({
+    data: {
+      make: tag.make,
+      model: tag.model,
+      year: tag.year,
+      trim: tag.trim || null,
+      countryOfOrigin: origin.countryOfOrigin,
+      regionId: region.id,
+      bodyStyle: bodyStyle as never,
+      era: "modern",
+      rarity: "common",
+    },
+  });
+
+  const image = await prisma.image.create({
+    data: {
+      vehicleId: vehicle.id,
+      filename: staging.cloudinaryPublicId,
+      sourceUrl: staging.sourceUrl,
+      attribution: staging.attribution,
+      copyrightHolder: staging.adminCopyrightHolder ?? null,
+      isCropped: staging.adminIsCropped ?? false,
+      isLogoVisible: staging.adminIsLogoVisible ?? tag.is_logo_visible,
+      isModelNameVisible: staging.adminIsModelNameVisible ?? tag.is_model_name_visible,
+      hasMultipleVehicles: staging.adminHasMultipleVehicles ?? tag.has_multiple_vehicles,
+      isFaceVisible: staging.adminIsFaceVisible ?? tag.is_face_visible,
+      isVehicleUnmodified: staging.adminIsVehicleUnmodified ?? tag.is_vehicle_unmodified,
+      isActive: true,
+      isHardcoreEligible: false,
+    },
+  });
+
+  await prisma.imageStats.create({ data: { imageId: image.id } });
+
+  await prisma.stagingImage.update({
+    where: { id: stagingId },
+    data: {
+      adminMake: tag.make,
+      adminModel: tag.model,
+      adminYear: tag.year,
+      adminRegionSlug: origin.regionSlug,
+      adminCountryOfOrigin: origin.countryOfOrigin,
+      status: "PUBLISHED",
+      reviewedAt: new Date(),
+    },
+  });
+
+  await prisma.knownMake.upsert({
+    where: { name: tag.make },
+    create: { name: tag.make },
+    update: {},
+  });
+  await prisma.knownModel.upsert({
+    where: { make_name: { make: tag.make, name: tag.model } },
+    create: { make: tag.make, name: tag.model },
+    update: {},
+  });
+
+  console.log(`    ↳ Autopublished → vehicleId: ${vehicle.id}, imageId: ${image.id}`);
+  return true;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -343,6 +566,10 @@ async function main(): Promise<void> {
       const yearStr = tag.year ? String(tag.year) : "?";
       console.log(`  → ${tag.make} ${tag.model} ${yearStr} (confidence: ${tag.confidence})${tag.notes ? ` — ${tag.notes}` : ""}`);
       tagged++;
+
+      if (tag.confidence >= AUTOPUBLISH_CONFIDENCE_THRESHOLD) {
+        await autopublish(prisma, record.id, tag);
+      }
     }
 
     if (i < untagged.length - 1) {

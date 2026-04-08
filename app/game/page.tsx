@@ -5,7 +5,7 @@ import GameScreen from "../_components/GameScreen";
 export const metadata: Metadata = { title: "Autoguessr — Play" };
 
 interface Props {
-  searchParams: Promise<{ mode?: string; username?: string; filter?: string }>;
+  searchParams: Promise<{ mode?: string; username?: string; filter?: string; cf_token?: string }>;
 }
 
 export default async function Page({ searchParams }: Props) {
@@ -16,6 +16,7 @@ export default async function Page({ searchParams }: Props) {
       mode={params.mode}
       username={params.username ?? ""}
       filter={params.filter ?? ""}
+      cfToken={params.cf_token}
     />
   );
 }
