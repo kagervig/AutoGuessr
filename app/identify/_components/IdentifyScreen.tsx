@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Navbar } from "@/app/components/layout/Navbar";
 
 const CONFIRMATION_THRESHOLD = 5;
 const DOWNVOTE_REMOVAL_THRESHOLD = 5;
@@ -49,22 +51,24 @@ function ProgressField({ label, field }: { label: string; field: FieldAgreement 
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm text-gray-600">{label}</span>
+        <span className="text-sm text-muted-foreground">{label}</span>
         <div className="flex items-center gap-2">
           {field.value !== null && (
-            <span className={`text-sm font-medium ${field.confirmed ? "text-green-700" : "text-gray-700"}`}>
+            <span className={`text-sm font-bold ${field.confirmed ? "text-green-400" : "text-white"}`}>
               {String(field.value)}
             </span>
           )}
-          <span className="text-xs text-gray-400">{field.count}/{CONFIRMATION_THRESHOLD}</span>
+          <span className="text-xs text-muted-foreground tabular-nums">{field.count}/{CONFIRMATION_THRESHOLD}</span>
           {field.confirmed && (
-            <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">confirmed</span>
+            <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-1.5 py-0.5 rounded-full font-bold tracking-wider uppercase">
+              confirmed
+            </span>
           )}
         </div>
       </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${field.confirmed ? "bg-green-500" : "bg-blue-400"}`}
+          className={`h-full rounded-full transition-all duration-500 ${field.confirmed ? "bg-green-500" : "bg-primary"}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -106,25 +110,25 @@ function SuggestionCard({
   ].filter(Boolean);
 
   return (
-    <div className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${isOwn ? "bg-blue-50 border border-blue-200" : "bg-gray-50"}`}>
+    <div className={`flex items-center gap-3 rounded-lg px-3 py-2.5 border ${isOwn ? "bg-primary/10 border-primary/30" : "bg-white/5 border-white/10"}`}>
       {/* Vote controls */}
       <div className="flex flex-col items-center gap-0.5 shrink-0">
         <button
           onClick={() => vote(true)}
           disabled={isOwn || voting || !username.trim()}
           aria-label="Upvote"
-          className="text-gray-400 hover:text-green-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors leading-none text-base"
+          className="text-muted-foreground hover:text-green-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors leading-none text-base"
         >
           ▲
         </button>
-        <span className={`text-xs font-bold tabular-nums ${suggestion.netVotes > 0 ? "text-green-600" : suggestion.netVotes < 0 ? "text-red-500" : "text-gray-400"}`}>
+        <span className={`text-xs font-bold tabular-nums ${suggestion.netVotes > 0 ? "text-green-400" : suggestion.netVotes < 0 ? "text-red-400" : "text-muted-foreground"}`}>
           {suggestion.netVotes}
         </span>
         <button
           onClick={() => vote(false)}
           disabled={isOwn || voting || !username.trim()}
           aria-label="Downvote"
-          className="text-gray-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors leading-none text-base"
+          className="text-muted-foreground hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors leading-none text-base"
         >
           ▼
         </button>
@@ -132,10 +136,10 @@ function SuggestionCard({
 
       {/* Suggestion content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 truncate">
-          {parts.length > 0 ? parts.join(" ") : <span className="italic text-gray-400">No details</span>}
+        <p className="text-sm font-bold text-white truncate">
+          {parts.length > 0 ? parts.join(" ") : <span className="italic text-muted-foreground font-normal">No details</span>}
         </p>
-        <p className="text-xs text-gray-400 mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5">
           {isOwn ? "Your suggestion" : suggestion.username}
           {` · ${suggestion.upvotes}↑ ${suggestion.downvotes}↓`}
         </p>
@@ -215,43 +219,69 @@ export default function IdentifyScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]">
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold">Help identify cars</h1>
-            <p className="text-sm text-gray-500">Vote on suggestions or add your own. 5 agreements confirms a field.</p>
-          </div>
-          <a href="/" className="text-sm text-gray-400 hover:text-gray-600">← Play</a>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background text-foreground bg-noise">
+      <Navbar />
 
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+      <div className="pt-24 pb-16 max-w-3xl mx-auto px-4 sm:px-6 space-y-10">
+
+        {/* Page heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex items-center gap-4 mb-2">
+            <h1 className="text-3xl font-display font-black tracking-widest text-white uppercase">
+              Community ID
+            </h1>
+            <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Work together to identify mystery cars. Vote on suggestions or add your own — 5 agreements confirms a field.
+          </p>
+        </motion.div>
+
         {/* Username */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Your username</label>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="glass-panel rounded-xl p-5"
+        >
+          <label className="block text-xs font-display font-black tracking-widest text-muted-foreground uppercase mb-3">
+            Driver Tag
+          </label>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter your game username"
-            className="w-full sm:w-72 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400"
+            placeholder="ENTER ALIAS"
+            className="w-full sm:w-72 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-white placeholder:text-white/20 focus:outline-none focus:border-primary transition-colors"
           />
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-2">
             Required to submit or vote. Suggestions with {DOWNVOTE_REMOVAL_THRESHOLD}+ downvotes are hidden.
           </p>
-        </div>
+        </motion.div>
 
-        {loading && <p className="text-sm text-gray-400">Loading…</p>}
-
-        {!loading && images.length === 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-            <p className="text-gray-500">No images need identifying right now.</p>
-            <p className="text-sm text-gray-400 mt-1">Check back later or <a href="/" className="underline">play the game</a>.</p>
-          </div>
+        {loading && (
+          <p className="text-sm text-muted-foreground text-center py-8">Loading…</p>
         )}
 
-        {images.map((img) => {
+        {!loading && images.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="glass-panel rounded-xl p-10 text-center"
+          >
+            <p className="text-white font-bold">No images need identifying right now.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Check back later or{" "}
+              <a href="/" className="text-primary hover:underline">play the game</a>.
+            </p>
+          </motion.div>
+        )}
+
+        {images.map((img, i) => {
           const form = getForm(img.id);
           const isSubmitted = submitted.has(img.id);
           const isSubmitting = submitting === img.id;
@@ -259,28 +289,38 @@ export default function IdentifyScreen() {
           const hasAnySuggestions = img.suggestions.length > 0;
 
           return (
-            <div key={img.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <motion.div
+              key={img.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 + i * 0.05 }}
+              className="glass-panel rounded-xl overflow-hidden"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={img.imageUrl}
                 alt="Mystery car"
-                className="w-full aspect-video object-cover bg-gray-100"
+                className="w-full aspect-video object-cover"
               />
 
-              <div className="p-4 space-y-4">
+              <div className="p-5 space-y-5">
                 {/* AI hint */}
                 {(img.ai.make || img.ai.model) && (
-                  <p className="text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5">
+                  <p className="text-xs text-primary bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
                     AI hint: {[img.ai.year, img.ai.make, img.ai.model].filter(Boolean).join(" ")}
                   </p>
                 )}
 
-                {/* Suggestions with voting */}
+                {/* Suggestions */}
                 {hasAnySuggestions && (
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Suggestions · {img.suggestions.length} {img.suggestions.length !== 1 ? "entries" : "entry"}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-xs font-display font-black tracking-widest text-muted-foreground uppercase">
+                        Suggestions
+                      </p>
+                      <span className="text-xs text-muted-foreground">{img.suggestions.length} {img.suggestions.length !== 1 ? "entries" : "entry"}</span>
+                      <div className="flex-1 h-px bg-white/10" />
+                    </div>
                     {img.suggestions.map((s) => (
                       <SuggestionCard
                         key={s.id}
@@ -295,8 +335,13 @@ export default function IdentifyScreen() {
 
                 {/* Confirmation progress */}
                 {hasAnySuggestions && (
-                  <div className="space-y-2 pt-1 border-t border-gray-100">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Confirmation progress</p>
+                  <div className="space-y-3 pt-1 border-t border-white/10">
+                    <div className="flex items-center gap-3">
+                      <p className="text-xs font-display font-black tracking-widest text-muted-foreground uppercase">
+                        Progress
+                      </p>
+                      <div className="flex-1 h-px bg-white/10" />
+                    </div>
                     {img.agreements.make.value !== null && <ProgressField label="Make" field={img.agreements.make} />}
                     {img.agreements.model.value !== null && <ProgressField label="Model" field={img.agreements.model} />}
                     {img.agreements.year.value !== null && <ProgressField label="Year" field={img.agreements.year} />}
@@ -304,11 +349,14 @@ export default function IdentifyScreen() {
                   </div>
                 )}
 
-                {/* Suggestion form — hidden if user already has one (show update option instead) */}
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    {userSuggestion || isSubmitted ? "Update your suggestion" : "Add a suggestion"}
-                  </p>
+                {/* Suggestion form */}
+                <div className="space-y-3 pt-1 border-t border-white/10">
+                  <div className="flex items-center gap-3">
+                    <p className="text-xs font-display font-black tracking-widest text-muted-foreground uppercase">
+                      {userSuggestion || isSubmitted ? "Update Suggestion" : "Add Suggestion"}
+                    </p>
+                    <div className="flex-1 h-px bg-white/10" />
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     {(["make", "model", "trim"] as const).map((field) => (
                       <input
@@ -317,7 +365,7 @@ export default function IdentifyScreen() {
                         value={form[field]}
                         onChange={(e) => setField(img.id, field, e.target.value)}
                         placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                        className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400"
+                        className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary transition-colors"
                       />
                     ))}
                     <input
@@ -325,24 +373,24 @@ export default function IdentifyScreen() {
                       value={form.year}
                       onChange={(e) => setField(img.id, "year", e.target.value)}
                       placeholder="Year"
-                      className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400"
+                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary transition-colors"
                     />
                   </div>
 
                   {errors[img.id] && (
-                    <p className="text-xs text-red-600 mt-1">{errors[img.id]}</p>
+                    <p className="text-xs text-red-400">{errors[img.id]}</p>
                   )}
 
                   <button
                     onClick={() => submit(img.id)}
                     disabled={isSubmitting || !username.trim()}
-                    className="mt-2 w-full text-sm bg-gray-900 text-white rounded-lg px-3 py-2 hover:bg-gray-700 disabled:opacity-50"
+                    className="w-full text-sm font-display font-black tracking-widest uppercase bg-primary text-white rounded-lg px-3 py-2.5 hover:bg-primary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
-                    {isSubmitting ? "Submitting…" : userSuggestion || isSubmitted ? "Update suggestion" : "Submit suggestion"}
+                    {isSubmitting ? "Submitting…" : userSuggestion || isSubmitted ? "Update Suggestion" : "Submit Suggestion"}
                   </button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
