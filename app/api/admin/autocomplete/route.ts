@@ -78,13 +78,31 @@ export async function GET(request: NextRequest) {
     }
 
     case "make_defaults": {
-      const rows = await prisma.vehicle.findMany({
-        select: { make: true, countryOfOrigin: true, region: { select: { slug: true } } },
-        distinct: ["make"],
-        orderBy: { make: "asc" },
-      });
+      const [vehicleRows, stagingRows] = await Promise.all([
+        prisma.vehicle.findMany({
+          select: { make: true, countryOfOrigin: true, region: { select: { slug: true } } },
+          distinct: ["make"],
+          orderBy: { make: "asc" },
+        }),
+        prisma.stagingImage.findMany({
+          where: {
+            adminMake: { not: null },
+            adminCountryOfOrigin: { not: null },
+            adminRegionSlug: { not: null },
+          },
+          select: { adminMake: true, adminCountryOfOrigin: true, adminRegionSlug: true },
+          distinct: ["adminMake"],
+        }),
+      ]);
       const defaults: Record<string, { country: string; regionSlug: string }> = {};
-      for (const row of rows) {
+      // Staging data first (lower precedence)
+      for (const row of stagingRows) {
+        if (row.adminMake && row.adminCountryOfOrigin && row.adminRegionSlug) {
+          defaults[row.adminMake] = { country: row.adminCountryOfOrigin, regionSlug: row.adminRegionSlug };
+        }
+      }
+      // Vehicle data overwrites staging (higher precedence)
+      for (const row of vehicleRows) {
         defaults[row.make] = { country: row.countryOfOrigin, regionSlug: row.region.slug };
       }
       return Response.json(defaults);
