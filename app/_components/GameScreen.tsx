@@ -71,6 +71,7 @@ interface PointsBreakdown {
   makePoints: number;
   modelPoints: number;
   yearBonus: number | null;
+  yearDelta?: number | null;
   timeBonus: number;
   modeMultiplier: number;
   proBonus: number;
@@ -168,7 +169,12 @@ function RoundResult({
               )}
               {reveal.breakdown.yearBonus != null && reveal.breakdown.yearBonus > 0 && (
                 <div className="flex justify-between text-white/70">
-                  <span>Year</span>
+                  <span>
+                    Year
+                    {reveal.breakdown.yearDelta != null && reveal.breakdown.yearDelta > 0 && (
+                      <span className="text-white/40 ml-1">({reveal.breakdown.yearDelta} off)</span>
+                    )}
+                  </span>
                   <span>+{reveal.breakdown.yearBonus}</span>
                 </div>
               )}
@@ -443,7 +449,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
       }
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, yearDelta: data.yearDelta, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
     } catch {
       resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
@@ -472,7 +478,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
       }
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, yearDelta: data.yearDelta, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
     } catch {
       resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
@@ -506,7 +512,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
       }
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, yearDelta: data.yearDelta, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
     } catch {
       resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
