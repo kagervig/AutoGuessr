@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     where: { id: roundId },
     include: {
       guess: true,
-      session: { select: { mode: true } },
+      session: { select: { mode: true, sessionToken: true } },
       image: {
         select: {
           id: true,
@@ -58,6 +58,11 @@ export async function POST(request: NextRequest) {
 
   if (round.guess) {
     return Response.json({ error: "Round already has a guess" }, { status: 409 });
+  }
+
+  const cookie = request.cookies.get(`st_${round.gameId}`)?.value;
+  if (!cookie || cookie !== round.session.sessionToken) {
+    return Response.json({ error: "Unauthorised" }, { status: 401 });
   }
 
   const vehicle = round.image.vehicle;
