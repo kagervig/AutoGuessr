@@ -42,7 +42,7 @@ function mockRound(overrides: object = {}) {
     guess: null,
     timeLimitMs: null,
     session: {
-      mode: "hard",
+      mode: "standard",
       sessionToken: TOKEN,
     },
     image: {

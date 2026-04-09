@@ -12,7 +12,7 @@ const MODE_LABELS: Record<string, string> = Object.fromEntries(
   MODES.map((m) => [m.id, m.label])
 );
 
-const HARD_MODES = ["hard", "hardcore", "competitive"];
+const HARD_MODES = ["standard", "hardcore", "time_attack"];
 
 interface GuessData {
   isCorrect: boolean;
