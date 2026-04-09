@@ -1,3 +1,5 @@
+export const ROUNDS_PER_GAME = parseInt(process.env.ROUNDS_PER_GAME ?? "10", 10);
+
 export const MODES = [
   {
     id: "easy",
