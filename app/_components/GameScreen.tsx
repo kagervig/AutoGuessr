@@ -13,6 +13,10 @@ import {
   Flag,
   RotateCcw,
   Trophy,
+  CheckCircle2,
+  Target,
+  Calendar,
+  Clock,
 } from "lucide-react";
 import { TIME_LIMITS, shuffle } from "@/app/lib/game";
 import { MODES } from "@/app/lib/constants";
@@ -153,53 +157,74 @@ function RoundResult({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 mb-6 text-left"
+            className="w-full mb-6 text-left bg-card border border-white/10 rounded-2xl p-4"
           >
-            <div className="space-y-1 text-sm font-mono">
+            <p className="text-xs font-mono tracking-widest uppercase text-white/30 mb-2">
+              Round score
+            </p>
+            <div className="space-y-2">
               {reveal.breakdown.makePoints > 0 && (
-                <div className="flex justify-between text-white/70">
-                  <span>Make</span>
-                  <span>+{reveal.breakdown.makePoints}</span>
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 shrink-0 text-white/50" />
+                    <span className="text-sm text-white/80">Correct make</span>
+                  </div>
+                  <span className="text-sm font-black text-white">+{reveal.breakdown.makePoints}</span>
                 </div>
               )}
               {reveal.breakdown.modelPoints > 0 && (
-                <div className="flex justify-between text-white/70">
-                  <span>Model</span>
-                  <span>+{reveal.breakdown.modelPoints}</span>
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <Target className="w-5 h-5 shrink-0 text-white/50" />
+                    <span className="text-sm text-white/80">Correct model</span>
+                  </div>
+                  <span className="text-sm font-black text-white">+{reveal.breakdown.modelPoints}</span>
                 </div>
               )}
               {reveal.breakdown.yearBonus != null && reveal.breakdown.yearBonus > 0 && (
-                <div className="flex justify-between text-white/70">
-                  <span>
-                    Year
-                    {reveal.breakdown.yearDelta != null && reveal.breakdown.yearDelta > 0 && (
-                      <span className="text-white/40 ml-1">({reveal.breakdown.yearDelta} off)</span>
-                    )}
-                  </span>
-                  <span>+{reveal.breakdown.yearBonus}</span>
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-5 h-5 shrink-0 text-white/50" />
+                    <span className="text-sm text-white/80">
+                      Year bonus
+                      {reveal.breakdown.yearDelta != null && reveal.breakdown.yearDelta > 0 && (
+                        <span className="text-white/40 ml-1">({reveal.breakdown.yearDelta} off)</span>
+                      )}
+                    </span>
+                  </div>
+                  <span className="text-sm font-black text-white">+{reveal.breakdown.yearBonus}</span>
                 </div>
               )}
               {reveal.breakdown.timeBonus > 0 && (
-                <div className="flex justify-between text-white/70">
-                  <span>Speed bonus</span>
-                  <span>+{reveal.breakdown.timeBonus}</span>
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-5 h-5 shrink-0 text-white/50" />
+                    <span className="text-sm text-white/80">Speed bonus</span>
+                  </div>
+                  <span className="text-sm font-black text-white">+{reveal.breakdown.timeBonus}</span>
                 </div>
               )}
               {reveal.breakdown.modeMultiplier > 1 && (
-                <div className="flex justify-between text-yellow-400/80 pt-1 border-t border-white/10">
-                  <span>Difficulty ×{reveal.breakdown.modeMultiplier.toFixed(1)}</span>
-                  <span></span>
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <Star className="w-5 h-5 shrink-0 text-yellow-400/70" />
+                    <span className="text-sm text-yellow-400/80">Difficulty multiplier</span>
+                  </div>
+                  <span className="text-sm font-black text-yellow-400">×{reveal.breakdown.modeMultiplier.toFixed(1)}</span>
                 </div>
               )}
               {reveal.breakdown.proBonus > 0 && (
-                <div className="flex justify-between text-yellow-400/80">
-                  <span>Rare find</span>
-                  <span>+{reveal.breakdown.proBonus}</span>
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <Zap className="w-5 h-5 shrink-0 text-yellow-400/70" />
+                    <span className="text-sm text-yellow-400/80">Rare find</span>
+                  </div>
+                  <span className="text-sm font-black text-yellow-400">+{reveal.breakdown.proBonus}</span>
                 </div>
               )}
-              <div className="flex justify-between text-primary font-black text-base pt-2 border-t border-white/20">
-                <span>Total</span>
-                <span>+{reveal.pointsEarned.toLocaleString()}</span>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
+                <span className="text-sm font-black text-primary uppercase tracking-widest">Total</span>
+                <span className="text-base font-black text-primary">+{reveal.pointsEarned.toLocaleString()}</span>
               </div>
             </div>
           </motion.div>
