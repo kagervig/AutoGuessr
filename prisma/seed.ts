@@ -29,9 +29,12 @@ const regions = [
   { slug: "north_america", label: "North America" },
   { slug: "europe", label: "Europe" },
   { slug: "east_asia", label: "East Asia" },
+  { slug: "south_asia", label: "South Asia" },
   { slug: "jdm", label: "JDM" },
   { slug: "south_america", label: "South America" },
   { slug: "australia", label: "Australia" },
+  { slug: "nz_aus", label: "NZ / Australia" },
+  { slug: "africa", label: "Africa" },
   { slug: "uk", label: "United Kingdom" },
 ];
 
