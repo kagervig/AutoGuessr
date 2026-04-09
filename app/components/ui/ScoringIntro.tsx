@@ -2,55 +2,124 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import {
+  ShieldCheck,
+  SlidersHorizontal,
+  Gauge,
+  Timer,
+  Flame,
+  Dumbbell,
+  CheckCircle2,
+  Target,
+  Clock,
+  Calendar,
+  Star,
+  Zap,
+  X,
+  ChevronRight,
+} from "lucide-react";
+import { cn } from "@/app/lib/utils";
 
-export interface ModeIntroConfig {
-  heading: string;
-  description: string;
-  pills: string[];
+interface ScoreRow {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
 }
+
+interface ModeIntroConfig {
+  heading: string;
+  icon: React.ReactNode;
+  description: string;
+  difficulty: number; // 1–5
+  difficultyLabel: string;
+  rows: ScoreRow[];
+  tip: string;
+}
+
+const ROW_ICON_CLASS = "w-5 h-5 shrink-0 text-white/50";
 
 const MODE_INTROS: Record<string, ModeIntroConfig> = {
   easy: {
     heading: "Easy Mode",
-    description: "Pick the right car from 4 choices. Points are scored as follows:",
-    pills: ["Make +300", "Model +400", "Speed bonus up to +100", "×1.0 multiplier"],
+    icon: <ShieldCheck className="w-8 h-8 text-green-400" />,
+    description: "Pick the right car from 4 multiple-choice answers.",
+    difficulty: 1,
+    difficultyLabel: "Beginner",
+    rows: [
+      { icon: <CheckCircle2 className={ROW_ICON_CLASS} />, label: "Correct make",        value: "+300 pts" },
+      { icon: <Target       className={ROW_ICON_CLASS} />, label: "Correct model",       value: "+400 pts" },
+      { icon: <Clock        className={ROW_ICON_CLASS} />, label: "Speed bonus",         value: "up to +100 pts" },
+      { icon: <Star         className={ROW_ICON_CLASS} />, label: "Difficulty multiplier", value: "×1.0" },
+    ],
+    tip: "Focus on the badge first — it's usually the quickest tell.",
   },
   custom: {
     heading: "Custom Mode",
-    description:
-      "Type the make and model, autocomplete helps to speed things up. Each scores independently — you get credit for what you know, even if you only nail one.",
-    pills: ["Make +300", "Model +400", "Speed bonus up to +100", "×1.0 multiplier"],
+    icon: <SlidersHorizontal className="w-8 h-8 text-blue-400" />,
+    description: "Type make and model separately. Autocomplete helps.",
+    difficulty: 2,
+    difficultyLabel: "Intermediate",
+    rows: [
+      { icon: <CheckCircle2 className={ROW_ICON_CLASS} />, label: "Correct make",        value: "+300 pts" },
+      { icon: <Target       className={ROW_ICON_CLASS} />, label: "Correct model",       value: "+400 pts" },
+      { icon: <Clock        className={ROW_ICON_CLASS} />, label: "Speed bonus",         value: "up to +100 pts" },
+      { icon: <Star         className={ROW_ICON_CLASS} />, label: "Difficulty multiplier", value: "×1.0" },
+    ],
+    tip: "Make and model score independently — partial credit counts.",
   },
   standard: {
     heading: "Standard Mode",
-    description:
-      "Type the make, model, and year - autocomplete helps to speed things up. Within 5 years earns bonus points. Everything is tallied and multiplied by ×1.7.",
-    pills: ["Make +300", "Model +400", "Year bonus up to +200", "Speed +100", "×1.7 multiplier"],
+    icon: <Gauge className="w-8 h-8 text-yellow-400" />,
+    description: "Type make, model, and year. Autocomplete helps.",
+    difficulty: 3,
+    difficultyLabel: "Advanced",
+    rows: [
+      { icon: <CheckCircle2 className={ROW_ICON_CLASS} />, label: "Correct make",        value: "+300 pts" },
+      { icon: <Target       className={ROW_ICON_CLASS} />, label: "Correct model",       value: "+400 pts" },
+      { icon: <Calendar     className={ROW_ICON_CLASS} />, label: "Year bonus",          value: "up to +200 pts" },
+      { icon: <Clock        className={ROW_ICON_CLASS} />, label: "Speed bonus",         value: "up to +100 pts" },
+      { icon: <Star         className={ROW_ICON_CLASS} />, label: "Difficulty multiplier", value: "×1.7" },
+    ],
+    tip: "Commit to a year. Being within 2 still earns +120.",
   },
   time_attack: {
     heading: "Time Attack",
-    description:
-      "30 seconds per round. Same scoring as Standard — but with half the time and a ×2.0 multiplier. Every second you sit on costs points.",
-    pills: ["Make +300", "Model +400", "Year bonus up to +200", "Speed +100", "×2.0 multiplier"],
+    icon: <Timer className="w-8 h-8 text-orange-400" />,
+    description: "30 seconds per round. Same as Standard, but faster.",
+    difficulty: 4,
+    difficultyLabel: "Expert",
+    rows: [
+      { icon: <CheckCircle2 className={ROW_ICON_CLASS} />, label: "Correct make",        value: "+300 pts" },
+      { icon: <Target       className={ROW_ICON_CLASS} />, label: "Correct model",       value: "+400 pts" },
+      { icon: <Calendar     className={ROW_ICON_CLASS} />, label: "Year bonus",          value: "up to +200 pts" },
+      { icon: <Clock        className={ROW_ICON_CLASS} />, label: "Speed bonus",         value: "up to +100 pts" },
+      { icon: <Star         className={ROW_ICON_CLASS} />, label: "Difficulty multiplier", value: "×2.0" },
+    ],
+    tip: "Lock in early — every second you hesitate eats your speed bonus.",
   },
   hardcore: {
     heading: "Hardcore Mode",
-    description:
-      "Panels slowly reveal the car. Guess before all 9 appear for a bigger multiplier — up to ×4.0 on the first panel, down to ×1.0 on the last. Bonus points for guessing the year (+/- 5 years).",
-    pills: [
-      "Make +300",
-      "Model +400",
-      "Year bonus up to +200",
-      "Speed +100",
-      "×1.0–×4.0 multiplier",
+    icon: <Flame className="w-8 h-8 text-red-400" />,
+    description: "Panels slowly reveal the car. Guess early for a bigger multiplier.",
+    difficulty: 5,
+    difficultyLabel: "Extreme",
+    rows: [
+      { icon: <CheckCircle2 className={ROW_ICON_CLASS} />, label: "Correct make",        value: "+300 pts" },
+      { icon: <Target       className={ROW_ICON_CLASS} />, label: "Correct model",       value: "+400 pts" },
+      { icon: <Calendar     className={ROW_ICON_CLASS} />, label: "Year bonus",          value: "up to +200 pts" },
+      { icon: <Clock        className={ROW_ICON_CLASS} />, label: "Speed bonus",         value: "up to +100 pts" },
+      { icon: <Star         className={ROW_ICON_CLASS} />, label: "Difficulty multiplier", value: "×1.0–×4.0" },
     ],
+    tip: "Guess after the first panel for the maximum ×4.0 multiplier.",
   },
   practice: {
     heading: "Practice Mode",
-    description:
-      "No score, no pressure. Use it to train your eye on makes and models without it counting against you.",
-    pills: ["No points earned", "Nothing on the leaderboard"],
+    icon: <Dumbbell className="w-8 h-8 text-muted-foreground" />,
+    description: "No score, no pressure. Train your eye without it counting.",
+    difficulty: 0,
+    difficultyLabel: "No pressure",
+    rows: [],
+    tip: "Take your time and learn what to look for.",
   },
 };
 
@@ -78,58 +147,106 @@ export function ScoringIntro({ mode, onDismiss }: Props) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm px-4 pb-6 sm:pb-0"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm px-4 pb-4 sm:pb-0"
     >
       <motion.div
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 280, damping: 24 }}
-        className="w-full max-w-sm bg-card border border-white/10 rounded-3xl p-7 space-y-4 shadow-2xl"
+        className="relative w-full max-w-sm bg-card border border-white/10 rounded-3xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100dvh-2rem)]"
       >
-        <div className="space-y-1">
-          <p className="text-xs font-mono tracking-widest uppercase text-primary">
+        {/* Close */}
+        <button
+          onClick={onDismiss}
+          aria-label="Close"
+          className="absolute top-4 right-4 text-white/30 hover:text-white transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Header */}
+        <div className="mb-5">
+          <p className="text-xs font-mono tracking-widest uppercase text-primary mb-2">
             How scoring works
           </p>
-          <h2 className="text-2xl font-black tracking-widest uppercase">{config.heading}</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed pt-1">{config.description}</p>
+          <div className="flex items-center gap-3 mb-3">
+            {config.icon}
+            <h2 className="text-3xl font-black tracking-widest uppercase leading-none">
+              {config.heading}
+            </h2>
+          </div>
+          <p className="text-sm text-white/60 leading-relaxed">{config.description}</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {config.pills.map((pill) => (
-            <span
-              key={pill}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-mono text-white/70"
-            >
-              {pill}
+        {/* Difficulty meter */}
+        {config.difficulty > 0 && (
+          <div className="flex items-center gap-2 mb-5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-2 flex-1 rounded-sm",
+                  i < config.difficulty ? "bg-green-400" : "bg-white/10"
+                )}
+              />
+            ))}
+            <span className="text-sm font-bold text-white ml-1 whitespace-nowrap">
+              {config.difficultyLabel}
             </span>
-          ))}
+          </div>
+        )}
+
+        {/* Points breakdown */}
+        {config.rows.length > 0 && (
+          <div className="mb-4">
+            <p className="text-xs font-mono tracking-widest uppercase text-white/30 mb-2">
+              Points breakdown
+            </p>
+            <div className="space-y-2">
+              {config.rows.map((row) => (
+                <div
+                  key={row.label}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    {row.icon}
+                    <span className="text-sm text-white/80">{row.label}</span>
+                  </div>
+                  <span className="text-sm font-black text-white whitespace-nowrap">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tip */}
+        <div className="flex items-start gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3 mb-5">
+          <Zap className="w-5 h-5 shrink-0 text-yellow-400 mt-0.5" />
+          <p className="text-sm text-white/70">
+            <span className="font-bold text-yellow-400">Tip: </span>
+            {config.tip}
+          </p>
         </div>
 
-        <Link
-          href="/scoring"
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors py-2"
-        >
-          <span className="underline underline-offset-2">Full scoring breakdown</span>
-          <span>→</span>
-        </Link>
-
-        <label className="flex items-center gap-4 cursor-pointer group py-2">
+        {/* Don't show again */}
+        <label className="flex items-center gap-3 cursor-pointer group mb-4 py-1">
           <input
             type="checkbox"
             checked={dontShowAgain}
             onChange={(e) => setDontShowAgain(e.target.checked)}
             className="w-5 h-5 rounded accent-primary cursor-pointer shrink-0"
           />
-          <span className="text-sm text-muted-foreground group-hover:text-white transition-colors">
+          <span className="text-sm text-white/50 group-hover:text-white transition-colors">
             Don&apos;t show this again
           </span>
         </label>
 
+        {/* CTA */}
         <button
           onClick={handleStart}
-          className="w-full bg-primary text-white font-black tracking-widest uppercase py-3 rounded-full hover:brightness-110 transition-all"
+          className="w-full flex items-center justify-center gap-2 bg-primary text-white font-black tracking-widest uppercase py-4 rounded-2xl hover:brightness-110 transition-all text-base"
         >
-          Let&apos;s Go
+          Let&apos;s Go <ChevronRight className="w-5 h-5" />
         </button>
       </motion.div>
     </motion.div>
