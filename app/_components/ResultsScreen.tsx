@@ -126,12 +126,12 @@ function InitialsEntry({
   return (
     <div className="px-6 py-5 border-t border-white/10 flex flex-col items-center text-center">
       <div className="flex items-center gap-2 mb-1">
-        <Trophy className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="text-xs font-mono tracking-widest uppercase text-muted-foreground">
+        <Trophy className="w-7 h-7 text-muted-foreground" />
+        <span className="text-lg sm:text-xl font-mono tracking-widest uppercase text-muted-foreground">
           Submit to Leaderboard
         </span>
       </div>
-      <p className="text-sm text-muted-foreground mb-3">Enter your initials</p>
+      <p className="text-base text-muted-foreground mb-3">Enter your initials</p>
       <div className="flex items-center gap-2">
         {inputRefs.map((ref, i) => (
           <input
@@ -145,7 +145,7 @@ function InitialsEntry({
             onKeyDown={(e) => handleKeyDown(i, e)}
             aria-label={`Initial ${i + 1}`}
             className={cn(
-              "w-14 h-14 rounded-xl border-2 bg-white/5 text-center text-3xl font-black font-mono uppercase tracking-wider text-white transition-colors outline-none shrink-0",
+              "w-10 h-10 sm:w-14 sm:h-14 aspect-square rounded-2xl border-2 bg-white/5 text-center text-xl sm:text-3xl font-black font-mono uppercase tracking-wider text-white transition-colors outline-none shrink-0",
               letters[i]
                 ? "border-primary"
                 : "border-white/20 focus:border-primary/60"
@@ -156,7 +156,7 @@ function InitialsEntry({
         <button
           onClick={submit}
           disabled={!canSubmit}
-          className="h-14 px-6 bg-primary text-white font-black tracking-widest uppercase rounded-xl hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-10 sm:h-14 px-4 sm:px-6 bg-primary text-white font-black tracking-widest uppercase text-sm sm:text-base rounded-xl hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {submitting ? "Saving…" : "Submit"}
         </button>
@@ -172,7 +172,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
   const [error, setError] = useState<string | null>(null);
   const [initialsSubmitted, setInitialsSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(true);
 
   async function handleShare(score: number, grade: string) {
     const url = window.location.href;
@@ -230,7 +230,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 space-y-4">
+      <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 space-y-4">
 
         {/* Main card */}
         <motion.div
@@ -239,18 +239,18 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
           className="glass-panel rounded-3xl border border-white/10 overflow-hidden"
         >
           {/* Card header */}
-          <div className="flex items-center justify-between px-6 pt-6 pb-5">
-            <div className="flex items-center gap-2">
-              <Flag className="w-5 h-5 text-primary" />
-              <h1 className="text-lg sm:text-xl font-black tracking-widest uppercase">Race Over</h1>
+          <div className="flex items-center justify-center gap-4 px-6 pt-6 pb-5">
+            <div className="rounded-2xl bg-primary/20 p-4 shrink-0">
+              <Flag className="w-10 h-10 text-primary" />
             </div>
-            <span className="border border-white/30 rounded-full text-white font-bold tracking-widest uppercase text-xs px-3 py-1.5">
-              {modeLabel}
-            </span>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-widest uppercase leading-tight">Race Over</h1>
+              <p className="text-lg sm:text-xl font-bold tracking-widest uppercase text-muted-foreground">{modeLabel} Mode</p>
+            </div>
           </div>
 
           {/* Score + Speed Rating */}
-          <div className="grid grid-cols-2 border-t border-white/10">
+          <div className="grid grid-cols-[2fr_3fr] sm:grid-cols-2 border-t border-white/10">
             <div className="flex flex-col items-center justify-center py-8 px-4 border-r border-white/10">
               <div className={cn("text-7xl sm:text-8xl font-black leading-none mb-3", gradeColor)}>
                 {grade}
@@ -271,7 +271,12 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
               )}
             </div>
             <div className="flex flex-col items-center justify-center py-8 px-4">
-              <Tachometer score={score} maxScore={approxMax} size={160} />
+              <div className="sm:hidden">
+                <Tachometer score={score} maxScore={approxMax} size={200} />
+              </div>
+              <div className="hidden sm:block">
+                <Tachometer score={score} maxScore={approxMax} size={320} />
+              </div>
               <p className="text-xs text-muted-foreground font-mono tracking-widest mt-3 uppercase">
                 Speed Rating
               </p>
@@ -290,15 +295,15 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="px-6 py-5 border-t border-white/10 space-y-2"
+              className="px-6 py-5 border-t border-white/10 space-y-2 flex flex-col items-center text-center"
             >
-              <div className="flex items-center gap-2 text-green-400 text-sm font-bold tracking-wider uppercase">
-                <CheckCircle className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-green-400 text-lg sm:text-xl font-bold tracking-wider uppercase">
+                <CheckCircle className="w-5 h-5" />
                 Score saved to leaderboard
               </div>
               <button
                 onClick={() => router.push(`/leaderboard?mode=${mode}`)}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors"
+                className="flex items-center gap-2 text-base text-muted-foreground hover:text-white transition-colors underline underline-offset-2"
               >
                 <Trophy className="w-4 h-4" /> View leaderboard
               </button>
@@ -312,20 +317,20 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
                 const params = new URLSearchParams({ mode, ...(username ? { username } : {}) });
                 router.push(`/game?${params.toString()}`);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-3 py-3 rounded-full hover:brightness-110 transition-all text-sm"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-3 py-3 rounded-full hover:brightness-110 transition-all text-xs sm:text-sm"
             >
               <RotateCcw className="w-4 h-4 shrink-0" /> Play Again
             </button>
             <button
               onClick={() => handleShare(score, grade)}
-              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-3 py-3 rounded-full hover:bg-white/10 transition-all text-sm"
+              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-3 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
             >
               <Share2 className="w-4 h-4 shrink-0" />
               {copied ? "Copied!" : "Share"}
             </button>
             <button
               onClick={() => router.push("/")}
-              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-3 py-3 rounded-full hover:bg-white/10 transition-all text-sm"
+              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-3 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
             >
               <ArrowLeft className="w-4 h-4 shrink-0" /> Garage
             </button>
