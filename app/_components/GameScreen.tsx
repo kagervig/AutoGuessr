@@ -17,6 +17,7 @@ import {
 import { TIME_LIMITS, shuffle } from "@/app/lib/game";
 import { MODES } from "@/app/lib/constants";
 import { Tachometer } from "@/app/components/ui/Tachometer";
+import { ScoringIntro, shouldShowIntro } from "@/app/components/ui/ScoringIntro";
 import { cn } from "@/app/lib/utils";
 import CustomModeInput from "./CustomModeInput";
 import StandardModeInput from "./StandardModeInput";
@@ -245,6 +246,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [mediumYearGuessing, setMediumYearGuessing] = useState(false);
+  const [introVisible, setIntroVisible] = useState(() => shouldShowIntro(mode));
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [roundState, setRoundState] = useState<"answering" | "revealed">("answering");
@@ -298,6 +300,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   }, [mode, username, filter]);
 
   useEffect(() => {
+    if (introVisible) return;
+
     roundStartRef.current = Date.now();
     if (gameData) {
       currentRoundIdRef.current = gameData.rounds[currentIndex].roundId;
@@ -332,7 +336,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
       if (autoSubmitRef.current !== null) clearTimeout(autoSubmitRef.current);
       if (panelIntervalRef.current !== null) clearInterval(panelIntervalRef.current);
     };
-  }, [currentIndex, mode, gameData]);
+  }, [currentIndex, mode, gameData, introVisible]);
 
   const handleTimeout = useCallback(async () => {
     if (roundState !== "answering") return;
@@ -627,6 +631,12 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+
+      <AnimatePresence>
+        {introVisible && (
+          <ScoringIntro mode={mode} onDismiss={() => setIntroVisible(false)} />
+        )}
+      </AnimatePresence>
 
       {/* Sticky top HUD */}
       <div className="sticky top-0 z-40 glass-panel border-b border-white/10">
