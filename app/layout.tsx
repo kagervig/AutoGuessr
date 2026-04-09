@@ -15,6 +15,17 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Autoguessr",
   description: "Can you identify the car?",
+  openGraph: {
+    title: "Autoguessr",
+    description: "Can you identify the car?",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Autoguessr" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Autoguessr",
+    description: "Can you identify the car?",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
