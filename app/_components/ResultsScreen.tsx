@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle, Share2 } from "lucide-react";
+import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle, Share2, ChevronDown, ChevronUp } from "lucide-react";
 import { MODES } from "@/app/lib/constants";
 import { Tachometer } from "@/app/components/ui/Tachometer";
 import { ScoringNudge } from "@/app/components/ui/ScoringNudge";
@@ -59,7 +59,7 @@ interface Props {
   username: string;
 }
 
-// Retro arcade-style 3-character initials entry
+// Retro arcade-style 3-character initials entry, inline layout
 function InitialsEntry({
   gameId,
   onSubmitted,
@@ -124,11 +124,15 @@ function InitialsEntry({
   }
 
   return (
-    <div className="mt-6 space-y-4">
-      <p className="text-xs font-mono tracking-widest uppercase text-muted-foreground text-center">
-        Enter your initials
-      </p>
-      <div className="flex justify-center gap-3">
+    <div className="px-6 py-5 border-t border-white/10 flex flex-col items-center text-center">
+      <div className="flex items-center gap-2 mb-1">
+        <Trophy className="w-3.5 h-3.5 text-muted-foreground" />
+        <span className="text-xs font-mono tracking-widest uppercase text-muted-foreground">
+          Submit to Leaderboard
+        </span>
+      </div>
+      <p className="text-sm text-muted-foreground mb-3">Enter your initials</p>
+      <div className="flex items-center gap-2">
         {inputRefs.map((ref, i) => (
           <input
             key={i}
@@ -141,7 +145,7 @@ function InitialsEntry({
             onKeyDown={(e) => handleKeyDown(i, e)}
             aria-label={`Initial ${i + 1}`}
             className={cn(
-              "w-14 h-16 rounded-xl border-2 bg-white/5 text-center text-3xl font-black font-mono uppercase tracking-wider text-white transition-colors outline-none",
+              "w-14 h-14 rounded-xl border-2 bg-white/5 text-center text-3xl font-black font-mono uppercase tracking-wider text-white transition-colors outline-none shrink-0",
               letters[i]
                 ? "border-primary"
                 : "border-white/20 focus:border-primary/60"
@@ -149,17 +153,15 @@ function InitialsEntry({
             autoFocus={i === 0}
           />
         ))}
-      </div>
-      {error && <p className="text-center text-xs text-red-400">{error}</p>}
-      <div className="flex justify-center">
         <button
           onClick={submit}
           disabled={!canSubmit}
-          className="bg-primary text-white font-black tracking-widest uppercase px-8 py-3 rounded-full hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-14 px-6 bg-primary text-white font-black tracking-widest uppercase rounded-xl hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {submitting ? "Saving…" : "Submit"}
         </button>
       </div>
+      {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
     </div>
   );
 }
@@ -170,6 +172,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
   const [error, setError] = useState<string | null>(null);
   const [initialsSubmitted, setInitialsSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
 
   async function handleShare(score: number, grade: string) {
     const url = window.location.href;
@@ -226,46 +229,54 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
   const showLeaderboard = mode !== "practice" && score > 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 space-y-4">
 
-        {/* Summary card */}
+        {/* Main card */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-panel rounded-3xl p-10 text-center border border-white/10"
+          className="glass-panel rounded-3xl border border-white/10 overflow-hidden"
         >
-          <div className="mb-8">
-            <Flag className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h1 className="text-4xl font-black tracking-widest uppercase mb-1">Race Over</h1>
-            <p className="text-muted-foreground">
-              {username ? `${username} · ` : ""}{modeLabel} mode
-            </p>
-          </div>
-
-          <div className={cn("text-8xl font-black mb-4", gradeColor)}>{grade}</div>
-
-          <div className="mb-8">
-            <div className="text-5xl font-black text-white mb-1">
-              {score.toLocaleString()}
+          {/* Card header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-5">
+            <div className="flex items-center gap-2">
+              <Flag className="w-5 h-5 text-primary" />
+              <h1 className="text-lg sm:text-xl font-black tracking-widest uppercase">Race Over</h1>
             </div>
-            <div className="text-sm text-muted-foreground font-mono tracking-widest">pts</div>
+            <span className="border border-white/30 rounded-full text-white font-bold tracking-widest uppercase text-xs px-3 py-1.5">
+              {modeLabel}
+            </span>
           </div>
 
-          <div className="mb-2 flex justify-center">
-            <Tachometer score={score} maxScore={approxMax} size={200} />
+          {/* Score + Speed Rating */}
+          <div className="grid grid-cols-2 border-t border-white/10">
+            <div className="flex flex-col items-center justify-center py-8 px-4 border-r border-white/10">
+              <div className={cn("text-7xl sm:text-8xl font-black leading-none mb-3", gradeColor)}>
+                {grade}
+              </div>
+              <div className="text-4xl sm:text-5xl font-black text-white leading-none">
+                {score.toLocaleString()}
+              </div>
+              <div className="text-xs text-muted-foreground font-mono tracking-widest mt-2 uppercase">
+                Points
+              </div>
+              {session.personalBest !== null && session.personalBest <= score && score > 0 && (
+                <p className="mt-2 text-xs text-green-400 font-bold tracking-widest uppercase">New PB!</p>
+              )}
+              {session.personalBest !== null && session.personalBest > score && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  PB: {session.personalBest.toLocaleString()}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col items-center justify-center py-8 px-4">
+              <Tachometer score={score} maxScore={approxMax} size={160} />
+              <p className="text-xs text-muted-foreground font-mono tracking-widest mt-3 uppercase">
+                Speed Rating
+              </p>
+            </div>
           </div>
-
-          {session.personalBest !== null && session.personalBest > score && (
-            <p className="mt-4 text-xs text-muted-foreground">
-              Personal best: {session.personalBest.toLocaleString()} pts
-            </p>
-          )}
-          {session.personalBest !== null && session.personalBest <= score && score > 0 && (
-            <p className="mt-4 text-xs text-green-400 font-bold tracking-widest uppercase">
-              New personal best!
-            </p>
-          )}
 
           {/* Initials entry or confirmation */}
           {showLeaderboard && hasToken && !initialsSubmitted && (
@@ -279,120 +290,138 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mt-6 space-y-3"
+              className="px-6 py-5 border-t border-white/10 space-y-2"
             >
-              <div className="flex items-center justify-center gap-2 text-green-400 text-sm font-bold tracking-wider uppercase">
+              <div className="flex items-center gap-2 text-green-400 text-sm font-bold tracking-wider uppercase">
                 <CheckCircle className="w-4 h-4" />
                 Score saved to leaderboard
               </div>
               <button
                 onClick={() => router.push(`/leaderboard?mode=${mode}`)}
-                className="flex items-center gap-2 mx-auto text-sm text-muted-foreground hover:text-white transition-colors"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors"
               >
                 <Trophy className="w-4 h-4" /> View leaderboard
               </button>
             </motion.div>
           )}
 
-          <div className="mt-8">
-            <ScoringNudge mode={mode} score={score} />
-          </div>
-
-          <div className="flex gap-3 justify-center mt-4 flex-wrap">
+          {/* Action buttons */}
+          <div className="flex gap-3 px-6 py-5 border-t border-white/10">
             <button
               onClick={() => {
                 const params = new URLSearchParams({ mode, ...(username ? { username } : {}) });
                 router.push(`/game?${params.toString()}`);
               }}
-              className="inline-flex items-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-6 py-3 rounded-full hover:brightness-110 transition-all"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-3 py-3 rounded-full hover:brightness-110 transition-all text-sm"
             >
-              <RotateCcw className="w-4 h-4" /> Play Again
+              <RotateCcw className="w-4 h-4 shrink-0" /> Play Again
             </button>
             <button
               onClick={() => handleShare(score, grade)}
-              className="inline-flex items-center gap-2 border border-primary/60 text-primary font-black tracking-widest uppercase px-6 py-3 rounded-full hover:bg-primary/10 transition-all"
+              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-3 py-3 rounded-full hover:bg-white/10 transition-all text-sm"
             >
-              <Share2 className="w-4 h-4" />
-              {copied ? "Link Copied!" : "Share Score"}
+              <Share2 className="w-4 h-4 shrink-0" />
+              {copied ? "Copied!" : "Share"}
             </button>
             <button
               onClick={() => router.push("/")}
-              className="inline-flex items-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-6 py-3 rounded-full hover:bg-white/10 transition-all"
+              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-3 py-3 rounded-full hover:bg-white/10 transition-all text-sm"
             >
-              <ArrowLeft className="w-4 h-4" /> Garage
+              <ArrowLeft className="w-4 h-4 shrink-0" /> Garage
             </button>
           </div>
         </motion.div>
+
+        {/* Scoring nudge */}
+        <ScoringNudge mode={mode} score={score} />
 
         {/* Round breakdown */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="space-y-2"
+          className="glass-panel rounded-2xl border border-white/10 overflow-hidden"
         >
-          {session.rounds.map((round) => {
-            const v = round.image.vehicle;
-            const label = HARD_MODES.includes(mode) ? `${v.year} ${v.make} ${v.model}` : `${v.make} ${v.model}`;
-            const g = round.guess;
-            const isCorrect = g?.isCorrect ?? false;
+          <button
+            onClick={() => setBreakdownOpen(!breakdownOpen)}
+            className="w-full flex items-center justify-between px-5 py-4 text-white font-bold hover:bg-white/5 transition-colors"
+          >
+            <span>Round Breakdown</span>
+            {breakdownOpen ? (
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
 
-            return (
-              <div
-                key={round.sequenceNumber}
-                className={cn(
-                  "rounded-xl border px-3 py-3",
-                  isCorrect ? "border-green-800/50 bg-green-950/20" : "border-white/10 bg-white/5"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={round.imageUrl}
-                    alt={label}
-                    loading="lazy"
-                    className="h-12 w-16 shrink-0 rounded-lg object-cover"
-                  />
-                  <div className="flex flex-1 items-start justify-between gap-2 min-w-0">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-zinc-100 truncate">{label}</p>
-                      <p className="text-xs text-muted-foreground">{v.countryOfOrigin}</p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      {g ? (
-                        <>
-                          <p className={cn("text-sm font-bold", isCorrect ? "text-green-400" : "text-muted-foreground")}>
-                            {g.pointsEarned > 0 ? `+${g.pointsEarned.toLocaleString()}` : "0"}
-                          </p>
-                          {!isCorrect && <p className="text-xs text-red-500">missed</p>}
-                        </>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">no guess</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+          {breakdownOpen && (
+            <div className="border-t border-white/10 p-4 space-y-2">
+              {session.rounds.map((round) => {
+                const v = round.image.vehicle;
+                const label = HARD_MODES.includes(mode)
+                  ? `${v.year} ${v.make} ${v.model}`
+                  : `${v.make} ${v.model}`;
+                const g = round.guess;
+                const isCorrect = g?.isCorrect ?? false;
 
-                {g && g.pointsEarned > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                    {g.makePoints > 0 && <span>make +{g.makePoints}</span>}
-                    {g.modelPoints > 0 && <span>model +{g.modelPoints}</span>}
-                    {g.yearBonus != null && g.yearBonus > 0 && (
-                      <span>
-                        year +{g.yearBonus}
-                        {g.yearDelta != null && g.yearDelta > 0 && (
-                          <span className="text-muted-foreground/50 ml-1">({g.yearDelta} off)</span>
-                        )}
-                      </span>
+                return (
+                  <div
+                    key={round.sequenceNumber}
+                    className={cn(
+                      "rounded-xl border px-3 py-3",
+                      isCorrect ? "border-green-800/50 bg-green-950/20" : "border-white/10 bg-white/5"
                     )}
-                    {g.timeBonus > 0 && <span>speed +{g.timeBonus}</span>}
-                    {g.modeMultiplier > 1 && <span className="text-yellow-400/80">×{g.modeMultiplier.toFixed(1)}</span>}
-                    {g.proBonus > 0 && <span className="text-yellow-400">pro +{g.proBonus}</span>}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={round.imageUrl}
+                        alt={label}
+                        loading="lazy"
+                        className="h-12 w-16 shrink-0 rounded-lg object-cover"
+                      />
+                      <div className="flex flex-1 items-start justify-between gap-2 min-w-0">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-zinc-100 truncate">{label}</p>
+                          <p className="text-xs text-muted-foreground">{v.countryOfOrigin}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          {g ? (
+                            <>
+                              <p className={cn("text-sm font-bold", isCorrect ? "text-green-400" : "text-muted-foreground")}>
+                                {g.pointsEarned > 0 ? `+${g.pointsEarned.toLocaleString()}` : "0"}
+                              </p>
+                              {!isCorrect && <p className="text-xs text-red-500">missed</p>}
+                            </>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">no guess</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {g && g.pointsEarned > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                        {g.makePoints > 0 && <span>make +{g.makePoints}</span>}
+                        {g.modelPoints > 0 && <span>model +{g.modelPoints}</span>}
+                        {g.yearBonus != null && g.yearBonus > 0 && (
+                          <span>
+                            year +{g.yearBonus}
+                            {g.yearDelta != null && g.yearDelta > 0 && (
+                              <span className="text-muted-foreground/50 ml-1">({g.yearDelta} off)</span>
+                            )}
+                          </span>
+                        )}
+                        {g.timeBonus > 0 && <span>speed +{g.timeBonus}</span>}
+                        {g.modeMultiplier > 1 && <span className="text-yellow-400/80">×{g.modeMultiplier.toFixed(1)}</span>}
+                        {g.proBonus > 0 && <span className="text-yellow-400">pro +{g.proBonus}</span>}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
