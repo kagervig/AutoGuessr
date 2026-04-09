@@ -11,9 +11,6 @@
     "import-cars": "tsx scripts/import-cars.ts",
     "tag-images": "tsx scripts/tag-images.ts"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@google/genai": "^1.48.0",
     "@prisma/adapter-pg": "^7.6.0",
@@ -31,6 +28,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "dotenv": "^16",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
