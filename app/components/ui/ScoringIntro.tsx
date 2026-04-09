@@ -84,7 +84,7 @@ export function ScoringIntro({ mode, onDismiss }: Props) {
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 280, damping: 24 }}
-        className="w-full max-w-sm bg-card border border-white/10 rounded-3xl p-7 space-y-5 shadow-2xl"
+        className="w-full max-w-sm bg-card border border-white/10 rounded-3xl p-7 space-y-4 shadow-2xl"
       >
         <div className="space-y-1">
           <p className="text-xs font-mono tracking-widest uppercase text-primary">
@@ -107,31 +107,30 @@ export function ScoringIntro({ mode, onDismiss }: Props) {
 
         <Link
           href="/scoring"
-          className="text-xs text-muted-foreground hover:text-white transition-colors underline underline-offset-2"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors py-2"
         >
-          Full scoring breakdown →
+          <span className="underline underline-offset-2">Full scoring breakdown</span>
+          <span>→</span>
         </Link>
 
-        <div className="space-y-3 pt-1">
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={dontShowAgain}
-              onChange={(e) => setDontShowAgain(e.target.checked)}
-              className="w-4 h-4 rounded accent-primary cursor-pointer"
-            />
-            <span className="text-xs text-muted-foreground group-hover:text-white transition-colors">
-              Don&apos;t show this again
-            </span>
-          </label>
+        <label className="flex items-center gap-4 cursor-pointer group py-2">
+          <input
+            type="checkbox"
+            checked={dontShowAgain}
+            onChange={(e) => setDontShowAgain(e.target.checked)}
+            className="w-5 h-5 rounded accent-primary cursor-pointer shrink-0"
+          />
+          <span className="text-sm text-muted-foreground group-hover:text-white transition-colors">
+            Don&apos;t show this again
+          </span>
+        </label>
 
-          <button
-            onClick={handleStart}
-            className="w-full bg-primary text-white font-black tracking-widest uppercase py-3 rounded-full hover:brightness-110 transition-all"
-          >
-            Let&apos;s Go
-          </button>
-        </div>
+        <button
+          onClick={handleStart}
+          className="w-full bg-primary text-white font-black tracking-widest uppercase py-3 rounded-full hover:brightness-110 transition-all"
+        >
+          Let&apos;s Go
+        </button>
       </motion.div>
     </motion.div>
   );
