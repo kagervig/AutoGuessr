@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 
-const VALID_MODES = ["easy", "medium", "hard", "hardcore", "competitive"] as const;
+const VALID_MODES = ["easy", "custom", "standard", "hardcore", "time_attack"] as const;
 const VALID_PERIODS = ["day", "week", "alltime"] as const;
 type Period = (typeof VALID_PERIODS)[number];
 

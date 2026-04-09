@@ -70,7 +70,7 @@ beforeEach(() => {
     Array.from({ length: 10 }, (_, i) => ({ ...FAKE_ROUND, id: `round-${i}` })) as never
   );
 
-  // makes list for medium mode
+  // makes list for custom mode
   vi.mocked(prisma.vehicle.findMany).mockResolvedValue([
     { make: "Toyota" },
   ] as never);
@@ -83,7 +83,7 @@ describe("GET /api/game", () => {
   });
 
   it("should return gameId (not sessionId) in the response body", async () => {
-    const res = await GET(makeRequest({ mode: "medium" }));
+    const res = await GET(makeRequest({ mode: "custom" }));
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.gameId).toBe(GAME_ID);
@@ -91,7 +91,7 @@ describe("GET /api/game", () => {
   });
 
   it("should set an HttpOnly session cookie named for the gameId", async () => {
-    const res = await GET(makeRequest({ mode: "medium" }));
+    const res = await GET(makeRequest({ mode: "custom" }));
     const setCookie = res.headers.get("Set-Cookie") ?? "";
     // Cookie name must match st_<gameId>; value is a UUID generated at request time
     expect(setCookie).toMatch(new RegExp(`^st_${GAME_ID}=[0-9a-f-]+`));

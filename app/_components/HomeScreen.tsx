@@ -23,10 +23,10 @@ import { cn } from "@/app/lib/utils";
 
 const MODE_ICONS: Record<string, React.ReactNode> = {
   easy: <ShieldCheck className="w-6 h-6" />,
-  medium: <Settings2 className="w-6 h-6" />,
-  hard: <Keyboard className="w-6 h-6" />,
+  custom: <Settings2 className="w-6 h-6" />,
+  standard: <Keyboard className="w-6 h-6" />,
   hardcore: <EyeOff className="w-6 h-6" />,
-  competitive: <Timer className="w-6 h-6" />,
+  time_attack: <Timer className="w-6 h-6" />,
   practice: <Wrench className="w-6 h-6" />,
 };
 
@@ -76,7 +76,7 @@ export default function HomeScreen({ initialFilterError }: Props) {
     };
   }, []);
 
-  const isCustomMode = selectedMode === "medium" || selectedMode === "practice";
+  const isCustomMode = selectedMode === "custom" || selectedMode === "practice";
   const hasFilter =
     selectedCategories.length > 0 ||
     selectedRegions.length > 0 ||
