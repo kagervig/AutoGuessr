@@ -5,10 +5,10 @@ const INITIALS_RE = /^[A-Z]{1,3}$/;
 
 export async function PATCH(request: NextRequest) {
   const body = await request.json();
-  const { sessionId, initials } = body as { sessionId?: string; initials?: string };
+  const { gameId, initials } = body as { gameId?: string; initials?: string };
 
-  if (!sessionId) {
-    return Response.json({ error: "sessionId is required" }, { status: 400 });
+  if (!gameId) {
+    return Response.json({ error: "gameId is required" }, { status: 400 });
   }
 
   const normalised = typeof initials === "string" ? initials.toUpperCase().trim() : "";
@@ -17,8 +17,8 @@ export async function PATCH(request: NextRequest) {
   }
 
   const session = await prisma.gameSession.findUnique({
-    where: { id: sessionId },
-    select: { id: true, endedAt: true, initials: true, mode: true },
+    where: { id: gameId },
+    select: { id: true, endedAt: true, initials: true, mode: true, sessionToken: true },
   });
 
   if (!session) {
@@ -37,8 +37,13 @@ export async function PATCH(request: NextRequest) {
     return Response.json({ error: "Practice sessions are not on the leaderboard" }, { status: 400 });
   }
 
+  const cookie = request.cookies.get(`st_${gameId}`)?.value;
+  if (!cookie || cookie !== session.sessionToken) {
+    return Response.json({ error: "Unauthorised" }, { status: 401 });
+  }
+
   await prisma.gameSession.update({
-    where: { id: sessionId },
+    where: { id: gameId },
     data: { initials: normalised },
   });
 
