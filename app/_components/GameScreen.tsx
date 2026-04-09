@@ -23,13 +23,16 @@ import {
 import { TIME_LIMITS, shuffle } from "@/app/lib/game";
 import { MODES } from "@/app/lib/constants";
 import { Tachometer } from "@/app/components/ui/Tachometer";
-import { ScoringIntro, shouldShowIntro } from "@/app/components/ui/ScoringIntro";
+import {
+  ScoringIntro,
+  shouldShowIntro,
+} from "@/app/components/ui/ScoringIntro";
 import { cn } from "@/app/lib/utils";
 import CustomModeInput from "./CustomModeInput";
 import StandardModeInput from "./StandardModeInput";
 
 const MODE_LABELS: Record<string, string> = Object.fromEntries(
-  MODES.map((m) => [m.id, m.label])
+  MODES.map((m) => [m.id, m.label]),
 );
 
 // Approximate max per-round score for tachometer calibration
@@ -139,26 +142,37 @@ function RoundResult({
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className="text-center max-w-sm w-full px-6 overflow-y-auto max-h-screen py-6"
       >
-        <div className={cn(
-          "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl",
-          reveal.isCorrect ? "bg-green-500/20 shadow-green-500/30" : "bg-red-600/20 shadow-red-600/30"
-        )}>
-          {reveal.isCorrect
-            ? <Check className="w-10 h-10 text-green-400" strokeWidth={3} />
-            : <X className="w-10 h-10 text-red-400" strokeWidth={3} />
-          }
+        <div
+          className={cn(
+            "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl",
+            reveal.isCorrect
+              ? "bg-green-500/20 shadow-green-500/30"
+              : "bg-red-600/20 shadow-red-600/30",
+          )}
+        >
+          {reveal.isCorrect ? (
+            <Check className="w-10 h-10 text-green-400" strokeWidth={3} />
+          ) : (
+            <X className="w-10 h-10 text-red-400" strokeWidth={3} />
+          )}
         </div>
 
-        <p className={cn(
-          "text-2xl font-black tracking-widest uppercase mb-1",
-          reveal.isCorrect ? "text-green-400" : "text-red-400"
-        )}>
+        <p
+          className={cn(
+            "text-2xl font-black tracking-widest uppercase mb-1",
+            reveal.isCorrect ? "text-green-400" : "text-red-400",
+          )}
+        >
           {reveal.isCorrect ? "Nailed it!" : "Miss!"}
         </p>
 
-        <p className="text-sm text-muted-foreground mb-1">{reveal.correctLabel}</p>
+        <p className="text-sm text-muted-foreground mb-1">
+          {reveal.correctLabel}
+        </p>
         {!reveal.isCorrect && reveal.guessLabel && (
-          <p className="text-xs text-red-400/70 mb-4">You said: {reveal.guessLabel}</p>
+          <p className="text-xs text-red-400/70 mb-4">
+            You said: {reveal.guessLabel}
+          </p>
         )}
         {reveal.isCorrect && <div className="mb-4" />}
 
@@ -179,7 +193,9 @@ function RoundResult({
                     <CheckCircle2 className="w-5 h-5 shrink-0 text-white/50" />
                     <span className="text-sm text-white/80">Correct make</span>
                   </div>
-                  <span className="text-sm font-black text-white">+{reveal.breakdown.makePoints}</span>
+                  <span className="text-sm font-black text-white">
+                    +{reveal.breakdown.makePoints}
+                  </span>
                 </div>
               )}
               {reveal.breakdown.modelPoints > 0 && (
@@ -188,54 +204,80 @@ function RoundResult({
                     <Target className="w-5 h-5 shrink-0 text-white/50" />
                     <span className="text-sm text-white/80">Correct model</span>
                   </div>
-                  <span className="text-sm font-black text-white">+{reveal.breakdown.modelPoints}</span>
+                  <span className="text-sm font-black text-white">
+                    +{reveal.breakdown.modelPoints}
+                  </span>
                 </div>
               )}
-              {reveal.breakdown.yearBonus != null && reveal.breakdown.yearBonus > 0 && (
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 shrink-0 text-white/50" />
-                    <span className="text-sm text-white/80">
-                      Year bonus
-                      {reveal.breakdown.yearDelta != null && reveal.breakdown.yearDelta > 0 && (
-                        <span className="text-white/40 ml-1">({reveal.breakdown.yearDelta} off)</span>
-                      )}
+              {reveal.breakdown.yearBonus != null &&
+                reveal.breakdown.yearBonus > 0 && (
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-5 h-5 shrink-0 text-white/50" />
+                      <span className="text-sm text-white/80">
+                        Year bonus
+                        {reveal.breakdown.yearDelta != null &&
+                          reveal.breakdown.yearDelta > 0 && (
+                            <span className="text-white/40 ml-1">
+                              ({reveal.breakdown.yearDelta} off)
+                            </span>
+                          )}
+                      </span>
+                    </div>
+                    <span className="text-sm font-black text-white">
+                      +{reveal.breakdown.yearBonus}
                     </span>
                   </div>
-                  <span className="text-sm font-black text-white">+{reveal.breakdown.yearBonus}</span>
-                </div>
-              )}
+                )}
               {reveal.breakdown.timeBonus > 0 && (
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3">
                   <div className="flex items-center gap-3">
                     <Clock className="w-5 h-5 shrink-0 text-white/50" />
                     <span className="text-sm text-white/80">Speed bonus</span>
                   </div>
-                  <span className="text-sm font-black text-white">+{reveal.breakdown.timeBonus}</span>
+                  <span className="text-sm font-black text-white">
+                    +{reveal.breakdown.timeBonus}
+                  </span>
                 </div>
               )}
               {reveal.breakdown.modeMultiplier > 1 && (
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-4 py-3">
                   <div className="flex items-center gap-3">
                     <Star className="w-5 h-5 shrink-0 text-yellow-400/70" />
-                    <span className="text-sm text-yellow-400/80">Difficulty multiplier</span>
+                    <span className="text-sm text-yellow-400/80">
+                      Difficulty multiplier
+                    </span>
                   </div>
-                  <span className="text-sm font-black text-yellow-400">×{reveal.breakdown.modeMultiplier.toFixed(1)}</span>
+                  <span className="text-sm font-black text-yellow-400">
+                    ×{reveal.breakdown.modeMultiplier.toFixed(1)}
+                  </span>
                 </div>
               )}
               {reveal.breakdown.proBonus > 0 && (
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-4 py-3">
                   <div className="flex items-center gap-3">
                     <Zap className="w-5 h-5 shrink-0 text-yellow-400/70" />
-                    <span className="text-sm text-yellow-400/80">Rare find</span>
+                    <span className="text-sm text-yellow-400/80">
+                      Rare find
+                    </span>
                   </div>
-                  <span className="text-sm font-black text-yellow-400">+{reveal.breakdown.proBonus}</span>
+                  <span className="text-sm font-black text-yellow-400">
+                    +{reveal.breakdown.proBonus}
+                  </span>
                 </div>
               )}
               <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
-                <span className="text-sm font-black text-primary uppercase tracking-widest">Total</span>
-                <span className="text-base font-black text-primary">+{reveal.pointsEarned.toLocaleString()}</span>
+                <span className="text-sm font-black text-primary uppercase tracking-widest">
+                  Total
+                </span>
+                <span className="text-base font-black text-primary">
+                  +{reveal.pointsEarned.toLocaleString()}
+                </span>
               </div>
+            </div>
+            <div className="border-t border-white/10 mt-3 pt-3 flex items-center justify-between">
+              <span className="text-xs font-bold tracking-widest text-white/40 uppercase">Total Score</span>
+              <span className="text-lg font-black text-white">{totalScore.toLocaleString()}</span>
             </div>
           </motion.div>
         ) : reveal.pointsEarned > 0 ? (
@@ -245,19 +287,34 @@ function RoundResult({
             transition={{ delay: 0.2, type: "spring" }}
             className="inline-flex items-center gap-2 bg-primary/20 border border-primary/40 text-primary rounded-full px-5 py-2 font-black text-xl tracking-wider mb-6"
           >
-            <Zap className="w-5 h-5" />
-            +{reveal.pointsEarned.toLocaleString()} pts
+            <Zap className="w-5 h-5" />+{reveal.pointsEarned.toLocaleString()}{" "}
+            pts
           </motion.div>
         ) : (
-          <div className="mb-6" />
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="w-full mb-6 text-left bg-card border border-white/10 rounded-2xl p-4"
+          >
+            <p className="text-xs font-mono tracking-widest uppercase text-white/30 mb-2">
+              Round score
+            </p>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3">
+              <span className="text-sm text-white/50">No points scored</span>
+              <span className="text-sm font-black text-white/50">0</span>
+            </div>
+            <div className="border-t border-white/10 mt-3 pt-3 flex items-center justify-between">
+              <span className="text-xs font-bold tracking-widest text-white/40 uppercase">Total Score</span>
+              <span className="text-lg font-black text-white">{totalScore.toLocaleString()}</span>
+            </div>
+          </motion.div>
         )}
 
-        <div className="text-xs text-muted-foreground mb-6 font-mono">
-          TOTAL: {totalScore.toLocaleString()}
-        </div>
-
         <div className="flex items-center justify-center gap-3 mb-8">
-          <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Rate Image</span>
+          <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+            Rate Image
+          </span>
           <div className="flex gap-2">
             <button
               onClick={() => onRate("up")}
@@ -266,7 +323,7 @@ function RoundResult({
                 "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors",
                 imageRating === "up"
                   ? "bg-green-500/20 border-green-500/40 text-green-400"
-                  : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+                  : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80",
               )}
             >
               <ThumbsUp className="w-4 h-4" />
@@ -278,7 +335,7 @@ function RoundResult({
                 "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors",
                 imageRating === "down"
                   ? "bg-red-500/20 border-red-500/40 text-red-400"
-                  : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+                  : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80",
               )}
             >
               <ThumbsDown className="w-4 h-4" />
@@ -291,7 +348,7 @@ function RoundResult({
                 "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors disabled:pointer-events-none sm:hidden",
                 imageReported
                   ? "bg-orange-500/20 border-orange-500/40 text-orange-400"
-                  : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+                  : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80",
               )}
             >
               <Flag className="w-4 h-4" />
@@ -304,16 +361,19 @@ function RoundResult({
           className="inline-flex items-center gap-2 bg-white text-black font-black tracking-widest uppercase px-8 py-3 rounded-full hover:bg-primary hover:text-white transition-all duration-200 shadow-lg hover:shadow-primary/40"
         >
           {isLast ? (
-            <><Trophy className="w-5 h-5" /> See Results</>
+            <>
+              <Trophy className="w-5 h-5" /> See Results
+            </>
           ) : (
-            <>Next Round <ChevronRight className="w-5 h-5" /></>
+            <>
+              Next Round <ChevronRight className="w-5 h-5" />
+            </>
           )}
         </button>
       </motion.div>
     </motion.div>
   );
 }
-
 
 // ─── Main Game component ───────────────────────────────────────────────────
 
@@ -327,7 +387,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const [introVisible, setIntroVisible] = useState(() => shouldShowIntro(mode));
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [roundState, setRoundState] = useState<"answering" | "revealed">("answering");
+  const [roundState, setRoundState] = useState<"answering" | "revealed">(
+    "answering",
+  );
   const [selectedEasyId, setSelectedEasyId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState(0);
@@ -343,7 +405,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const currentRoundImageUrlRef = useRef<string>("");
 
   // Hardcore grid
-  const [visiblePanels, setVisiblePanels] = useState<boolean[]>(Array(9).fill(true));
+  const [visiblePanels, setVisiblePanels] = useState<boolean[]>(
+    Array(9).fill(true),
+  );
   const panelOrderRef = useRef<number[]>([]);
   const panelIndexRef = useRef(0);
   const panelIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -356,12 +420,17 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     if (cfToken) params.set("cf_token", cfToken);
 
     Promise.all([
-      fetch(`/api/game?${params.toString()}`, { signal: controller.signal }).then((r) => r.json()),
+      fetch(`/api/game?${params.toString()}`, {
+        signal: controller.signal,
+      }).then((r) => r.json()),
       fetch("/api/flags", { signal: controller.signal }).then((r) => r.json()),
     ])
       .then(([game, flags]) => {
         if (game.error) {
-          if (typeof game.error === "string" && game.error.toLowerCase().includes("not enough")) {
+          if (
+            typeof game.error === "string" &&
+            game.error.toLowerCase().includes("not enough")
+          ) {
             router.replace(`/?filterError=${encodeURIComponent(game.error)}`);
           } else {
             setError(game.error);
@@ -372,7 +441,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         }
       })
       .catch((err) => {
-        if (err.name !== "AbortError") setError("Failed to load game. Please try again.");
+        if (err.name !== "AbortError")
+          setError("Failed to load game. Please try again.");
       })
       .finally(() => setLoading(false));
 
@@ -388,7 +458,10 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
       currentRoundImageUrlRef.current = gameData.rounds[currentIndex].imageUrl;
       const limit = gameData.timeLimitMs ?? TIME_LIMITS[mode];
       if (limit) {
-        autoSubmitRef.current = setTimeout(() => handleTimeoutRef.current(), limit);
+        autoSubmitRef.current = setTimeout(
+          () => handleTimeoutRef.current(),
+          limit,
+        );
       }
     }
 
@@ -414,7 +487,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
     return () => {
       if (autoSubmitRef.current !== null) clearTimeout(autoSubmitRef.current);
-      if (panelIntervalRef.current !== null) clearInterval(panelIntervalRef.current);
+      if (panelIntervalRef.current !== null)
+        clearInterval(panelIntervalRef.current);
     };
   }, [currentIndex, mode, gameData, introVisible]);
 
@@ -427,14 +501,30 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         const res = await fetch("/api/guess", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roundId, rawInput: "", timeTakenMs: Date.now() - roundStartRef.current }),
+          body: JSON.stringify({
+            roundId,
+            rawInput: "",
+            timeTakenMs: Date.now() - roundStartRef.current,
+          }),
         });
-        if (!res.ok && res.status === 401) { router.push("/"); return; }
+        if (!res.ok && res.status === 401) {
+          router.push("/");
+          return;
+        }
         const data = await res.json();
         vehicle = data.vehicle;
-      } catch {/* ignore — reveal will show blank label */}
+      } catch {
+        /* ignore — reveal will show blank label */
+      }
     }
-    resolveAndReveal({ imageUrl: currentRoundImageUrlRef.current, makeCorrect: false, modelCorrect: false, guessLabel: "", pointsEarned: 0, vehicle });
+    resolveAndReveal({
+      imageUrl: currentRoundImageUrlRef.current,
+      makeCorrect: false,
+      modelCorrect: false,
+      guessLabel: "",
+      pointsEarned: 0,
+      vehicle,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundState]);
 
@@ -442,14 +532,18 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   // it without taking a dependency on roundState (which would restart the timer
   // on every state change mid-round).
   const handleTimeoutRef = useRef(handleTimeout);
-  useEffect(() => { handleTimeoutRef.current = handleTimeout; }, [handleTimeout]);
+  useEffect(() => {
+    handleTimeoutRef.current = handleTimeout;
+  }, [handleTimeout]);
 
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
-          <p className="text-muted-foreground font-mono tracking-widest text-sm uppercase">Loading</p>
+          <p className="text-muted-foreground font-mono tracking-widest text-sm uppercase">
+            Loading
+          </p>
         </div>
       </main>
     );
@@ -475,7 +569,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const choices = gameData.easyChoices?.[round.roundId] ?? [];
   const isLastRound = currentIndex === gameData.rounds.length - 1;
   const isHardcore = mode === "hardcore";
-  const maxTotalScore = gameData.rounds.length * Math.floor(1000 * (MAX_MULTIPLIERS[mode] ?? 1.0));
+  const maxTotalScore =
+    gameData.rounds.length * Math.floor(1000 * (MAX_MULTIPLIERS[mode] ?? 1.0));
 
   function resolveAndReveal({
     imageUrl,
@@ -506,12 +601,23 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     const make = vehicle?.make ?? "";
     const model = vehicle?.model ?? "";
     const year = vehicle?.year ?? 0;
-    const correctLabel = HARD_MODES.includes(mode) ? `${year} ${make} ${model}`.trim() : `${make} ${model}`.trim();
+    const correctLabel = HARD_MODES.includes(mode)
+      ? `${year} ${make} ${model}`.trim()
+      : `${make} ${model}`.trim();
 
     setIsSubmitting(false);
     setScore((s) => s + pointsEarned);
-    setReveal({ correctLabel, guessLabel, isCorrect: makeCorrect && modelCorrect, pointsEarned, breakdown });
-    setCompletedRounds((prev) => [...prev, { imageUrl, correctLabel, isCorrect: makeCorrect && modelCorrect }]);
+    setReveal({
+      correctLabel,
+      guessLabel,
+      isCorrect: makeCorrect && modelCorrect,
+      pointsEarned,
+      breakdown,
+    });
+    setCompletedRounds((prev) => [
+      ...prev,
+      { imageUrl, correctLabel, isCorrect: makeCorrect && modelCorrect },
+    ]);
     setRoundState("revealed");
   }
 
@@ -520,26 +626,67 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     setSelectedEasyId(vehicleId);
     setIsSubmitting(true);
     const elapsedMs = Date.now() - roundStartRef.current;
-    const guessLabel = choices.find((c) => c.vehicleId === vehicleId)?.label ?? "";
+    const guessLabel =
+      choices.find((c) => c.vehicleId === vehicleId)?.label ?? "";
     try {
       const res = await fetch("/api/guess", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roundId: round.roundId, rawInput: guessLabel, guessedVehicleId: vehicleId, timeTakenMs: elapsedMs }),
+        body: JSON.stringify({
+          roundId: round.roundId,
+          rawInput: guessLabel,
+          guessedVehicleId: vehicleId,
+          timeTakenMs: elapsedMs,
+        }),
       });
       const data = await res.json();
-      if (!res.ok && res.status === 401) { router.push("/"); return; }
-      if (!res.ok) {
-        resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+      if (!res.ok && res.status === 401) {
+        router.push("/");
         return;
       }
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, yearDelta: data.yearDelta, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
+      if (!res.ok) {
+        resolveAndReveal({
+          imageUrl: round.imageUrl,
+          makeCorrect: false,
+          modelCorrect: false,
+          guessLabel,
+          pointsEarned: 0,
+        });
+        return;
+      }
+      resolveAndReveal({
+        imageUrl: round.imageUrl,
+        makeCorrect: data.makeMatch,
+        modelCorrect: data.modelMatch,
+        guessLabel,
+        pointsEarned: data.pointsEarned,
+        vehicle: data.vehicle,
+        breakdown: {
+          makePoints: data.makePoints,
+          modelPoints: data.modelPoints,
+          yearBonus: data.yearBonus,
+          yearDelta: data.yearDelta,
+          timeBonus: data.timeBonus,
+          modeMultiplier: data.modeMultiplier,
+          proBonus: data.proBonus,
+        },
+      });
     } catch {
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+      resolveAndReveal({
+        imageUrl: round.imageUrl,
+        makeCorrect: false,
+        modelCorrect: false,
+        guessLabel,
+        pointsEarned: 0,
+      });
     }
   }
 
-  async function handleMediumSubmit(make: string, model: string, year?: string) {
+  async function handleMediumSubmit(
+    make: string,
+    model: string,
+    year?: string,
+  ) {
     if (roundState === "revealed") return;
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = `${make} ${model}`;
@@ -552,19 +699,53 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           rawInput: guessLabel,
           guessedMake: make,
           guessedModel: model,
-          guessedYear: year && mediumYearGuessing ? parseInt(year) || undefined : undefined,
+          guessedYear:
+            year && mediumYearGuessing
+              ? parseInt(year) || undefined
+              : undefined,
           timeTakenMs: elapsedMs,
         }),
       });
       const data = await res.json();
-      if (!res.ok && res.status === 401) { router.push("/"); return; }
-      if (!res.ok) {
-        resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+      if (!res.ok && res.status === 401) {
+        router.push("/");
         return;
       }
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, yearDelta: data.yearDelta, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
+      if (!res.ok) {
+        resolveAndReveal({
+          imageUrl: round.imageUrl,
+          makeCorrect: false,
+          modelCorrect: false,
+          guessLabel,
+          pointsEarned: 0,
+        });
+        return;
+      }
+      resolveAndReveal({
+        imageUrl: round.imageUrl,
+        makeCorrect: data.makeMatch,
+        modelCorrect: data.modelMatch,
+        guessLabel,
+        pointsEarned: data.pointsEarned,
+        vehicle: data.vehicle,
+        breakdown: {
+          makePoints: data.makePoints,
+          modelPoints: data.modelPoints,
+          yearBonus: data.yearBonus,
+          yearDelta: data.yearDelta,
+          timeBonus: data.timeBonus,
+          modeMultiplier: data.modeMultiplier,
+          proBonus: data.proBonus,
+        },
+      });
     } catch {
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+      resolveAndReveal({
+        imageUrl: round.imageUrl,
+        makeCorrect: false,
+        modelCorrect: false,
+        guessLabel,
+        pointsEarned: 0,
+      });
     }
   }
 
@@ -573,7 +754,13 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = `${year} ${make} ${model}`.trim();
     if (!make && !model) {
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel: "", pointsEarned: 0 });
+      resolveAndReveal({
+        imageUrl: round.imageUrl,
+        makeCorrect: false,
+        modelCorrect: false,
+        guessLabel: "",
+        pointsEarned: 0,
+      });
       return;
     }
     try {
@@ -587,41 +774,94 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           guessedModel: model,
           guessedYear: parseInt(year) || undefined,
           timeTakenMs: elapsedMs,
-          panelsRevealed: mode === "hardcore" ? panelIndexRef.current : undefined,
+          panelsRevealed:
+            mode === "hardcore" ? panelIndexRef.current : undefined,
         }),
       });
       const data = await res.json();
-      if (!res.ok && res.status === 401) { router.push("/"); return; }
-      if (!res.ok) {
-        resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+      if (!res.ok && res.status === 401) {
+        router.push("/");
         return;
       }
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, yearDelta: data.yearDelta, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
+      if (!res.ok) {
+        resolveAndReveal({
+          imageUrl: round.imageUrl,
+          makeCorrect: false,
+          modelCorrect: false,
+          guessLabel,
+          pointsEarned: 0,
+        });
+        return;
+      }
+      resolveAndReveal({
+        imageUrl: round.imageUrl,
+        makeCorrect: data.makeMatch,
+        modelCorrect: data.modelMatch,
+        guessLabel,
+        pointsEarned: data.pointsEarned,
+        vehicle: data.vehicle,
+        breakdown: {
+          makePoints: data.makePoints,
+          modelPoints: data.modelPoints,
+          yearBonus: data.yearBonus,
+          yearDelta: data.yearDelta,
+          timeBonus: data.timeBonus,
+          modeMultiplier: data.modeMultiplier,
+          proBonus: data.proBonus,
+        },
+      });
     } catch {
-      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+      resolveAndReveal({
+        imageUrl: round.imageUrl,
+        makeCorrect: false,
+        modelCorrect: false,
+        guessLabel,
+        pointsEarned: 0,
+      });
     }
   }
 
   async function submitPracticeStats(roundResults: CompletedRound[]) {
     if (!username) return;
     const filterConfig = filter
-      ? (() => { try { return JSON.parse(decodeURIComponent(filter)); } catch { return {}; } })()
+      ? (() => {
+          try {
+            return JSON.parse(decodeURIComponent(filter));
+          } catch {
+            return {};
+          }
+        })()
       : {};
     const correct = roundResults.filter((r) => r.isCorrect).length;
     const incorrect = roundResults.length - correct;
     const dimensions: Array<{ type: string; key: string }> = [
-      ...(filterConfig.categorySlugs ?? []).map((s: string) => ({ type: "category", key: s })),
-      ...(filterConfig.regionSlugs ?? []).map((s: string) => ({ type: "region", key: s })),
-      ...(filterConfig.countries ?? []).map((s: string) => ({ type: "country", key: s })),
+      ...(filterConfig.categorySlugs ?? []).map((s: string) => ({
+        type: "category",
+        key: s,
+      })),
+      ...(filterConfig.regionSlugs ?? []).map((s: string) => ({
+        type: "region",
+        key: s,
+      })),
+      ...(filterConfig.countries ?? []).map((s: string) => ({
+        type: "country",
+        key: s,
+      })),
     ];
     await Promise.all(
       dimensions.map((d) =>
         fetch("/api/practice/stats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, dimensionType: d.type, dimensionKey: d.key, correct, incorrect }),
-        })
-      )
+          body: JSON.stringify({
+            username,
+            dimensionType: d.type,
+            dimensionKey: d.key,
+            correct,
+            incorrect,
+          }),
+        }),
+      ),
     );
   }
 
@@ -637,7 +877,10 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ gameId: gameData!.gameId, finalScore: score }),
       });
-      if (!endRes.ok && endRes.status === 401) { router.push("/"); return; }
+      if (!endRes.ok && endRes.status === 401) {
+        router.push("/");
+        return;
+      }
       const params = new URLSearchParams({
         gameId: gameData!.gameId,
         mode,
@@ -685,24 +928,48 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         >
           <div className="mb-8">
             <Flag className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h1 className="text-4xl font-black tracking-widest uppercase mb-1">Session Over</h1>
-            <p className="text-muted-foreground">{username || "Driver"} · Garage mode</p>
+            <h1 className="text-4xl font-black tracking-widest uppercase mb-1">
+              Session Over
+            </h1>
+            <p className="text-muted-foreground">
+              {username || "Driver"} · Garage mode
+            </p>
           </div>
 
           <div className="text-5xl font-black text-white mb-1">
-            {correct} <span className="text-2xl text-muted-foreground">/ {total}</span>
+            {correct}{" "}
+            <span className="text-2xl text-muted-foreground">/ {total}</span>
           </div>
-          <div className="text-sm text-muted-foreground font-mono tracking-widest mb-8">CORRECT</div>
+          <div className="text-sm text-muted-foreground font-mono tracking-widest mb-8">
+            CORRECT
+          </div>
 
           <div className="space-y-2 mb-8 text-left">
             {completedRounds.map((r, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={r.imageUrl} alt="" className="h-12 w-16 shrink-0 rounded-lg object-cover" />
-                <p className={cn("flex-1 min-w-0 truncate text-sm font-medium", r.isCorrect ? "text-zinc-200" : "text-zinc-500")}>
+                <img
+                  src={r.imageUrl}
+                  alt=""
+                  className="h-12 w-16 shrink-0 rounded-lg object-cover"
+                />
+                <p
+                  className={cn(
+                    "flex-1 min-w-0 truncate text-sm font-medium",
+                    r.isCorrect ? "text-zinc-200" : "text-zinc-500",
+                  )}
+                >
                   {r.correctLabel}
                 </p>
-                <span className={cn("text-lg shrink-0", r.isCorrect ? "text-green-400" : "text-red-400")}>
+                <span
+                  className={cn(
+                    "text-lg shrink-0",
+                    r.isCorrect ? "text-green-400" : "text-red-400",
+                  )}
+                >
                   {r.isCorrect ? "✓" : "✗"}
                 </span>
               </div>
@@ -711,7 +978,11 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
           <div className="flex gap-3 justify-center">
             <button
-              onClick={() => router.push(`/game?mode=practice&username=${username}&filter=${filter}`)}
+              onClick={() =>
+                router.push(
+                  `/game?mode=practice&username=${username}&filter=${filter}`,
+                )
+              }
               className="inline-flex items-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-6 py-3 rounded-full hover:brightness-110 transition-all"
             >
               <RotateCcw className="w-4 h-4" /> Play Again
@@ -730,7 +1001,6 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-
       <AnimatePresence>
         {introVisible && (
           <ScoringIntro mode={mode} onDismiss={() => setIntroVisible(false)} />
@@ -754,7 +1024,11 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                   key={i}
                   className={cn(
                     "w-2 h-2 rounded-full transition-all",
-                    i < currentIndex ? "bg-green-500" : i === currentIndex ? "bg-primary scale-125" : "bg-white/15"
+                    i < currentIndex
+                      ? "bg-green-500"
+                      : i === currentIndex
+                        ? "bg-primary scale-125"
+                        : "bg-white/15",
                   )}
                 />
               ))}
@@ -779,10 +1053,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
       {/* Main layout */}
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
-
         {/* Left column */}
         <div className="space-y-4">
-
           {/* Car image */}
           <AnimatePresence>
             <motion.div
@@ -804,7 +1076,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
               {/* Image fallback bg */}
               <div className="absolute inset-0 -z-10 flex items-center justify-center bg-card">
-                <span className="text-sm text-muted-foreground">Image unavailable</span>
+                <span className="text-sm text-muted-foreground">
+                  Image unavailable
+                </span>
               </div>
 
               {/* Hardcore grid overlay — panels are removed every 5 seconds */}
@@ -824,14 +1098,15 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
               <div className="absolute top-4 left-4 glass-panel px-3 py-1 rounded-full text-xs font-bold tracking-widest text-white/70 uppercase">
                 {isHardcore ? "Hardcore" : `Round ${currentIndex + 1}`}
               </div>
-
             </motion.div>
           </AnimatePresence>
 
           {/* Image feedback */}
           <div className="hidden sm:flex items-center justify-between px-1">
             <div className="flex items-center gap-2 sm:gap-3">
-              <span className="text-[7px] sm:text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Rate Image</span>
+              <span className="text-[7px] sm:text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                Rate Image
+              </span>
               <div className="flex gap-2 sm:gap-2">
                 <button
                   onClick={() => handleRateImage("up")}
@@ -840,7 +1115,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                     "w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center border transition-colors",
                     imageRating === "up"
                       ? "bg-green-500/20 border-green-500/40 text-green-400"
-                      : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+                      : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80",
                   )}
                 >
                   <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -852,7 +1127,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                     "w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center border transition-colors",
                     imageRating === "down"
                       ? "bg-red-500/20 border-red-500/40 text-red-400"
-                      : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+                      : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80",
                   )}
                 >
                   <ThumbsDown className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -860,7 +1135,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-              <span className="text-[7px] sm:text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Report</span>
+              <span className="text-[7px] sm:text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                Report
+              </span>
               <button
                 onClick={handleReportImage}
                 aria-label="Report image"
@@ -869,7 +1146,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                   "w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center border transition-colors disabled:pointer-events-none",
                   imageReported
                     ? "bg-orange-500/20 border-orange-500/40 text-orange-400"
-                    : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+                    : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80",
                 )}
               >
                 <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -890,8 +1167,10 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                 <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
                   {mode === "easy" && "Choose the correct make & model"}
                   {mode === "custom" && "Choose the correct make & model"}
-                  {(mode === "standard" || mode === "hardcore") && "Type make, model & year exactly"}
-                  {mode === "time_attack" && "Identify before the image reveals!"}
+                  {(mode === "standard" || mode === "hardcore") &&
+                    "Type make, model & year exactly"}
+                  {mode === "time_attack" &&
+                    "Identify before the image reveals!"}
                   {mode === "practice" && "Choose the correct make & model"}
                 </p>
 
@@ -912,14 +1191,15 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                             "relative group p-4 rounded-xl border-2 text-left transition-all duration-200 font-bold text-sm tracking-wide overflow-hidden disabled:pointer-events-none",
                             isSelected && isSubmitting
                               ? "border-primary/60 bg-primary/10"
-                              : "border-white/10 bg-white/5 hover:border-primary/60 hover:bg-primary/10"
+                              : "border-white/10 bg-white/5 hover:border-primary/60 hover:bg-primary/10",
                           )}
                         >
                           <span className="absolute top-2 right-3 text-xs font-mono text-white/20 group-hover:text-primary/50 transition-colors">
-                            {isSelected && isSubmitting
-                              ? <span className="inline-block w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                              : String.fromCharCode(65 + i)
-                            }
+                            {isSelected && isSubmitting ? (
+                              <span className="inline-block w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                            ) : (
+                              String.fromCharCode(65 + i)
+                            )}
                           </span>
                           {choice.label}
                         </motion.button>
@@ -958,7 +1238,6 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
         {/* Right column */}
         <div className="flex flex-col items-center gap-5 lg:sticky lg:top-20">
-
           {/* Tachometer */}
           <div className="glass-panel rounded-3xl p-6 border border-white/10 w-full flex flex-col items-center">
             <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
@@ -968,15 +1247,21 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             <div className="mt-4 w-full space-y-2">
               <div className="flex justify-between text-xs font-mono text-muted-foreground">
                 <span>ROUND</span>
-                <span className="text-white font-bold">{currentIndex + 1} / {gameData.rounds.length}</span>
+                <span className="text-white font-bold">
+                  {currentIndex + 1} / {gameData.rounds.length}
+                </span>
               </div>
               <div className="flex justify-between text-xs font-mono text-muted-foreground">
                 <span>TOTAL SCORE</span>
-                <span className="text-white font-bold">{score.toLocaleString()}</span>
+                <span className="text-white font-bold">
+                  {score.toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between text-xs font-mono text-muted-foreground">
                 <span>MAX POSSIBLE</span>
-                <span className="text-white/40">{maxTotalScore.toLocaleString()}</span>
+                <span className="text-white/40">
+                  {maxTotalScore.toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
@@ -985,15 +1270,21 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           <div className="glass-panel rounded-2xl p-4 border border-white/10 w-full">
             <div className="flex items-center gap-3 mb-2">
               <Star className="w-4 h-4 text-primary" />
-              <span className="text-sm font-black tracking-widest uppercase">{MODE_LABELS[mode] || mode}</span>
+              <span className="text-sm font-black tracking-widest uppercase">
+                {MODE_LABELS[mode] || mode}
+              </span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {mode === "easy" && "Pick the right car from 4 choices."}
-              {mode === "custom" && "Pick the right car from 4 choices. Filtered to your chosen collection."}
+              {mode === "custom" &&
+                "Pick the right car from 4 choices. Filtered to your chosen collection."}
               {mode === "standard" && "Type make, model, and year."}
-              {mode === "hardcore" && "Same as Standard. Panels are removed every 5 seconds to reveal the car."}
-              {mode === "time_attack" && "Race the clock — faster answers earn bonus points."}
-              {mode === "practice" && "No leaderboard pressure. Drill your knowledge."}
+              {mode === "hardcore" &&
+                "Same as Standard. Panels are removed every 5 seconds to reveal the car."}
+              {mode === "time_attack" &&
+                "Race the clock — faster answers earn bonus points."}
+              {mode === "practice" &&
+                "No leaderboard pressure. Drill your knowledge."}
             </p>
           </div>
         </div>
