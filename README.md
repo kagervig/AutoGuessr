@@ -82,6 +82,14 @@ Run a single file:
 npx vitest run __tests__/api/game.test.ts
 ```
 
+Run tests with coverage:
+
+```bash
+npm test -- --coverage
+```
+
+Coverage is reported for `app/lib/` and `app/api/`. The HTML report is written to `coverage/index.html`.
+
 To reset to a clean state and repopulate:
 
 ```bash

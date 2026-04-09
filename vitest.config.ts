@@ -10,6 +10,7 @@ export default defineConfig({
     globals: true,
     coverage: {
       provider: "v8",
+      reporter: ["text", "json-summary", "json"],
       include: ["app/lib/**", "app/api/**"],
       exclude: [
         "app/lib/prisma.ts",   // DB client singleton — not unit testable
