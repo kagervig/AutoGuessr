@@ -153,23 +153,33 @@ export default function HomeScreen({ initialFilterError }: Props) {
             <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-            {MODES.map((mode) => (
-              <ModeCard
-                key={mode.id}
-                id={mode.id}
-                title={mode.label}
-                description={mode.description}
-                icon={MODE_ICONS[mode.id]}
-                selected={selectedMode === mode.id}
-                featured={mode.id === "easy"}
-                onClick={() => setSelectedMode(mode.id)}
-                className={cn(
-                  mode.id === "easy" && "md:col-span-2 md:row-span-2",
-                  mode.id === "practice" && "md:col-span-3"
-                )}
-              />
-            ))}
+          <div className="space-y-4 lg:space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+              {MODES.slice(0, 4).map((mode) => (
+                <ModeCard
+                  key={mode.id}
+                  id={mode.id}
+                  title={mode.label}
+                  description={mode.description}
+                  icon={MODE_ICONS[mode.id]}
+                  selected={selectedMode === mode.id}
+                  onClick={() => setSelectedMode(mode.id)}
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+              {MODES.slice(4).map((mode) => (
+                <ModeCard
+                  key={mode.id}
+                  id={mode.id}
+                  title={mode.label}
+                  description={mode.description}
+                  icon={MODE_ICONS[mode.id]}
+                  selected={selectedMode === mode.id}
+                  onClick={() => setSelectedMode(mode.id)}
+                />
+              ))}
+            </div>
             <ModeCard
               id="community"
               title="Community"
@@ -177,7 +187,6 @@ export default function HomeScreen({ initialFilterError }: Props) {
               icon={<Users className="w-6 h-6" />}
               selected={false}
               onClick={() => router.push("/identify")}
-              className="md:col-span-3"
             />
           </div>
         </motion.div>

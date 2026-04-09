@@ -5,11 +5,6 @@ export const MODES = [
     description: "4 multiple choice answers. Perfect for warming up.",
   },
   {
-    id: "custom",
-    label: "Custom",
-    description: "Choose a category, region, or country — then identify cars from that collection.",
-  },
-  {
     id: "standard",
     label: "Standard",
     description: "Type the exact make, model, and year.",
@@ -23,6 +18,11 @@ export const MODES = [
     id: "time_attack",
     label: "Time Attack",
     description: "Beat the clock as the image slowly reveals itself.",
+  },
+  {
+    id: "custom",
+    label: "Custom",
+    description: "Choose a category, region, or country — then identify cars from that collection.",
   },
   {
     id: "practice",
