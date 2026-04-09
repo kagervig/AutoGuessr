@@ -55,7 +55,7 @@ interface Choice {
 }
 
 interface GameData {
-  sessionId: string;
+  gameId: string;
   rounds: RoundData[];
   easyChoices?: Record<string, Choice[]>;
   makes?: string[];
@@ -379,6 +379,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ roundId, rawInput: "", timeTakenMs: Date.now() - roundStartRef.current }),
         });
+        if (!res.ok && res.status === 401) { router.push("/"); return; }
         const data = await res.json();
         vehicle = data.vehicle;
       } catch {/* ignore — reveal will show blank label */}
@@ -476,6 +477,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         body: JSON.stringify({ roundId: round.roundId, rawInput: guessLabel, guessedVehicleId: vehicleId, timeTakenMs: elapsedMs }),
       });
       const data = await res.json();
+      if (!res.ok && res.status === 401) { router.push("/"); return; }
       if (!res.ok) {
         resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
@@ -504,6 +506,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         }),
       });
       const data = await res.json();
+      if (!res.ok && res.status === 401) { router.push("/"); return; }
       if (!res.ok) {
         resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
@@ -537,6 +540,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         }),
       });
       const data = await res.json();
+      if (!res.ok && res.status === 401) { router.push("/"); return; }
       if (!res.ok) {
         resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
@@ -577,13 +581,14 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         setPracticeComplete(true);
         return;
       }
-      await fetch("/api/session/end", {
+      const endRes = await fetch("/api/session/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: gameData!.sessionId, finalScore: score }),
+        body: JSON.stringify({ gameId: gameData!.gameId, finalScore: score }),
       });
+      if (!endRes.ok && endRes.status === 401) { router.push("/"); return; }
       const params = new URLSearchParams({
-        sessionId: gameData!.sessionId,
+        gameId: gameData!.gameId,
         mode,
         ...(username ? { username } : {}),
       });
