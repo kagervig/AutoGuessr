@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle } from "lucide-react";
 import { MODES } from "@/app/lib/constants";
 import { Tachometer } from "@/app/components/ui/Tachometer";
+import { ScoringNudge } from "@/app/components/ui/ScoringNudge";
 import { cn } from "@/app/lib/utils";
 
 const MODE_LABELS: Record<string, string> = Object.fromEntries(
@@ -288,7 +289,11 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
             </motion.div>
           )}
 
-          <div className="flex gap-3 justify-center mt-8">
+          <div className="mt-8">
+            <ScoringNudge mode={mode} score={score} />
+          </div>
+
+          <div className="flex gap-3 justify-center mt-4">
             <button
               onClick={() => {
                 const params = new URLSearchParams({ mode, ...(username ? { username } : {}) });
