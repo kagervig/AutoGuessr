@@ -18,10 +18,10 @@ export default function PrivacyPage() {
                 Privacy Policy
               </h1>
               <p className="text-muted-foreground text-xs">
-                Effective Date: April 7, 2025 &mdash; Contact:{" "}
-                <a href="mailto:legal@autoguessr.com" className="text-primary hover:underline">
-                  legal@autoguessr.com
-                </a>
+                Effective Date: April 7, 2025 &mdash; {" "}
+                <a href="mailto:kpallin90@gmail.com" className="text-primary hover:underline">
+                  Contact us
+                </a>.
               </p>
             </div>
 
@@ -125,8 +125,8 @@ export default function PrivacyPage() {
                 part of the game. We will store submitted images and associated metadata for as long as they
                 remain in the game library. You may request removal of a submitted image at any time by
                 contacting us at{" "}
-                <a href="mailto:legal@autoguessr.com" className="text-primary hover:underline">
-                  legal@autoguessr.com
+                <a href="mailto:kpallin90@gmail.com" className="text-primary hover:underline">
+                  contact us
                 </a>
                 . We will process removal requests within 14 business days.
               </p>
@@ -136,9 +136,9 @@ export default function PrivacyPage() {
               <p>
                 We retain leaderboard data indefinitely to maintain a consistent game record. Account data
                 (if applicable) is retained for as long as your account is active. You may request deletion
-                of your personal data by contacting us at{" "}
-                <a href="mailto:legal@autoguessr.com" className="text-primary hover:underline">
-                  legal@autoguessr.com
+                of your personal data by{" "}
+                <a href="mailto:kpallin90@gmail.com" className="text-primary hover:underline">
+                  contacting us
                 </a>
                 . We will respond within 30 days, subject to any legal retention obligations.
               </p>
@@ -174,9 +174,9 @@ export default function PrivacyPage() {
                 <li>Data portability (GDPR).</li>
               </ul>
               <p>
-                To exercise any of these rights, contact us at{" "}
-                <a href="mailto:legal@autoguessr.com" className="text-primary hover:underline">
-                  legal@autoguessr.com
+                To exercise any of these rights, {" "}
+                <a href="mailto:kpallin90@gmail.com" className="text-primary hover:underline">
+                  contact us
                 </a>
                 .
               </p>
@@ -200,10 +200,10 @@ export default function PrivacyPage() {
 
             <Section title="14. Contact">
               <p>
-                For privacy-related inquiries or to exercise your rights, contact us at:{" "}
-                <a href="mailto:legal@autoguessr.com" className="text-primary hover:underline">
-                  legal@autoguessr.com
-                </a>
+                For privacy-related inquiries or to exercise your rights, {" "}
+                <a href="mailto:kpallin90@gmail.com" className="text-primary hover:underline">
+                  contact us
+                </a>.
               </p>
             </Section>
 
