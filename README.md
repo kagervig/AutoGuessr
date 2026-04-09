@@ -12,11 +12,11 @@ A car identification game. Players are shown a photo of a car and must identify 
 ## Prerequisites
 
 - Node.js 20+
-- A PostgreSQL database
+- Docker (for the local database)
 - A Cloudinary account
 - A Gemini API key (for AI tagging)
 
-## Local setup
+## Initial setup
 
 **1. Install dependencies**
 
@@ -26,33 +26,62 @@ npm install
 
 **2. Configure environment**
 
-Copy `.env.example` to `.env` and fill in your values:
+Copy `.env.local.example` to `.env.local` and fill in your values:
 
-| Variable | Required | Notes |
-|---|---|---|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `ADMIN_PASSWORD` | Yes | Password for the `/admin` panel |
-| `CLOUDINARY_CLOUD_NAME` | No | Omit to use placeholder images locally |
-| `CLOUDINARY_API_KEY` | No | Required only when uploading images |
-| `CLOUDINARY_API_SECRET` | No | Required only when uploading images |
-| `GEMINI_API_KEY` | No | Required only for AI tagging |
-
-**3. Apply the schema and seed**
+**3. Start the local database**
 
 ```bash
-npx prisma db push
-npx prisma db seed
+npm run db:up
+npx prisma migrate deploy
 ```
 
-The seed creates categories, regions, feature flags, and ~20 sample vehicles.
+**4. Populate with data**
 
-**4. Start the dev server**
+To populate with a subset of real production data (includes real Cloudinary image filenames):
+
+```bash
+PROD_DATABASE_URL="<prod connection string>" npm run db:dump
+```
+
+The number controls how many vehicles to pull (defaults to 200). Vehicles are selected by most active images first.
+
+**5. Start the dev server**
 
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Running tests locally
+
+The local database must be running with the schema applied:
+
+```bash
+npm run db:up
+npx prisma migrate deploy
+```
+
+Copy `.env.test.example` to `.env.test` and set `DATABASE_URL` to the same value as in `.env.local`.
+
+Run the full suite:
+
+```bash
+npm test
+```
+
+Run a single file:
+
+```bash
+npx vitest run __tests__/api/game.test.ts
+```
+
+To reset to a clean state and repopulate:
+
+```bash
+npm run db:reset
+PROD_DATABASE_URL="<prod connection string>" npm run db:dump
+```
 
 ## Images in local development
 
