@@ -245,7 +245,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
             <div className="text-sm text-muted-foreground font-mono tracking-widest">pts</div>
           </div>
 
-          <div className="mb-2">
+          <div className="mb-2 flex justify-center">
             <Tachometer score={score} maxScore={approxMax} size={200} />
           </div>
 

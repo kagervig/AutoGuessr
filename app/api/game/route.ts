@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import type { Prisma } from "../../../app/generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, type VehicleForDistractor } from "@/app/lib/game";
+import { ROUNDS_PER_GAME } from "@/app/lib/constants";
 
 const VALID_MODES = ["easy", "custom", "standard", "hardcore", "time_attack", "practice"] as const;
 type Mode = (typeof VALID_MODES)[number];
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const selected = shuffle(allImages).slice(0, 10);
+  const selected = shuffle(allImages).slice(0, ROUNDS_PER_GAME);
 
   // Upsert player if username provided
   let playerId: string | null = null;
