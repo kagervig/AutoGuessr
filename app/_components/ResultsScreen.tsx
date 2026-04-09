@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle } from "lucide-react";
+import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle, Share2 } from "lucide-react";
 import { MODES } from "@/app/lib/constants";
 import { Tachometer } from "@/app/components/ui/Tachometer";
 import { ScoringNudge } from "@/app/components/ui/ScoringNudge";
 import { cn } from "@/app/lib/utils";
+import { calcGrade, APPROX_MAX_PER_ROUND } from "@/app/lib/grade";
 
 const MODE_LABELS: Record<string, string> = Object.fromEntries(
   MODES.map((m) => [m.id, m.label])
@@ -56,14 +57,6 @@ interface Props {
   hasToken: boolean;
   mode: string;
   username: string;
-}
-
-function calcGrade(pct: number): { grade: string; color: string } {
-  if (pct >= 0.9) return { grade: "S", color: "text-yellow-400" };
-  if (pct >= 0.75) return { grade: "A", color: "text-green-400" };
-  if (pct >= 0.55) return { grade: "B", color: "text-blue-400" };
-  if (pct >= 0.35) return { grade: "C", color: "text-muted-foreground" };
-  return { grade: "D", color: "text-muted-foreground" };
 }
 
 // Retro arcade-style 3-character initials entry
@@ -176,6 +169,19 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
   const [session, setSession] = useState<SessionData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initialsSubmitted, setInitialsSubmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function handleShare(score: number, grade: string) {
+    const url = window.location.href;
+    const text = `I scored ${score.toLocaleString()} pts (Grade ${grade}) on Autoguessr — can you beat it?`;
+    if (navigator.share) {
+      await navigator.share({ title: "Autoguessr", text, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
 
   useEffect(() => {
     fetch(`/api/session?gameId=${gameId}`)
@@ -214,8 +220,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
 
   const score = session.finalScore ?? 0;
   const total = session.rounds.length;
-  // Approximate max for grade calculation
-  const approxMax = total * 2200;
+  const approxMax = total * APPROX_MAX_PER_ROUND;
   const { grade, color: gradeColor } = calcGrade(score / approxMax);
   const modeLabel = MODE_LABELS[mode] || mode;
   const showLeaderboard = mode !== "practice" && score > 0;
@@ -293,7 +298,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
             <ScoringNudge mode={mode} score={score} />
           </div>
 
-          <div className="flex gap-3 justify-center mt-4">
+          <div className="flex gap-3 justify-center mt-4 flex-wrap">
             <button
               onClick={() => {
                 const params = new URLSearchParams({ mode, ...(username ? { username } : {}) });
@@ -302,6 +307,13 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
               className="inline-flex items-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-6 py-3 rounded-full hover:brightness-110 transition-all"
             >
               <RotateCcw className="w-4 h-4" /> Play Again
+            </button>
+            <button
+              onClick={() => handleShare(score, grade)}
+              className="inline-flex items-center gap-2 border border-primary/60 text-primary font-black tracking-widest uppercase px-6 py-3 rounded-full hover:bg-primary/10 transition-all"
+            >
+              <Share2 className="w-4 h-4" />
+              {copied ? "Link Copied!" : "Share Score"}
             </button>
             <button
               onClick={() => router.push("/")}
