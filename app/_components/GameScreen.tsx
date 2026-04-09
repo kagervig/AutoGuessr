@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Check,
   X,
-  Clock,
   Zap,
   Star,
   Flag,
@@ -230,30 +229,6 @@ function RoundResult({
   );
 }
 
-// ─── Competitive timer bar (overlaid on image) ─────────────────────────────
-
-function RevealBar({ timerActive, roundState, timeLimitMs }: {
-  timerActive: boolean;
-  roundState: string;
-  timeLimitMs: number;
-}) {
-  return (
-    <div className="flex items-center gap-3 text-sm font-bold">
-      <Clock className="w-4 h-4 text-primary animate-pulse" />
-      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-primary to-orange-400 rounded-full"
-          style={{
-            width: roundState === "revealed" ? "0%" : timerActive ? "0%" : "100%",
-            transition: timerActive && roundState === "answering"
-              ? `width ${timeLimitMs}ms linear`
-              : "none",
-          }}
-        />
-      </div>
-    </div>
-  );
-}
 
 // ─── Main Game component ───────────────────────────────────────────────────
 
@@ -273,11 +248,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
   const [practiceComplete, setPracticeComplete] = useState(false);
 
-  // Zoom modes (hard + competitive)
-  const [timerActive, setTimerActive] = useState(false);
-  const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
   const autoSubmitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rafRef = useRef<number | null>(null);
   const roundStartRef = useRef<number>(Date.now());
   const currentRoundIdRef = useRef<string>("");
   const currentRoundImageUrlRef = useRef<string>("");
@@ -329,7 +300,6 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         autoSubmitRef.current = setTimeout(() => handleTimeoutRef.current(), limit);
       }
     }
-    setTimerActive(false);
 
     if (mode === "hardcore") {
       const order = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
@@ -351,20 +321,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
       }, 5000);
     }
 
-    if ((mode === "competitive" || mode === "hard") && gameData) {
-      const x = Math.floor(Math.random() * 70 + 15);
-      const y = Math.floor(Math.random() * 70 + 15);
-      setZoomOrigin(`${x}% ${y}%`);
-
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = requestAnimationFrame(() => {
-          setTimerActive(true);
-        });
-      });
-    }
-
     return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       if (autoSubmitRef.current !== null) clearTimeout(autoSubmitRef.current);
       if (panelIntervalRef.current !== null) clearInterval(panelIntervalRef.current);
     };
@@ -425,11 +382,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
   const round = gameData.rounds[currentIndex];
   const choices = gameData.easyChoices?.[round.roundId] ?? [];
-  const timeLimitMs = gameData.timeLimitMs ?? TIME_LIMITS[mode] ?? TIME_LIMITS.easy;
   const isLastRound = currentIndex === gameData.rounds.length - 1;
   const isHardcore = mode === "hardcore";
-  const isCompetitive = mode === "competitive";
-  const isZoomMode = mode === "competitive" || mode === "hard";
   const maxTotalScore = gameData.rounds.length * Math.floor(1000 * (MAX_MULTIPLIERS[mode] ?? 1.0));
 
   function resolveAndReveal({
@@ -726,10 +680,6 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                 alt="Identify this car"
                 loading="eager"
                 className="absolute inset-0 w-full h-full object-cover"
-                style={isZoomMode && roundState === "answering"
-                  ? { transformOrigin: zoomOrigin, animation: `zoom-out ${timeLimitMs}ms linear forwards` }
-                  : undefined
-                }
                 draggable={false}
               />
 
@@ -748,13 +698,6 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                       style={{ opacity: visible ? 1 : 0 }}
                     />
                   ))}
-                </div>
-              )}
-
-              {/* Timer bar for zoom modes */}
-              {isZoomMode && roundState === "answering" && (
-                <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                  <RevealBar timerActive={timerActive} roundState={roundState} timeLimitMs={timeLimitMs} />
                 </div>
               )}
 
@@ -875,7 +818,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             <p className="text-xs text-muted-foreground leading-relaxed">
               {mode === "easy" && "Pick the right car from 4 choices."}
               {mode === "medium" && "Pick the right car from 4 choices. Filtered to your chosen collection."}
-              {mode === "hard" && "Type make, model, and year as the image zooms out."}
+              {mode === "hard" && "Type make, model, and year."}
               {mode === "hardcore" && "Same as Expert. Panels are removed every 5 seconds to reveal the car."}
               {mode === "competitive" && "Race the clock — faster answers earn bonus points."}
               {mode === "practice" && "No leaderboard pressure. Drill your knowledge."}
