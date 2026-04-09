@@ -5,11 +5,12 @@ import Combobox from "./Combobox";
 
 interface Props {
   makes: string[];
+  showYear: boolean;
   disabled: boolean;
-  onSubmit: (make: string, model: string, year: string) => void;
+  onSubmit: (make: string, model: string, year?: string) => void;
 }
 
-export default function HardModeInput({ makes, disabled, onSubmit }: Props) {
+export default function CustomModeInput({ makes, showYear, disabled, onSubmit }: Props) {
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
@@ -17,7 +18,6 @@ export default function HardModeInput({ makes, disabled, onSubmit }: Props) {
   const [loadingModels, setLoadingModels] = useState(false);
 
   useEffect(() => {
-    setModel("");
     setModels([]);
     if (!make) return;
     setLoadingModels(true);
@@ -27,7 +27,7 @@ export default function HardModeInput({ makes, disabled, onSubmit }: Props) {
       .finally(() => setLoadingModels(false));
   }, [make]);
 
-  const canSubmit = !!make && !!model && !!year;
+  const canSubmit = !!make || !!model;
 
   return (
     <div className="space-y-3">
@@ -42,25 +42,27 @@ export default function HardModeInput({ makes, disabled, onSubmit }: Props) {
         value={model}
         onChange={setModel}
         options={models}
-        placeholder={make ? (loadingModels ? "Loading…" : "Model") : "Select make first"}
-        disabled={disabled || !make}
-      />
-      <input
-        type="number"
-        value={year}
-        onChange={(e) => setYear(e.target.value)}
-        placeholder="Year (e.g. 1969)"
-        min={1885}
-        max={new Date().getFullYear() + 1}
+        placeholder={loadingModels ? "Loading…" : "Model (e.g. Mustang)"}
         disabled={disabled}
-        className="w-full bg-white/5 border-2 border-white/10 rounded-xl px-4 py-3 text-white font-bold placeholder:text-white/25 focus:outline-none focus:border-primary transition-colors disabled:opacity-40"
       />
+      {showYear && (
+        <input
+          type="number"
+          value={year}
+          onChange={(e) => setYear(e.target.value)}
+          placeholder="Year (e.g. 1969)"
+          min={1885}
+          max={new Date().getFullYear() + 1}
+          disabled={disabled}
+          className="w-full bg-white/5 border-2 border-white/10 rounded-xl px-4 py-3 text-white font-bold placeholder:text-white/25 focus:outline-none focus:border-primary transition-colors disabled:opacity-40"
+        />
+      )}
       <button
         disabled={disabled || !canSubmit}
-        onClick={() => onSubmit(make, model, year)}
+        onClick={() => onSubmit(make, model, showYear ? year : undefined)}
         className="w-full py-3 rounded-xl bg-primary text-white font-black tracking-widest uppercase disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 transition-all"
       >
-        Submit
+        Confirm
       </button>
     </div>
   );

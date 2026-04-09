@@ -52,7 +52,7 @@ describe("GET /api/session", () => {
     vi.mocked(prisma.gameSession.findUnique).mockResolvedValue({
       id: GAME_ID,
       playerId: null,
-      mode: "hard",
+      mode: "standard",
       finalScore: 1500,
       rounds: [],
     } as never);

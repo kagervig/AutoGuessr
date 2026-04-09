@@ -23,10 +23,10 @@ import { cn } from "@/app/lib/utils";
 
 const MODE_ICONS: Record<string, React.ReactNode> = {
   easy: <ShieldCheck className="w-6 h-6" />,
-  medium: <Settings2 className="w-6 h-6" />,
-  hard: <Keyboard className="w-6 h-6" />,
+  custom: <Settings2 className="w-6 h-6" />,
+  standard: <Keyboard className="w-6 h-6" />,
   hardcore: <EyeOff className="w-6 h-6" />,
-  competitive: <Timer className="w-6 h-6" />,
+  time_attack: <Timer className="w-6 h-6" />,
   practice: <Wrench className="w-6 h-6" />,
 };
 
@@ -36,23 +36,13 @@ interface FilterOption {
   label: string;
 }
 
-interface DimensionStat {
-  dimensionType: string;
-  dimensionKey: string;
-  correct: number;
-  incorrect: number;
-  streak: number;
-}
-
 interface Props {
-  initialUsername: string;
   initialFilterError?: string;
 }
 
-export default function HomeScreen({ initialUsername, initialFilterError }: Props) {
+export default function HomeScreen({ initialFilterError }: Props) {
   const router = useRouter();
 
-  const [username, setUsername] = useState(initialUsername);
   const [selectedMode, setSelectedMode] = useState<ModeId | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
@@ -60,8 +50,7 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
   const [categories, setCategories] = useState<FilterOption[]>(FALLBACK_CATEGORIES);
   const [regions, setRegions] = useState<FilterOption[]>(FALLBACK_REGIONS);
   const [countries, setCountries] = useState<{ code: string; label: string }[]>([...COUNTRIES]);
-  const [filterError, setFilterError] = useState<string | null>(initialFilterError ?? null);
-  const [practiceStats, setPracticeStats] = useState<DimensionStat[]>([]);
+  const filterError = initialFilterError ?? null;
 
   useEffect(() => {
     fetch("/api/filters")
@@ -76,19 +65,6 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
       });
   }, []);
 
-  useEffect(() => {
-    if (!username.trim()) {
-      setPracticeStats([]);
-      return;
-    }
-    fetch(`/api/practice/stats?username=${encodeURIComponent(username.trim())}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) setPracticeStats(data);
-      })
-      .catch(() => {});
-  }, [username]);
-
   const isProd = process.env.NODE_ENV === "production";
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -100,7 +76,7 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
     };
   }, []);
 
-  const isCustomMode = selectedMode === "medium" || selectedMode === "practice";
+  const isCustomMode = selectedMode === "custom" || selectedMode === "practice";
   const hasFilter =
     selectedCategories.length > 0 ||
     selectedRegions.length > 0 ||
@@ -116,10 +92,6 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
     if (!selectedMode) return;
     if (isCustomMode && !hasFilter) return;
 
-    if (username.trim()) {
-      document.cookie = `autoguessr_username=${encodeURIComponent(username.trim())}; max-age=${60 * 60 * 24 * 365}; path=/`;
-    }
-
     const filterConfig = {
       categorySlugs: selectedCategories,
       regionSlugs: selectedRegions,
@@ -127,7 +99,6 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
     };
 
     const params = new URLSearchParams({ mode: selectedMode });
-    if (username.trim()) params.set("username", username.trim());
     params.set("filter", encodeURIComponent(JSON.stringify(filterConfig)));
     if (turnstileToken) params.set("cf_token", turnstileToken);
 
@@ -169,32 +140,6 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
       {/* Main Configuration Form */}
       <section className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20">
 
-        {/* Username */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="max-w-md mx-auto"
-        >
-          <label htmlFor="username" className="block text-sm font-bold tracking-widest text-muted-foreground uppercase mb-3 text-center">
-            Driver Tag (Optional)
-          </label>
-          <div className="relative group">
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="ENTER ALIAS"
-              maxLength={32}
-              className="w-full bg-white/5 border-2 border-white/10 rounded-xl px-6 py-4 text-center text-xl font-display font-bold uppercase tracking-wider text-white placeholder:text-white/20 focus:outline-none focus:border-primary focus:bg-white/10 transition-all duration-300"
-              autoComplete="off"
-              spellCheck="false"
-            />
-            <div className="absolute inset-0 rounded-xl ring-2 ring-primary/0 group-focus-within:ring-primary/20 transition-all duration-300 pointer-events-none" />
-          </div>
-        </motion.div>
-
         {/* Mode Selection */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -208,23 +153,33 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
             <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-            {MODES.map((mode) => (
-              <ModeCard
-                key={mode.id}
-                id={mode.id}
-                title={mode.label}
-                description={mode.description}
-                icon={MODE_ICONS[mode.id]}
-                selected={selectedMode === mode.id}
-                featured={mode.id === "easy"}
-                onClick={() => setSelectedMode(mode.id)}
-                className={cn(
-                  mode.id === "easy" && "md:col-span-2 md:row-span-2",
-                  mode.id === "practice" && "md:col-span-3"
-                )}
-              />
-            ))}
+          <div className="space-y-4 lg:space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+              {MODES.slice(0, 4).map((mode) => (
+                <ModeCard
+                  key={mode.id}
+                  id={mode.id}
+                  title={mode.label}
+                  description={mode.description}
+                  icon={MODE_ICONS[mode.id]}
+                  selected={selectedMode === mode.id}
+                  onClick={() => setSelectedMode(mode.id)}
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+              {MODES.slice(4).map((mode) => (
+                <ModeCard
+                  key={mode.id}
+                  id={mode.id}
+                  title={mode.label}
+                  description={mode.description}
+                  icon={MODE_ICONS[mode.id]}
+                  selected={selectedMode === mode.id}
+                  onClick={() => setSelectedMode(mode.id)}
+                />
+              ))}
+            </div>
             <ModeCard
               id="community"
               title="Community"
@@ -232,7 +187,6 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
               icon={<Users className="w-6 h-6" />}
               selected={false}
               onClick={() => router.push("/identify")}
-              className="md:col-span-3"
             />
           </div>
         </motion.div>
@@ -294,42 +248,6 @@ export default function HomeScreen({ initialUsername, initialFilterError }: Prop
           >
             {filterError}
           </motion.p>
-        )}
-
-        {/* Practice stats */}
-        {practiceStats.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
-          >
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-display font-black tracking-widest text-white uppercase">
-                Practice Progress
-              </h2>
-              <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
-            </div>
-            <div className="space-y-2">
-              {practiceStats.map((s) => (
-                <div
-                  key={`${s.dimensionType}-${s.dimensionKey}`}
-                  className="flex items-center justify-between glass-panel rounded-xl px-4 py-3"
-                >
-                  <span className="capitalize text-sm font-medium text-zinc-300">
-                    {s.dimensionKey.replace(/_/g, " ")}
-                  </span>
-                  <span className="text-sm font-mono text-muted-foreground">
-                    <span className="text-green-400 font-bold">{s.correct}</span>
-                    {" / "}
-                    {s.correct + s.incorrect}
-                    {s.streak > 0 && (
-                      <span className="ml-2 text-primary font-bold">{s.streak} streak</span>
-                    )}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.section>
         )}
 
         {/* Legal links */}

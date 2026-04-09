@@ -3,7 +3,7 @@ import type { Prisma } from "../../../app/generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, type VehicleForDistractor } from "@/app/lib/game";
 
-const VALID_MODES = ["easy", "medium", "hard", "hardcore", "competitive", "practice"] as const;
+const VALID_MODES = ["easy", "custom", "standard", "hardcore", "time_attack", "practice"] as const;
 type Mode = (typeof VALID_MODES)[number];
 
 interface FilterConfig {
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
   });
 
   // Create rounds
-  const timeLimitMs = mode === "competitive" ? TIME_LIMITS.competitive : null;
+  const timeLimitMs = mode === "time_attack" ? TIME_LIMITS.time_attack : null;
 
   const rounds = await prisma.$transaction(
     selected.map((image, i) =>
@@ -199,9 +199,9 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Medium/hard/hardcore/competitive: return distinct makes
+  // Custom/standard/hardcore/time_attack: return distinct makes
   let makes: string[] | undefined;
-  if (["medium", "hard", "hardcore", "competitive"].includes(mode)) {
+  if (["custom", "standard", "hardcore", "time_attack"].includes(mode)) {
     const distinctMakes = await prisma.vehicle.findMany({
       select: { make: true },
       distinct: ["make"],
@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
     rounds: roundData,
     ...(easyChoices ? { easyChoices } : {}),
     ...(makes ? { makes } : {}),
-    ...(mode === "competitive" ? { timeLimitMs: TIME_LIMITS.competitive } : {}),
+    ...(mode === "time_attack" ? { timeLimitMs: TIME_LIMITS.time_attack } : {}),
   });
   response.headers.set(
     "Set-Cookie",
