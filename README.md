@@ -18,24 +18,30 @@ A car identification game. Players are shown a photo of a car and must identify 
 
 ## Initial setup
 
-**1. Install dependencies**
+**1. Install Docker**
+
+Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/), then start it.
+
+**2. Install dependencies**
 
 ```bash
 npm install
 ```
 
-**2. Configure environment**
+> runs `prisma generate` to regenerate the Prisma client.
+
+**3. Configure environment**
 
 Copy `.env.local.example` to `.env.local` and fill in your values:
 
-**3. Start the local database**
+**4. Start the local database**
 
 ```bash
 npm run db:up
 npx prisma migrate deploy
 ```
 
-**4. Populate with data**
+**5. Populate with data**
 
 To populate with a subset of real production data (includes real Cloudinary image filenames):
 
@@ -45,7 +51,7 @@ PROD_DATABASE_URL="<prod connection string>" npm run db:dump
 
 The number controls how many vehicles to pull (defaults to 200). Vehicles are selected by most active images first.
 
-**5. Start the dev server**
+**6. Start the dev server**
 
 ```bash
 npm run dev
@@ -81,6 +87,16 @@ To reset to a clean state and repopulate:
 ```bash
 npm run db:reset
 PROD_DATABASE_URL="<prod connection string>" npm run db:dump
+```
+
+## Database migrations
+
+Migrations run automatically on Vercel deploy via `prisma migrate deploy`.
+
+To run migrations manually against production from your local machine, explicitly pass the prod connection string to avoid `.env.local` taking precedence:
+
+```bash
+DATABASE_URL="<prod connection string>" npx prisma migrate deploy
 ```
 
 ## Images in local development
