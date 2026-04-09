@@ -19,9 +19,9 @@ export default function TermsPage() {
               </h1>
               <p className="text-muted-foreground text-xs">
                 Effective Date: April 7, 2025 &mdash; Contact:{" "}
-                <a href="mailto:legal@autoguessr.com" className="text-primary hover:underline">
-                  legal@autoguessr.com
-                </a>
+                <a href="mailto:kpallin90@gmail.com" className="text-primary hover:underline">
+                  contact us
+                </a>.
               </p>
             </div>
 
@@ -110,9 +110,9 @@ export default function TermsPage() {
 
             <Section title="6. Copyright and Takedown Requests">
               <p>
-                If you believe any image displayed on AutoGuessr infringes your copyright, contact us at{" "}
-                <a href="mailto:legal@autoguessr.com" className="text-primary hover:underline">
-                  legal@autoguessr.com
+                If you believe any image displayed on AutoGuessr infringes your copyright, {" "}
+                <a href="mailto:kpallin90@gmail.com" className="text-primary hover:underline">
+                  contact us
                 </a>{" "}
                 with:
               </p>
@@ -178,10 +178,10 @@ export default function TermsPage() {
 
             <Section title="12. Contact">
               <p>
-                For questions about these Terms, contact us at:{" "}
-                <a href="mailto:legal@autoguessr.com" className="text-primary hover:underline">
-                  legal@autoguessr.com
-                </a>
+                For questions about these Terms, {" "}
+                <a href="mailto:kpallin90@gmail.com" className="text-primary hover:underline">
+                  contact us
+                </a>.
               </p>
             </Section>
 
