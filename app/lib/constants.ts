@@ -5,22 +5,22 @@ export const MODES = [
     description: "4 multiple choice answers. Perfect for warming up.",
   },
   {
-    id: "medium",
+    id: "custom",
     label: "Custom",
     description: "Choose a category, region, or country — then identify cars from that collection.",
   },
   {
-    id: "hard",
-    label: "Expert",
+    id: "standard",
+    label: "Standard",
     description: "Type the exact make, model, and year.",
   },
   {
     id: "hardcore",
     label: "Hardcore",
-    description: "Expert rules, but images are heavily obscured.",
+    description: "Standard rules, but images are heavily obscured.",
   },
   {
-    id: "competitive",
+    id: "time_attack",
     label: "Time Attack",
     description: "Beat the clock as the image slowly reveals itself.",
   },

@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     partialCredit = 0;
   }
 
-  const timeLimitMs = round.timeLimitMs ?? TIME_LIMITS[mode] ?? TIME_LIMITS.hard;
+  const timeLimitMs = round.timeLimitMs ?? TIME_LIMITS[mode] ?? TIME_LIMITS.standard;
 
   const scoring = scoreRound({
     makeCorrect: makeMatch,

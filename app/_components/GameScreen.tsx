@@ -18,8 +18,8 @@ import { TIME_LIMITS, shuffle } from "@/app/lib/game";
 import { MODES } from "@/app/lib/constants";
 import { Tachometer } from "@/app/components/ui/Tachometer";
 import { cn } from "@/app/lib/utils";
-import MediumModeInput from "./MediumModeInput";
-import HardModeInput from "./HardModeInput";
+import CustomModeInput from "./CustomModeInput";
+import StandardModeInput from "./StandardModeInput";
 
 const MODE_LABELS: Record<string, string> = Object.fromEntries(
   MODES.map((m) => [m.id, m.label])
@@ -28,10 +28,10 @@ const MODE_LABELS: Record<string, string> = Object.fromEntries(
 // Approximate max per-round score for tachometer calibration
 const MAX_MULTIPLIERS: Record<string, number> = {
   easy: 1.0,
-  medium: 1.3,
-  hard: 1.7,
+  custom: 1.3,
+  standard: 1.7,
   hardcore: 2.2,
-  competitive: 2.0,
+  time_attack: 2.0,
   practice: 1.0,
 };
 
@@ -91,8 +91,8 @@ interface Props {
   cfToken?: string;
 }
 
-const HARD_MODES = ["hard", "hardcore", "competitive"];
-const CHOICE_MODES = ["easy", "practice", "medium"];
+const HARD_MODES = ["standard", "hardcore", "time_attack"];
+const CHOICE_MODES = ["easy", "practice", "custom"];
 
 // ─── RoundResult overlay ───────────────────────────────────────────────────
 
@@ -721,9 +721,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
               >
                 <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
                   {mode === "easy" && "Choose the correct make & model"}
-                  {mode === "medium" && "Choose the correct make & model"}
-                  {(mode === "hard" || mode === "hardcore") && "Type make, model & year exactly"}
-                  {mode === "competitive" && "Identify before the image reveals!"}
+                  {mode === "custom" && "Choose the correct make & model"}
+                  {(mode === "standard" || mode === "hardcore") && "Type make, model & year exactly"}
+                  {mode === "time_attack" && "Identify before the image reveals!"}
                   {mode === "practice" && "Choose the correct make & model"}
                 </p>
 
@@ -748,8 +748,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                   </div>
                 )}
 
-                {mode === "medium" && (
-                  <MediumModeInput
+                {mode === "custom" && (
+                  <CustomModeInput
                     makes={gameData.makes ?? []}
                     showYear={mediumYearGuessing}
                     disabled={false}
@@ -757,16 +757,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
                   />
                 )}
 
-                {HARD_MODES.includes(mode) && mode !== "competitive" && (
-                  <HardModeInput
-                    makes={gameData.makes ?? []}
-                    disabled={false}
-                    onSubmit={handleHardSubmit}
-                  />
-                )}
-
-                {mode === "competitive" && (
-                  <HardModeInput
+                {HARD_MODES.includes(mode) && (
+                  <StandardModeInput
                     makes={gameData.makes ?? []}
                     disabled={false}
                     onSubmit={handleHardSubmit}
@@ -817,10 +809,10 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {mode === "easy" && "Pick the right car from 4 choices."}
-              {mode === "medium" && "Pick the right car from 4 choices. Filtered to your chosen collection."}
-              {mode === "hard" && "Type make, model, and year."}
-              {mode === "hardcore" && "Same as Expert. Panels are removed every 5 seconds to reveal the car."}
-              {mode === "competitive" && "Race the clock — faster answers earn bonus points."}
+              {mode === "custom" && "Pick the right car from 4 choices. Filtered to your chosen collection."}
+              {mode === "standard" && "Type make, model, and year."}
+              {mode === "hardcore" && "Same as Standard. Panels are removed every 5 seconds to reveal the car."}
+              {mode === "time_attack" && "Race the clock — faster answers earn bonus points."}
               {mode === "practice" && "No leaderboard pressure. Drill your knowledge."}
             </p>
           </div>

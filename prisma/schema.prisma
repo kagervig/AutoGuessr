@@ -39,10 +39,10 @@ enum Rarity {
 
 enum GameMode {
   easy
-  medium
-  hard
+  custom
+  standard
   hardcore
-  competitive
+  time_attack
   practice
 }
 

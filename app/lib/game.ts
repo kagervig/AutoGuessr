@@ -140,11 +140,11 @@ export function scoreRound({
 } {
   const makePoints = makeCorrect ? 300 : 0;
   // Medium mode awards model points independently of make (partial credit for separate fields)
-  const modelPoints = mode === "medium"
+  const modelPoints = mode === "custom"
     ? (modelCorrect ? 400 : 0)
     : (makeCorrect && modelCorrect ? 400 : 0);
 
-  const yearBonusApplies = ["hard", "hardcore", "competitive"].includes(mode);
+  const yearBonusApplies = ["standard", "hardcore", "time_attack"].includes(mode);
   const yearBonus =
     yearBonusApplies && yearDelta !== null
       ? Math.max(0, Math.round(200 * (1 - yearDelta / 5)))
@@ -158,9 +158,9 @@ export function scoreRound({
 
   const multipliers: Record<string, number> = {
     easy: 1.0,
-    medium: 1.0,
-    hard: 1.7,
-    competitive: 2.0,
+    custom: 1.0,
+    standard: 1.7,
+    time_attack: 2.0,
     practice: 0,
   };
 
@@ -194,8 +194,8 @@ export function proLevelBonus(correctGuesses: number, incorrectGuesses: number):
 
 export const TIME_LIMITS: Record<string, number> = {
   easy: 30_000,
-  medium: 45_000,
-  hard: 60_000,
+  custom: 45_000,
+  standard: 60_000,
   hardcore: 90_000,
-  competitive: 30_000,
+  time_attack: 30_000,
 };

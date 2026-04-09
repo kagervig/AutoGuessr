@@ -32,7 +32,7 @@ function mockSession(overrides: object = {}) {
     id: GAME_ID,
     endedAt: new Date(),
     initials: null,
-    mode: "hard",
+    mode: "standard",
     sessionToken: TOKEN,
     ...overrides,
   } as never);
