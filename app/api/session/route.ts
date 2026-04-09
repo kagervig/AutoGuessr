@@ -5,13 +5,13 @@ import { imageUrl } from "@/app/lib/game";
 // Session end is handled by /api/session/end
 
 export async function GET(request: NextRequest) {
-  const sessionId = request.nextUrl.searchParams.get("sessionId");
-  if (!sessionId) {
-    return Response.json({ error: "sessionId is required" }, { status: 400 });
+  const gameId = request.nextUrl.searchParams.get("gameId");
+  if (!gameId) {
+    return Response.json({ error: "gameId is required" }, { status: 400 });
   }
 
   const session = await prisma.gameSession.findUnique({
-    where: { id: sessionId },
+    where: { id: gameId },
     include: {
       rounds: {
         orderBy: { sequenceNumber: "asc" },

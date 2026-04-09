@@ -183,19 +183,20 @@ model GameSession {
   endedAt      DateTime?
   finalScore   Int?
   initials     String?
+  sessionToken String      @unique @default(dbgenerated("gen_random_uuid()"))
   player       Player?     @relation(fields: [playerId], references: [id])
   rounds       Round[]
 }
 
 model Round {
   id             String      @id @default(cuid())
-  sessionId      String
+  gameId         String
   imageId        String
   sequenceNumber Int
   easyChoices    String[]
   timeLimitMs    Int?
   presentedAt    DateTime    @default(now())
-  session        GameSession @relation(fields: [sessionId], references: [id])
+  session        GameSession @relation(fields: [gameId], references: [id])
   image          Image       @relation(fields: [imageId], references: [id])
   guess          Guess?
 }

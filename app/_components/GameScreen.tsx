@@ -55,7 +55,7 @@ interface Choice {
 }
 
 interface GameData {
-  sessionId: string;
+  gameId: string;
   rounds: RoundData[];
   easyChoices?: Record<string, Choice[]>;
   makes?: string[];
@@ -280,6 +280,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const rafRef = useRef<number | null>(null);
   const roundStartRef = useRef<number>(Date.now());
   const currentRoundIdRef = useRef<string>("");
+  const currentRoundImageUrlRef = useRef<string>("");
 
   // Hardcore grid
   const [visiblePanels, setVisiblePanels] = useState<boolean[]>(Array(9).fill(true));
@@ -322,6 +323,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     roundStartRef.current = Date.now();
     if (gameData) {
       currentRoundIdRef.current = gameData.rounds[currentIndex].roundId;
+      currentRoundImageUrlRef.current = gameData.rounds[currentIndex].imageUrl;
       const limit = gameData.timeLimitMs ?? TIME_LIMITS[mode];
       if (limit) {
         autoSubmitRef.current = setTimeout(() => handleTimeoutRef.current(), limit);
@@ -379,11 +381,12 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ roundId, rawInput: "", timeTakenMs: Date.now() - roundStartRef.current }),
         });
+        if (!res.ok && res.status === 401) { router.push("/"); return; }
         const data = await res.json();
         vehicle = data.vehicle;
       } catch {/* ignore — reveal will show blank label */}
     }
-    resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel: "", pointsEarned: 0, vehicle });
+    resolveAndReveal({ imageUrl: currentRoundImageUrlRef.current, makeCorrect: false, modelCorrect: false, guessLabel: "", pointsEarned: 0, vehicle });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundState]);
 
@@ -430,6 +433,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const maxTotalScore = gameData.rounds.length * Math.floor(1000 * (MAX_MULTIPLIERS[mode] ?? 1.0));
 
   function resolveAndReveal({
+    imageUrl,
     makeCorrect,
     modelCorrect,
     guessLabel,
@@ -437,6 +441,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     vehicle,
     breakdown,
   }: {
+    imageUrl: string;
     makeCorrect: boolean;
     modelCorrect: boolean;
     guessLabel: string;
@@ -460,7 +465,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
     setScore((s) => s + pointsEarned);
     setReveal({ correctLabel, guessLabel, isCorrect: makeCorrect && modelCorrect, pointsEarned, breakdown });
-    setCompletedRounds((prev) => [...prev, { imageUrl: round.imageUrl, correctLabel, isCorrect: makeCorrect && modelCorrect }]);
+    setCompletedRounds((prev) => [...prev, { imageUrl, correctLabel, isCorrect: makeCorrect && modelCorrect }]);
     setRoundState("revealed");
   }
 
@@ -476,13 +481,14 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         body: JSON.stringify({ roundId: round.roundId, rawInput: guessLabel, guessedVehicleId: vehicleId, timeTakenMs: elapsedMs }),
       });
       const data = await res.json();
+      if (!res.ok && res.status === 401) { router.push("/"); return; }
       if (!res.ok) {
-        resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+        resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
       }
-      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
     } catch {
-      resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
   }
 
@@ -504,13 +510,14 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         }),
       });
       const data = await res.json();
+      if (!res.ok && res.status === 401) { router.push("/"); return; }
       if (!res.ok) {
-        resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+        resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
       }
-      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
     } catch {
-      resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
   }
 
@@ -519,7 +526,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = `${year} ${make} ${model}`.trim();
     if (!make && !model) {
-      resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel: "", pointsEarned: 0 });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel: "", pointsEarned: 0 });
       return;
     }
     try {
@@ -537,13 +544,14 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         }),
       });
       const data = await res.json();
+      if (!res.ok && res.status === 401) { router.push("/"); return; }
       if (!res.ok) {
-        resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+        resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
         return;
       }
-      resolveAndReveal({ makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: data.makeMatch, modelCorrect: data.modelMatch, guessLabel, pointsEarned: data.pointsEarned, vehicle: data.vehicle, breakdown: { makePoints: data.makePoints, modelPoints: data.modelPoints, yearBonus: data.yearBonus, timeBonus: data.timeBonus, modeMultiplier: data.modeMultiplier, proBonus: data.proBonus } });
     } catch {
-      resolveAndReveal({ makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
+      resolveAndReveal({ imageUrl: round.imageUrl, makeCorrect: false, modelCorrect: false, guessLabel, pointsEarned: 0 });
     }
   }
 
@@ -577,13 +585,14 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         setPracticeComplete(true);
         return;
       }
-      await fetch("/api/session/end", {
+      const endRes = await fetch("/api/session/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: gameData!.sessionId, finalScore: score }),
+        body: JSON.stringify({ gameId: gameData!.gameId, finalScore: score }),
       });
+      if (!endRes.ok && endRes.status === 401) { router.push("/"); return; }
       const params = new URLSearchParams({
-        sessionId: gameData!.sessionId,
+        gameId: gameData!.gameId,
         mode,
         ...(username ? { username } : {}),
       });

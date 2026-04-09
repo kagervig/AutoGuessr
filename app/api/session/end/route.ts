@@ -3,19 +3,31 @@ import { prisma } from "@/app/lib/prisma";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { sessionId, finalScore } = body as { sessionId: string; finalScore: number };
+  const { gameId, finalScore } = body as { gameId: string; finalScore: number };
 
-  if (!sessionId) {
-    return Response.json({ error: "sessionId is required" }, { status: 400 });
+  if (!gameId) {
+    return Response.json({ error: "gameId is required" }, { status: 400 });
   }
 
   const session = await prisma.gameSession.findUnique({
-    where: { id: sessionId },
-    include: { rounds: { include: { guess: true } } },
+    where: { id: gameId },
+    select: {
+      id: true,
+      playerId: true,
+      mode: true,
+      endedAt: true,
+      sessionToken: true,
+      rounds: { select: { guess: { select: { isCorrect: true } } } },
+    },
   });
 
   if (!session) {
     return Response.json({ error: "Session not found" }, { status: 404 });
+  }
+
+  const cookie = request.cookies.get(`st_${gameId}`)?.value;
+  if (!cookie || cookie !== session.sessionToken) {
+    return Response.json({ error: "Unauthorised" }, { status: 401 });
   }
 
   if (session.endedAt) {
@@ -26,7 +38,7 @@ export async function POST(request: NextRequest) {
   const roundsPlayed = session.rounds.length;
 
   const endedSession = await prisma.gameSession.update({
-    where: { id: sessionId },
+    where: { id: gameId },
     data: { endedAt: new Date(), finalScore: finalScore ?? 0 },
   });
 
@@ -62,5 +74,5 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  return Response.json({ sessionId, finalScore: finalScore ?? 0, endedAt: endedSession.endedAt });
+  return Response.json({ gameId, finalScore: finalScore ?? 0, endedAt: endedSession.endedAt });
 }
