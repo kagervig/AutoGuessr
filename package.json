@@ -7,6 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run",
     "lint": "eslint",
     "import-cars": "tsx scripts/import-cars.ts",
     "tag-images": "tsx scripts/tag-images.ts"
@@ -28,17 +29,18 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "dotenv": "^16",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "csv-parse": "^6.2.1",
+    "dotenv": "^16",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.3"
   }
 }
