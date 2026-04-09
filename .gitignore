@@ -2,6 +2,9 @@
 .env
 .env*.local
 
+# Prisma
+app/generated/
+
 # Next.js
 .next/
 out/
