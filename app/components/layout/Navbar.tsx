@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flag, Trophy, User } from "lucide-react";
+import { Flag, Trophy } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -23,10 +23,6 @@ export function Navbar() {
               <Trophy className="w-4 h-4" />
               <span className="hidden sm:inline">LEADERBOARD</span>
             </Link>
-            <button className="text-sm font-semibold tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-2">
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">PROFILE</span>
-            </button>
           </div>
         </div>
       </div>
