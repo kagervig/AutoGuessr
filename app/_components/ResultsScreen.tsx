@@ -270,12 +270,12 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
                 </p>
               )}
             </div>
-            <div className="flex flex-col items-center justify-center py-8 px-4">
+            <div className="flex flex-col items-center justify-center py-8 px-0">
               <div className="sm:hidden">
-                <Tachometer score={score} maxScore={approxMax} size={200} />
+                <Tachometer score={score} maxScore={approxMax} size={200} instanceId="results-mobile" />
               </div>
               <div className="hidden sm:block">
-                <Tachometer score={score} maxScore={approxMax} size={320} />
+                <Tachometer score={score} maxScore={approxMax} size={260} instanceId="results-desktop" />
               </div>
               <p className="text-xs text-muted-foreground font-mono tracking-widest mt-3 uppercase">
                 Speed Rating
