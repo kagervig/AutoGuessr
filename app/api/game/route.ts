@@ -127,11 +127,13 @@ export async function GET(request: NextRequest) {
   }
 
   // Create session
+  const sessionToken = crypto.randomUUID();
   const session = await prisma.gameSession.create({
     data: {
       playerId,
       mode,
       filterConfig: filterConfig as object,
+      sessionToken,
     },
   });
 
@@ -142,7 +144,7 @@ export async function GET(request: NextRequest) {
     selected.map((image, i) =>
       prisma.round.create({
         data: {
-          sessionId: session.id,
+          gameId: session.id,
           imageId: image.id,
           sequenceNumber: i + 1,
           easyChoices: [],
@@ -208,11 +210,17 @@ export async function GET(request: NextRequest) {
     makes = distinctMakes.map((v) => v.make);
   }
 
-  return Response.json({
-    sessionId: session.id,
+  const isProduction = process.env.NODE_ENV === "production";
+  const response = Response.json({
+    gameId: session.id,
     rounds: roundData,
     ...(easyChoices ? { easyChoices } : {}),
     ...(makes ? { makes } : {}),
     ...(mode === "competitive" ? { timeLimitMs: TIME_LIMITS.competitive } : {}),
   });
+  response.headers.set(
+    "Set-Cookie",
+    `st_${session.id}=${sessionToken}; HttpOnly; SameSite=Strict; Max-Age=1200; Path=/${isProduction ? "; Secure" : ""}`,
+  );
+  return response;
 }
