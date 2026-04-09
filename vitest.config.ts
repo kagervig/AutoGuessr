@@ -8,6 +8,22 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary", "json"],
+      include: ["app/lib/**", "app/api/**"],
+      exclude: [
+        "app/lib/prisma.ts",   // DB client singleton — not unit testable
+        "app/lib/staging.ts",  // admin utility dependent on external services
+        "app/lib/utils.ts",    // Tailwind merge helper — no business logic
+      ],
+      thresholds: {
+        lines: 30,
+        functions: 20,
+        branches: 25,
+        statements: 30,
+      },
+    },
   },
   resolve: {
     alias: {
