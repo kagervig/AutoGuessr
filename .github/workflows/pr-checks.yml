@@ -37,7 +37,7 @@ jobs:
         if: steps.changed-files.outputs.files != ''
         run: |
           read -ra FILES <<< "${{ steps.changed-files.outputs.files }}"
-          npx vitest run --related "${FILES[@]}"
+          npx vitest related --run "${FILES[@]}"
         shell: bash
 
       - name: No source files changed
