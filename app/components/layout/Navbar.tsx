@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flag, Trophy } from "lucide-react";
+import { Flag, Trophy, TrendingUp } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -16,6 +16,13 @@ export function Navbar() {
           </Link>
 
           <div className="flex items-center gap-6">
+            <Link
+              href="/scoring"
+              className="text-sm font-semibold tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-2"
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span className="hidden sm:inline">SCORING</span>
+            </Link>
             <Link
               href="/leaderboard"
               className="text-sm font-semibold tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-2"
