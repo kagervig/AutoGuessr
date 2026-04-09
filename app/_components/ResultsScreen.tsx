@@ -19,10 +19,11 @@ interface GuessData {
   makePoints: number;
   modelPoints: number;
   yearBonus: number | null;
+  yearDelta: number | null;
   timeBonus: number;
+  modeMultiplier: number;
   proBonus: number;
   pointsEarned: number;
-  yearDelta: number | null;
 }
 
 interface RoundData {
@@ -355,12 +356,20 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
                   </div>
                 </div>
 
-                {g && HARD_MODES.includes(mode) && g.pointsEarned > 0 && (
+                {g && g.pointsEarned > 0 && (
                   <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                     {g.makePoints > 0 && <span>make +{g.makePoints}</span>}
                     {g.modelPoints > 0 && <span>model +{g.modelPoints}</span>}
-                    {g.yearBonus != null && g.yearBonus > 0 && <span>year +{g.yearBonus}</span>}
+                    {g.yearBonus != null && g.yearBonus > 0 && (
+                      <span>
+                        year +{g.yearBonus}
+                        {g.yearDelta != null && g.yearDelta > 0 && (
+                          <span className="text-muted-foreground/50 ml-1">({g.yearDelta} off)</span>
+                        )}
+                      </span>
+                    )}
                     {g.timeBonus > 0 && <span>speed +{g.timeBonus}</span>}
+                    {g.modeMultiplier > 1 && <span className="text-yellow-400/80">×{g.modeMultiplier.toFixed(1)}</span>}
                     {g.proBonus > 0 && <span className="text-yellow-400">pro +{g.proBonus}</span>}
                   </div>
                 )}
