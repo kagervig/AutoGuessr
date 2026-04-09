@@ -50,7 +50,8 @@ interface SessionData {
 }
 
 interface Props {
-  sessionId: string;
+  gameId: string;
+  hasToken: boolean;
   mode: string;
   username: string;
 }
@@ -65,10 +66,10 @@ function calcGrade(pct: number): { grade: string; color: string } {
 
 // Retro arcade-style 3-character initials entry
 function InitialsEntry({
-  sessionId,
+  gameId,
   onSubmitted,
 }: {
-  sessionId: string;
+  gameId: string;
   onSubmitted: () => void;
 }) {
   const [letters, setLetters] = useState(["", "", ""]);
@@ -112,7 +113,7 @@ function InitialsEntry({
       const res = await fetch("/api/session/initials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, initials: initials.padEnd(3, "_").slice(0, 3) }),
+        body: JSON.stringify({ gameId, initials: initials.padEnd(3, "_").slice(0, 3) }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -168,21 +169,21 @@ function InitialsEntry({
   );
 }
 
-export default function ResultsScreen({ sessionId, mode, username }: Props) {
+export default function ResultsScreen({ gameId, hasToken, mode, username }: Props) {
   const router = useRouter();
   const [session, setSession] = useState<SessionData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initialsSubmitted, setInitialsSubmitted] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/session?sessionId=${sessionId}`)
+    fetch(`/api/session?gameId=${gameId}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.error) setError(data.error);
         else setSession(data);
       })
       .catch(() => setError("Failed to load results."));
-  }, [sessionId]);
+  }, [gameId]);
 
   if (error) {
     return (
@@ -260,9 +261,9 @@ export default function ResultsScreen({ sessionId, mode, username }: Props) {
           )}
 
           {/* Initials entry or confirmation */}
-          {showLeaderboard && !initialsSubmitted && (
+          {showLeaderboard && hasToken && !initialsSubmitted && (
             <InitialsEntry
-              sessionId={sessionId}
+              gameId={gameId}
               onSubmitted={() => setInitialsSubmitted(true)}
             />
           )}
