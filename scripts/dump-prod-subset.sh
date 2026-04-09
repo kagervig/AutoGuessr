@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-LIMIT="${1:-100}"
+LIMIT="${1:-200}"
 DB="${PROD_DATABASE_URL:?PROD_DATABASE_URL must be set}"
 CONTAINER="autoguessr-db-1"
 TMPDIR_HOST="$(mktemp -d)"
