@@ -243,6 +243,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [roundState, setRoundState] = useState<"answering" | "revealed">("answering");
   const [selectedEasyId, setSelectedEasyId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState(0);
   const [reveal, setReveal] = useState<RevealInfo | null>(null);
   const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
@@ -417,6 +418,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     const year = vehicle?.year ?? 0;
     const correctLabel = HARD_MODES.includes(mode) ? `${year} ${make} ${model}`.trim() : `${make} ${model}`.trim();
 
+    setIsSubmitting(false);
     setScore((s) => s + pointsEarned);
     setReveal({ correctLabel, guessLabel, isCorrect: makeCorrect && modelCorrect, pointsEarned, breakdown });
     setCompletedRounds((prev) => [...prev, { imageUrl, correctLabel, isCorrect: makeCorrect && modelCorrect }]);
@@ -426,6 +428,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   async function handleEasyAnswer(vehicleId: string) {
     if (roundState === "revealed") return;
     setSelectedEasyId(vehicleId);
+    setIsSubmitting(true);
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = choices.find((c) => c.vehicleId === vehicleId)?.label ?? "";
     try {
@@ -557,6 +560,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     setRoundState("answering");
     setReveal(null);
     setSelectedEasyId(null);
+    setIsSubmitting(false);
   }
 
   // Practice complete screen
@@ -729,22 +733,34 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
                 {CHOICE_MODES.includes(mode) && (
                   <div className="grid grid-cols-2 gap-3">
-                    {choices.map((choice, i) => (
-                      <motion.button
-                        key={choice.vehicleId}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.06 }}
-                        onClick={() => handleEasyAnswer(choice.vehicleId)}
-                        disabled={selectedEasyId !== null}
-                        className="relative group p-4 rounded-xl border-2 border-white/10 bg-white/5 hover:border-primary/60 hover:bg-primary/10 text-left transition-all duration-200 font-bold text-sm tracking-wide overflow-hidden disabled:pointer-events-none"
-                      >
-                        <span className="absolute top-2 right-3 text-xs font-mono text-white/20 group-hover:text-primary/50 transition-colors">
-                          {String.fromCharCode(65 + i)}
-                        </span>
-                        {choice.label}
-                      </motion.button>
-                    ))}
+                    {choices.map((choice, i) => {
+                      const isSelected = selectedEasyId === choice.vehicleId;
+                      return (
+                        <motion.button
+                          key={choice.vehicleId}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileTap={{ scale: 0.95 }}
+                          transition={{ delay: i * 0.06 }}
+                          onClick={() => handleEasyAnswer(choice.vehicleId)}
+                          disabled={selectedEasyId !== null}
+                          className={cn(
+                            "relative group p-4 rounded-xl border-2 text-left transition-all duration-200 font-bold text-sm tracking-wide overflow-hidden disabled:pointer-events-none",
+                            isSelected && isSubmitting
+                              ? "border-primary/60 bg-primary/10"
+                              : "border-white/10 bg-white/5 hover:border-primary/60 hover:bg-primary/10"
+                          )}
+                        >
+                          <span className="absolute top-2 right-3 text-xs font-mono text-white/20 group-hover:text-primary/50 transition-colors">
+                            {isSelected && isSubmitting
+                              ? <span className="inline-block w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                              : String.fromCharCode(65 + i)
+                            }
+                          </span>
+                          {choice.label}
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 )}
 
