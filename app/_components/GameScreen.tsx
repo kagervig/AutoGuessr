@@ -120,7 +120,9 @@ function RoundResult({
   totalRounds: number;
   totalScore: number;
   imageRating: "up" | "down" | null;
+  imageReported: boolean;
   onRate: (value: "up" | "down") => void;
+  onReport: () => void;
   onNext: () => void;
 }) {
   const isLast = round >= totalRounds;
@@ -280,6 +282,19 @@ function RoundResult({
               )}
             >
               <ThumbsDown className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onReport}
+              aria-label="Report image"
+              disabled={imageReported}
+              className={cn(
+                "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors disabled:pointer-events-none sm:hidden",
+                imageReported
+                  ? "bg-orange-500/20 border-orange-500/40 text-orange-400"
+                  : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+              )}
+            >
+              <Flag className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -814,7 +829,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           </AnimatePresence>
 
           {/* Image feedback */}
-          <div className="flex items-center justify-between px-1">
+          <div className="hidden sm:flex items-center justify-between px-1">
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-[7px] sm:text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Rate Image</span>
               <div className="flex gap-2 sm:gap-2">
@@ -992,7 +1007,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             totalRounds={gameData.rounds.length}
             totalScore={score}
             imageRating={imageRating}
+            imageReported={imageReported}
             onRate={handleRateImage}
+            onReport={handleReportImage}
             onNext={handleNext}
           />
         )}
