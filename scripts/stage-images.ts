@@ -139,6 +139,14 @@ async function main() {
     // Check if already uploaded to Cloudinary (e.g. direct upload without DB record)
     const existingPublicId = await existsInCloudinary(stem);
     if (existingPublicId) {
+      const existingByPublicId = await prisma.stagingImage.findUnique({
+        where: { cloudinaryPublicId: existingPublicId },
+      });
+      if (existingByPublicId) {
+        console.log(`  Already in Cloudinary and DB as ${existingPublicId} — skipping`);
+        skipped++;
+        continue;
+      }
       console.log(`  Already in Cloudinary as ${existingPublicId} — registering to DB`);
       if (!dryRun) {
         await prisma.stagingImage.create({
