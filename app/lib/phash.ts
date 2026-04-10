@@ -7,11 +7,15 @@
 //   4. Compute median of the 63 non-DC coefficients
 //   5. Build a 64-bit hash: 1 if coefficient > median, else 0
 //
+// The hash is returned as a 16-character hex string.
 // Two hashes are "similar" when their Hamming distance is below a threshold
 // (typically 10 out of 64 bits).
 
 const RESIZE_SIZE = 32;
 const HASH_BLOCK = 8;
+
+// Lookup table: number of set bits for each 4-bit nibble (0–15).
+const NIBBLE_POPCOUNT = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
 
 // 1D Type-II DCT (orthonormal form).
 // Exported for unit testing.
@@ -42,21 +46,20 @@ function dct2d(pixels: number[], size: number): number[][] {
   return result;
 }
 
-// Count the number of bit positions where a and b differ.
+// Count the number of bit positions where two 16-char hex hashes differ.
 // Exported for unit testing.
-export function hammingDistance(a: bigint, b: bigint): number {
-  let xor = a ^ b;
+export function hammingDistance(a: string, b: string): number {
   let count = 0;
-  while (xor > 0n) {
-    count += Number(xor & 1n);
-    xor >>= 1n;
+  for (let i = 0; i < a.length; i++) {
+    const xor = parseInt(a[i], 16) ^ parseInt(b[i], 16);
+    count += NIBBLE_POPCOUNT[xor];
   }
   return count;
 }
 
 // Compute the perceptual hash of an image buffer.
-// Returns a 64-bit hash as a bigint.
-export async function computePhash(buffer: Buffer): Promise<bigint> {
+// Returns a 16-character hex string representing a 64-bit hash.
+export async function computePhash(buffer: Buffer): Promise<string> {
   const sharp = (await import("sharp")).default;
 
   const raw = await sharp(buffer)
@@ -81,13 +84,13 @@ export async function computePhash(buffer: Buffer): Promise<bigint> {
   const sorted = [...nonDc].sort((a, b) => a - b);
   const median = sorted[Math.floor(sorted.length / 2)];
 
-  // Build 64-bit hash
-  let hash = 0n;
-  for (let i = 0; i < 64; i++) {
-    if (values[i] > median) {
-      hash |= 1n << BigInt(63 - i);
-    }
-  }
+  // Build 64-char binary string: 1 if coefficient > median, else 0
+  const bits = values.map((v) => (v > median ? "1" : "0")).join("");
 
-  return hash;
+  // Pack 4 bits per hex character
+  let hex = "";
+  for (let i = 0; i < 64; i += 4) {
+    hex += parseInt(bits.slice(i, i + 4), 2).toString(16);
+  }
+  return hex;
 }

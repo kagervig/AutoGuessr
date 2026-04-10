@@ -30,26 +30,32 @@ describe("dct1d", () => {
 });
 
 describe("hammingDistance", () => {
-  it("should return 0 for identical values", () => {
-    expect(hammingDistance(0n, 0n)).toBe(0);
-    expect(hammingDistance(0xdeadbeefn, 0xdeadbeefn)).toBe(0);
+  // Hashes are 16-char hex strings (64-bit)
+  const ZERO = "0000000000000000";
+  const ONE  = "0000000000000001"; // last bit set
+  const EIGHT_BITS = "00000000000000ff"; // 8 low bits set
+
+  it("should return 0 for identical hashes", () => {
+    expect(hammingDistance(ZERO, ZERO)).toBe(0);
+    expect(hammingDistance("deadbeef12345678", "deadbeef12345678")).toBe(0);
   });
 
-  it("should return 1 for values differing by exactly one bit", () => {
-    expect(hammingDistance(0n, 1n)).toBe(1);
-    expect(hammingDistance(0b1000n, 0b1001n)).toBe(1);
+  it("should return 1 for hashes differing by exactly one bit", () => {
+    expect(hammingDistance(ZERO, ONE)).toBe(1);
+    // 0x8 = 0b1000, 0x9 = 0b1001 — one bit differs
+    expect(hammingDistance("0000000000000008", "0000000000000009")).toBe(1);
   });
 
   it("should count all differing bits", () => {
-    // 0b101 XOR 0b011 = 0b110 — 2 bits differ
-    expect(hammingDistance(0b101n, 0b011n)).toBe(2);
-    // 0x00 XOR 0xFF — 8 bits differ
-    expect(hammingDistance(0n, 0xffn)).toBe(8);
+    // 0x5 = 0b0101, 0x3 = 0b0011 — XOR = 0b0110 — 2 bits differ
+    expect(hammingDistance("0000000000000005", "0000000000000003")).toBe(2);
+    // 0x00 vs 0xff — 8 bits differ
+    expect(hammingDistance(ZERO, EIGHT_BITS)).toBe(8);
   });
 
   it("should be symmetric", () => {
-    const a = 0xabcdn;
-    const b = 0x1234n;
+    const a = "abcd000000001234";
+    const b = "1234000000001234";
     expect(hammingDistance(a, b)).toBe(hammingDistance(b, a));
   });
 });

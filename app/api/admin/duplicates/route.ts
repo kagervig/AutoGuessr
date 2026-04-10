@@ -88,7 +88,7 @@ async function groupByPhash(
     })
   );
 
-  const hashes: { record: ScannedImage; hash: bigint }[] = [];
+  const hashes: { record: ScannedImage; hash: string }[] = [];
   for (let i = 0; i < records.length; i++) {
     const r = hashResults[i];
     if (r.status === "rejected") {
@@ -123,7 +123,7 @@ async function groupByPhash(
     if (cluster.length > 1) {
       used.add(i);
       groups.push({
-        hash: hashes[i].hash.toString(16).padStart(16, "0"),
+        hash: hashes[i].hash,
         distance: maxDist,
         images: cluster.map(({ record }) => ({
           id: record.id,
