@@ -8,6 +8,8 @@ export interface GuessData {
   modeMultiplier: number;
   proBonus: number;
   pointsEarned: number;
+  rawInput: string;
+  guessedVehicle: { make: string; model: string; year: number } | null;
 }
 
 export interface RoundData {
