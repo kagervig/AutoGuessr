@@ -815,49 +815,49 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
           {/* Image feedback */}
           <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Rate Image</span>
-              <div className="flex gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-[7px] sm:text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Rate Image</span>
+              <div className="flex gap-2 sm:gap-2">
                 <button
                   onClick={() => handleRateImage("up")}
                   aria-label="Thumbs up"
                   className={cn(
-                    "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors",
+                    "w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center border transition-colors",
                     imageRating === "up"
                       ? "bg-green-500/20 border-green-500/40 text-green-400"
                       : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
                   )}
                 >
-                  <ThumbsUp className="w-4 h-4" />
+                  <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
                 <button
                   onClick={() => handleRateImage("down")}
                   aria-label="Thumbs down"
                   className={cn(
-                    "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors",
+                    "w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center border transition-colors",
                     imageRating === "down"
                       ? "bg-red-500/20 border-red-500/40 text-red-400"
                       : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
                   )}
                 >
-                  <ThumbsDown className="w-4 h-4" />
+                  <ThumbsDown className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Report</span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-[7px] sm:text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Report</span>
               <button
                 onClick={handleReportImage}
                 aria-label="Report image"
                 disabled={imageReported}
                 className={cn(
-                  "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors disabled:pointer-events-none",
+                  "w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center border transition-colors disabled:pointer-events-none",
                   imageReported
                     ? "bg-orange-500/20 border-orange-500/40 text-orange-400"
                     : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
                 )}
               >
-                <Flag className="w-4 h-4" />
+                <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             </div>
           </div>
