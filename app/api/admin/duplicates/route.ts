@@ -4,8 +4,10 @@ import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 import { computePhash, hammingDistance } from "@/app/lib/phash";
 
-// Allow longer execution time for large scans on Vercel
-export const maxDuration = 60;
+// Allow longer execution time for large scans on Vercel (Pro/Enterprise plan)
+export const maxDuration = 300;
+
+const FETCH_CONCURRENCY = 500;
 
 type Algorithm = "md5" | "sha1" | "sha256" | "phash";
 
@@ -35,6 +37,29 @@ async function fetchBuffer(url: string): Promise<Buffer> {
   const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return Buffer.from(await res.arrayBuffer());
+}
+
+// Runs tasks with at most `concurrency` in-flight at once, preserving result order.
+async function settledConcurrently<T>(
+  tasks: Array<() => Promise<T>>,
+  concurrency: number
+): Promise<PromiseSettledResult<T>[]> {
+  const results: PromiseSettledResult<T>[] = new Array(tasks.length);
+  let next = 0;
+
+  async function worker() {
+    while (next < tasks.length) {
+      const i = next++;
+      try {
+        results[i] = { status: "fulfilled", value: await tasks[i]() };
+      } catch (reason) {
+        results[i] = { status: "rejected", reason };
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
+  return results;
 }
 
 function groupByCryptoHash(
@@ -143,6 +168,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const algorithm = (searchParams.get("algorithm") ?? "sha256") as Algorithm;
   const threshold = Math.max(1, Math.min(32, parseInt(searchParams.get("threshold") ?? "10", 10)));
+  const offset = Math.max(0, parseInt(searchParams.get("offset") ?? "0", 10));
+  const limit = Math.max(1, parseInt(searchParams.get("limit") ?? String(FETCH_CONCURRENCY), 10));
 
   if (!VALID_ALGORITHMS.includes(algorithm)) {
     return Response.json({ error: "Invalid algorithm" }, { status: 400 });
@@ -197,29 +224,38 @@ export async function GET(request: NextRequest) {
     })),
   ];
 
-  // Fetch all image bytes in parallel
-  const fetchResults = await Promise.allSettled(records.map((r) => fetchBuffer(r.url)));
+  const total = records.length;
+  const page = records.slice(offset, offset + limit);
+
+  const fetchResults = await settledConcurrently(
+    page.map((r) => () => fetchBuffer(r.url)),
+    FETCH_CONCURRENCY
+  );
 
   const fetchErrors: string[] = [];
 
   if (algorithm === "phash") {
-    const { groups, scanned } = await groupByPhash(threshold, fetchResults, records, fetchErrors);
+    const { groups, scanned } = await groupByPhash(threshold, fetchResults, page, fetchErrors);
     return Response.json({
       algorithm,
       threshold,
+      offset,
       scanned,
-      total: records.length,
+      total,
+      hasMore: offset + limit < total,
       duplicateGroups: groups,
       fetchErrors,
     });
   }
 
-  const groups = groupByCryptoHash(algorithm, fetchResults, records, fetchErrors);
-  const scanned = records.length - fetchErrors.length;
+  const groups = groupByCryptoHash(algorithm, fetchResults, page, fetchErrors);
+  const scanned = page.length - fetchErrors.length;
   return Response.json({
     algorithm,
+    offset,
     scanned,
-    total: records.length,
+    total,
+    hasMore: offset + limit < total,
     duplicateGroups: groups,
     fetchErrors,
   });
