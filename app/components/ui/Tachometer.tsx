@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion, useSpring } from "framer-motion";
+import { motion, useSpring, useTransform } from "framer-motion";
 
 interface TachometerProps {
   score: number;
@@ -46,6 +46,16 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
     springAngle.set(needleAngle);
   }, [needleAngle, springAngle]);
 
+  const toRad = (a: number) => ((a - 90) * Math.PI) / 180;
+  const needleX1 = useTransform(springAngle, (a) => CX + 8 * Math.cos(toRad(a)));
+  const needleY1 = useTransform(springAngle, (a) => CY + 8 * Math.sin(toRad(a)));
+  const needleX2 = useTransform(springAngle, (a) => CX + 65 * Math.cos(toRad(a)));
+  const needleY2 = useTransform(springAngle, (a) => CY + 65 * Math.sin(toRad(a)));
+  const needleTailX = useTransform(springAngle, (a) => CX - 14 * Math.cos(toRad(a)));
+  const needleTailY = useTransform(springAngle, (a) => CY - 14 * Math.sin(toRad(a)));
+  const tipCx = useTransform(springAngle, (a) => CX + TRACK_R * Math.cos(toRad(a)));
+  const tipCy = useTransform(springAngle, (a) => CY + TRACK_R * Math.sin(toRad(a)));
+
   const ticks = Array.from({ length: 11 }, (_, i) => i);
   const minorTicks = Array.from({ length: 51 }, (_, i) => i);
 
@@ -64,13 +74,7 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <filter id={`needleGlow-${id}`}>
-            <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
+
           <linearGradient id={`arcGradient-${id}`} gradientUnits="userSpaceOnUse" x1="20" y1="100" x2="180" y2="100">
             <stop offset="0%" stopColor="#22c55e" />
             <stop offset="45%" stopColor="#eab308" />
@@ -107,6 +111,14 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
           />
         )}
 
+        {/* Arc tip indicator — moves to end of coloured arc */}
+        {pct > 0 && (
+          <>
+            <motion.circle cx={tipCx} cy={tipCy} r="6" fill="white" opacity="0.9" filter={`url(#glow-${id})`} />
+            <motion.circle cx={tipCx} cy={tipCy} r="3" fill="white" />
+          </>
+        )}
+
         {/* Minor tick marks */}
         {minorTicks.map((i) => {
           const angle = START_ANGLE + (i / 50) * SWEEP;
@@ -123,7 +135,7 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
           const inner = polarToCartesian(CX, CY, OUTER_R - 10, angle);
           const outer = polarToCartesian(CX, CY, OUTER_R - 2, angle);
           const label = polarToCartesian(CX, CY, OUTER_R - 28, angle);
-          const val = Math.round((i / 10) * maxScore / 1000);
+          const val = i * 10;
           return (
             <g key={i}>
               <line x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke="#666" strokeWidth="1.2" />
@@ -143,11 +155,8 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
         })}
 
         {/* Needle */}
-        <motion.g style={{ rotate: springAngle, originX: "100px", originY: "100px" }}>
-          <line x1={CX} y1={CY - 8} x2={CX} y2={CY - 65} stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" filter={`url(#needleGlow-${id})`} />
-          <line x1={CX} y1={CY - 55} x2={CX} y2={CY - 65} stroke="#ff6b6b" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1={CX} y1={CY - 8} x2={CX} y2={CY + 14} stroke="#555" strokeWidth="1.5" strokeLinecap="round" />
-        </motion.g>
+        <motion.line x1={needleX1} y1={needleY1} x2={needleX2} y2={needleY2} stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
+        <motion.line x1={needleTailX} y1={needleTailY} x2={needleX1} y2={needleY1} stroke="#555" strokeWidth="1.5" strokeLinecap="round" />
 
         {/* Center cap */}
         <circle cx={CX} cy={CY} r="8" fill="#111" stroke="#444" strokeWidth="1" />
@@ -164,11 +173,6 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
               POINTS
             </text>
           </>
-        )}
-        {!isGame && (
-          <text x={CX} y={CY + 38} textAnchor="middle" fontSize="9" fill="#aaa" fontFamily="monospace" letterSpacing="1">
-            ×1000 RPT
-          </text>
         )}
         <text x={CX} y={CY - 28} textAnchor="middle" fontSize="7.5" fill="#aaa" fontFamily="'Outfit', sans-serif" letterSpacing="3" fontWeight="700">
           AUTOGUESSR
