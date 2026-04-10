@@ -95,13 +95,13 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
           className="glass-panel rounded-3xl border border-white/10 overflow-hidden"
         >
           {/* Card header */}
-          <div className="flex items-center justify-center gap-4 px-6 pt-6 pb-5">
+          <div className="flex items-center justify-center gap-4 px-6 pt-4 pb-4">
             <div className="rounded-2xl bg-primary/20 p-4 shrink-0">
               <Flag className="w-10 h-10 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-widest uppercase leading-tight">Race Over</h1>
-              <p className="text-lg sm:text-xl font-bold tracking-widest uppercase text-muted-foreground">{modeLabel} Mode</p>
+              <h1 className="text-xl sm:text-2xl font-black tracking-widest uppercase leading-tight">Race Over</h1>
+              <p className="text-base sm:text-lg font-bold tracking-widest uppercase text-muted-foreground">{modeLabel} Mode</p>
             </div>
           </div>
 
