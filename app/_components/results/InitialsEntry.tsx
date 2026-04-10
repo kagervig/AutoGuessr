@@ -72,7 +72,7 @@ export function InitialsEntry({
     <div className="px-6 py-5 border-t border-white/10 flex flex-col items-center text-center">
       <div className="flex items-center gap-2 mb-1">
         <Trophy className="w-7 h-7 text-muted-foreground" />
-        <span className="text-lg sm:text-xl font-mono tracking-widest uppercase text-muted-foreground">
+        <span className="text-base sm:text-xl font-mono tracking-widest uppercase text-muted-foreground">
           Submit to Leaderboard
         </span>
       </div>
@@ -90,7 +90,7 @@ export function InitialsEntry({
             onKeyDown={(e) => handleKeyDown(i, e)}
             aria-label={`Initial ${i + 1}`}
             className={cn(
-              "w-10 h-10 sm:w-14 sm:h-14 aspect-square rounded-2xl border-2 bg-white/5 text-center text-xl sm:text-3xl font-black font-mono uppercase tracking-wider text-white transition-colors outline-none shrink-0",
+              "w-10 h-10 sm:w-14 sm:h-14 aspect-square rounded-md sm:rounded-2xl border-2 bg-white/5 text-center text-xl sm:text-3xl font-black font-mono uppercase tracking-wider text-white transition-colors outline-none shrink-0",
               letters[i]
                 ? "border-primary"
                 : "border-white/20 focus:border-primary/60"
@@ -101,7 +101,7 @@ export function InitialsEntry({
         <button
           onClick={submit}
           disabled={!canSubmit}
-          className="h-10 sm:h-14 px-4 sm:px-6 bg-primary text-white font-black tracking-widest uppercase text-sm sm:text-base rounded-xl hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-10 px-4 sm:h-14 sm:px-6 bg-primary text-white font-black tracking-widest uppercase text-sm sm:text-base rounded-md sm:rounded-xl hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {submitting ? "Saving…" : "Submit"}
         </button>
