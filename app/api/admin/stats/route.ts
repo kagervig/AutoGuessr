@@ -1,4 +1,5 @@
 import { prisma } from "@/app/lib/prisma";
+import { imageUrl } from "@/app/lib/game";
 
 export async function GET() {
   const images = await prisma.image.findMany({
@@ -6,6 +7,7 @@ export async function GET() {
     select: {
       id: true,
       filename: true,
+      vehicleId: true,
       vehicle: { select: { make: true, model: true, year: true } },
       stats: {
         select: {
@@ -21,5 +23,7 @@ export async function GET() {
     orderBy: { uploadedAt: "desc" },
   });
 
-  return Response.json(images);
+  return Response.json(
+    images.map((img) => ({ ...img, imageUrl: imageUrl(img.filename, img.vehicleId) }))
+  );
 }

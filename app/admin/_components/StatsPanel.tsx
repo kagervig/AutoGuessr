@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 type SortKey = "make" | "total" | "correct" | "incorrect" | "successRate" | "thumbsUp" | "thumbsDown" | "reportCount";
 type SortDir = "asc" | "desc";
@@ -8,6 +8,7 @@ type SortDir = "asc" | "desc";
 interface ImageStatRow {
   id: string;
   filename: string;
+  imageUrl: string;
   vehicle: { make: string; model: string; year: number };
   stats: {
     correctGuesses: number;
@@ -37,6 +38,17 @@ export default function StatsPanel() {
   const [sortKey, setSortKey] = useState<SortKey>("total");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<ImageStatRow | null>(null);
+
+  const closeOverlay = useCallback(() => setSelected(null), []);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") closeOverlay();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [closeOverlay]);
 
   useEffect(() => {
     fetch("/api/admin/stats")
@@ -166,7 +178,7 @@ export default function StatsPanel() {
                 const total = totalPlays(row);
                 const rate = successRate(row);
                 return (
-                  <tr key={row.id} className="hover:bg-gray-50">
+                  <tr key={row.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelected(row)}>
                     <td className="px-3 py-2 text-gray-800">
                       {row.vehicle.year} {row.vehicle.make} {row.vehicle.model}
                       <span className="ml-2 text-xs text-gray-400">{row.filename}</span>
@@ -209,6 +221,27 @@ export default function StatsPanel() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+      {selected && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={closeOverlay}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <span className="font-medium text-gray-800">
+                {selected.vehicle.year} {selected.vehicle.make} {selected.vehicle.model}
+                <span className="ml-2 text-xs text-gray-400 font-normal">{selected.filename}</span>
+              </span>
+              <button onClick={closeOverlay} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={selected.imageUrl} alt={selected.filename} className="w-full object-contain max-h-[70vh]" />
+          </div>
         </div>
       )}
     </div>
