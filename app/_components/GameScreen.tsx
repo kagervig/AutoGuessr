@@ -816,7 +816,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
               Score Gauge
             </p>
-            <Tachometer score={score} maxScore={maxTotalScore} size={240} />
+            <Tachometer score={score} maxScore={maxTotalScore} size={300} />
             <div className="mt-4 w-full space-y-2">
               <div className="flex justify-between text-xs font-mono text-muted-foreground">
                 <span>ROUND</span>

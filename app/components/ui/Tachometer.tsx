@@ -36,7 +36,7 @@ const SWEEP = END_ANGLE - START_ANGLE;
 
 export function Tachometer({ score, maxScore, size = 260, instanceId = "default", variant = "game" }: TachometerProps) {
   const id = instanceId;
-  const isResults = variant === "results";
+  const isGame = variant === "game";
   const pct = Math.min(score / maxScore, 1);
   const needleAngle = START_ANGLE + pct * SWEEP;
 
@@ -122,7 +122,7 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
           const angle = START_ANGLE + (i / 10) * SWEEP;
           const inner = polarToCartesian(CX, CY, OUTER_R - 10, angle);
           const outer = polarToCartesian(CX, CY, OUTER_R - 2, angle);
-          const label = polarToCartesian(CX, CY, isResults ? OUTER_R - 28 : OUTER_R - 18, angle);
+          const label = polarToCartesian(CX, CY, OUTER_R - 28, angle);
           const val = Math.round((i / 10) * maxScore / 1000);
           return (
             <g key={i}>
@@ -131,7 +131,7 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
                 x={label.x} y={label.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fontSize={isResults ? "9" : "5.5"}
+                fontSize="9"
                 fill="#666"
                 fontFamily="monospace"
                 fontWeight="bold"
@@ -155,20 +155,22 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
         <circle cx={CX} cy={CY} r="2" fill="#ff6b6b" />
 
         {/* Score label */}
-        {!isResults && (
+        {isGame && (
           <>
             <text x={CX} y={CY + 26} textAnchor="middle" fontSize="14" fill="white" fontFamily="'Outfit', sans-serif" fontWeight="900" letterSpacing="-0.5">
               {score.toLocaleString()}
             </text>
-            <text x={CX} y={CY + 35} textAnchor="middle" fontSize="4.5" fill="#666" fontFamily="monospace" letterSpacing="2">
+            <text x={CX} y={CY + 38} textAnchor="middle" fontSize="8" fill="#aaa" fontFamily="monospace" letterSpacing="2">
               POINTS
             </text>
           </>
         )}
-        <text x={CX} y={isResults ? CY + 38 : CY + 46} textAnchor="middle" fontSize={isResults ? "9" : "4"} fill="#aaa" fontFamily="monospace" letterSpacing="1">
-          ×1000 RPT
-        </text>
-        <text x={CX} y={CY - 28} textAnchor="middle" fontSize={isResults ? "7.5" : "4"} fill="#aaa" fontFamily="'Outfit', sans-serif" letterSpacing="3" fontWeight="700">
+        {!isGame && (
+          <text x={CX} y={CY + 38} textAnchor="middle" fontSize="9" fill="#aaa" fontFamily="monospace" letterSpacing="1">
+            ×1000 RPT
+          </text>
+        )}
+        <text x={CX} y={CY - 28} textAnchor="middle" fontSize="7.5" fill="#aaa" fontFamily="'Outfit', sans-serif" letterSpacing="3" fontWeight="700">
           AUTOGUESSR
         </text>
       </svg>
