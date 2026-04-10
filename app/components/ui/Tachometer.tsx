@@ -8,6 +8,7 @@ interface TachometerProps {
   maxScore: number;
   size?: number;
   instanceId?: string;
+  variant?: "game" | "results";
 }
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
@@ -33,8 +34,9 @@ const START_ANGLE = 140;
 const END_ANGLE = 400;
 const SWEEP = END_ANGLE - START_ANGLE;
 
-export function Tachometer({ score, maxScore, size = 260, instanceId = "default" }: TachometerProps) {
+export function Tachometer({ score, maxScore, size = 260, instanceId = "default", variant = "game" }: TachometerProps) {
   const id = instanceId;
+  const isResults = variant === "results";
   const pct = Math.min(score / maxScore, 1);
   const needleAngle = START_ANGLE + pct * SWEEP;
 
@@ -49,13 +51,13 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
 
   return (
     <div style={{ width: size, height: size }} className="relative select-none">
-      <svg viewBox="0 0 200 200" width={size} height={size} overflow="visible">
+      <svg viewBox="0 0 200 200" width={size} height={size}>
         <defs>
           <radialGradient id={`gaugeGlow-${id}`} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#111" />
             <stop offset="100%" stopColor="#000" />
           </radialGradient>
-          <filter id={`glow-${id}`} x="-20%" y="-20%" width="140%" height="140%">
+          <filter id={`glow-${id}`} filterUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
             <feGaussianBlur stdDeviation="2" result="coloredBlur" />
             <feMerge>
               <feMergeNode in="coloredBlur" />
@@ -78,8 +80,8 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
         </defs>
 
         {/* Outer bezel ring */}
-        <circle cx={CX} cy={CY} r={OUTER_R + 6} fill="#1a1a1a" stroke="#333" strokeWidth="1.5" />
-        <circle cx={CX} cy={CY} r={OUTER_R + 4} fill="none" stroke="#444" strokeWidth="0.5" />
+        <circle cx={CX} cy={CY} r={OUTER_R + 6} fill="#1a1a1a" stroke="#666" strokeWidth="1.5" />
+        <circle cx={CX} cy={CY} r={OUTER_R + 4} fill="none" stroke="#777" strokeWidth="0.5" />
 
         {/* Background disc */}
         <circle cx={CX} cy={CY} r={OUTER_R} fill={`url(#gaugeGlow-${id})`} />
@@ -120,7 +122,7 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
           const angle = START_ANGLE + (i / 10) * SWEEP;
           const inner = polarToCartesian(CX, CY, OUTER_R - 10, angle);
           const outer = polarToCartesian(CX, CY, OUTER_R - 2, angle);
-          const label = polarToCartesian(CX, CY, OUTER_R - 26, angle);
+          const label = polarToCartesian(CX, CY, isResults ? OUTER_R - 28 : OUTER_R - 18, angle);
           const val = Math.round((i / 10) * maxScore / 1000);
           return (
             <g key={i}>
@@ -129,7 +131,7 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
                 x={label.x} y={label.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fontSize="8"
+                fontSize={isResults ? "9" : "5.5"}
                 fill="#666"
                 fontFamily="monospace"
                 fontWeight="bold"
@@ -153,16 +155,20 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
         <circle cx={CX} cy={CY} r="2" fill="#ff6b6b" />
 
         {/* Score label */}
-        <text x={CX} y={CY + 26} textAnchor="middle" fontSize="18" fill="white" fontFamily="'Outfit', sans-serif" fontWeight="900" letterSpacing="-0.5">
-          {score.toLocaleString()}
-        </text>
-        <text x={CX} y={CY + 37} textAnchor="middle" fontSize="6" fill="#666" fontFamily="monospace" letterSpacing="2">
-          POINTS
-        </text>
-        <text x={CX} y={CY + 48} textAnchor="middle" fontSize="5.5" fill="#444" fontFamily="monospace" letterSpacing="1">
+        {!isResults && (
+          <>
+            <text x={CX} y={CY + 26} textAnchor="middle" fontSize="14" fill="white" fontFamily="'Outfit', sans-serif" fontWeight="900" letterSpacing="-0.5">
+              {score.toLocaleString()}
+            </text>
+            <text x={CX} y={CY + 35} textAnchor="middle" fontSize="4.5" fill="#666" fontFamily="monospace" letterSpacing="2">
+              POINTS
+            </text>
+          </>
+        )}
+        <text x={CX} y={isResults ? CY + 38 : CY + 46} textAnchor="middle" fontSize={isResults ? "9" : "4"} fill="#aaa" fontFamily="monospace" letterSpacing="1">
           ×1000 RPT
         </text>
-        <text x={CX} y={CY - 36} textAnchor="middle" fontSize="5.5" fill="#333" fontFamily="'Outfit', sans-serif" letterSpacing="3" fontWeight="700">
+        <text x={CX} y={CY - 28} textAnchor="middle" fontSize={isResults ? "7.5" : "4"} fill="#aaa" fontFamily="'Outfit', sans-serif" letterSpacing="3" fontWeight="700">
           AUTOGUESSR
         </text>
       </svg>
