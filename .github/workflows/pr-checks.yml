@@ -44,6 +44,29 @@ jobs:
         if: steps.changed-files.outputs.files == ''
         run: echo "No TypeScript source files changed, skipping tests."
 
+  migration-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Check for missing migrations
+        run: |
+          SCHEMA_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'prisma/schema.prisma' || true)
+          NEW_MIGRATION=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'prisma/migrations/' || true)
+
+          if [ -n "$SCHEMA_CHANGED" ] && [ -z "$NEW_MIGRATION" ]; then
+            echo "Error: prisma/schema.prisma was modified but no migration file was added."
+            echo "Run 'npx prisma migrate dev --name <migration-name>' to create one."
+            exit 1
+          fi
+
   coverage:
     runs-on: ubuntu-latest
     needs: affected-tests
