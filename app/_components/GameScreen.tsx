@@ -588,6 +588,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
       const params = new URLSearchParams({
         gameId: gameData!.gameId,
         mode,
+        maxScore: String(maxTotalScore),
         ...(username ? { username } : {}),
       });
       router.push(`/results?${params.toString()}`);

@@ -1,5 +1,3 @@
-export const APPROX_MAX_PER_ROUND = 2200;
-
 export function calcGrade(pct: number): { grade: string; color: string } {
   if (pct >= 0.9) return { grade: "S", color: "text-yellow-400" };
   if (pct >= 0.75) return { grade: "A", color: "text-green-400" };
