@@ -193,7 +193,7 @@ export function ScorePanel({
           variant="results"
         />
         <p className="text-xs text-muted-foreground font-mono tracking-widest mt-3 uppercase">
-          Scored {Math.round(Math.min(score / approxMax, 1) * 100)}% Overall
+          Scored {approxMax > 0 ? Math.round(Math.min(score / approxMax, 1) * 100) : 0}% Overall
         </p>
       </div>
     </div>
