@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
+  // No password configured — skip auth (local dev)
+  if (!process.env.ADMIN_PASSWORD) {
+    return NextResponse.next();
+  }
+
   const authHeader = request.headers.get("Authorization");
 
   if (!authHeader || !authHeader.startsWith("Basic ")) {
