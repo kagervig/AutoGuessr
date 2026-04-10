@@ -137,6 +137,9 @@ model ImageStats {
   avgGuessTimeMs   Int?
   difficultyScore  Float?
   lastComputedAt   DateTime?
+  thumbsUp         Int       @default(0)
+  thumbsDown       Int       @default(0)
+  reportCount      Int       @default(0)
   image            Image     @relation(fields: [imageId], references: [id])
 }
 

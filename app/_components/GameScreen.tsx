@@ -17,6 +17,8 @@ import {
   Target,
   Calendar,
   Clock,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { TIME_LIMITS, shuffle } from "@/app/lib/game";
 import { MODES } from "@/app/lib/constants";
@@ -107,12 +109,18 @@ function RoundResult({
   round,
   totalRounds,
   totalScore,
+  imageRating,
+  imageReported,
+  onRate,
+  onReport,
   onNext,
 }: {
   reveal: RevealInfo;
   round: number;
   totalRounds: number;
   totalScore: number;
+  imageRating: "up" | "down" | null;
+  onRate: (value: "up" | "down") => void;
   onNext: () => void;
 }) {
   const isLast = round >= totalRounds;
@@ -242,8 +250,38 @@ function RoundResult({
           <div className="mb-6" />
         )}
 
-        <div className="text-xs text-muted-foreground mb-8 font-mono">
+        <div className="text-xs text-muted-foreground mb-6 font-mono">
           TOTAL: {totalScore.toLocaleString()}
+        </div>
+
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Rate Image</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onRate("up")}
+              aria-label="Thumbs up"
+              className={cn(
+                "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors",
+                imageRating === "up"
+                  ? "bg-green-500/20 border-green-500/40 text-green-400"
+                  : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+              )}
+            >
+              <ThumbsUp className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onRate("down")}
+              aria-label="Thumbs down"
+              className={cn(
+                "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors",
+                imageRating === "down"
+                  ? "bg-red-500/20 border-red-500/40 text-red-400"
+                  : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+              )}
+            >
+              <ThumbsDown className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <button
@@ -281,6 +319,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const [reveal, setReveal] = useState<RevealInfo | null>(null);
   const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
   const [practiceComplete, setPracticeComplete] = useState(false);
+  const [imageRating, setImageRating] = useState<"up" | "down" | null>(null);
+  const [imageReported, setImageReported] = useState(false);
 
   const autoSubmitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const roundStartRef = useRef<number>(Date.now());
@@ -596,6 +636,25 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     setReveal(null);
     setSelectedEasyId(null);
     setIsSubmitting(false);
+    setImageRating(null);
+    setImageReported(false);
+  }
+
+  async function handleRateImage(value: "up" | "down") {
+    const next = imageRating === value ? null : value;
+    setImageRating(next);
+    if (next === null) return;
+    await fetch(`/api/image/${round.imageId}/rate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ value: next === "up" ? 1 : -1 }),
+    });
+  }
+
+  async function handleReportImage() {
+    if (imageReported) return;
+    setImageReported(true);
+    await fetch(`/api/image/${round.imageId}/report`, { method: "POST" });
   }
 
   // Practice complete screen
@@ -754,6 +813,55 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             </motion.div>
           </AnimatePresence>
 
+          {/* Image feedback */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Rate Image</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleRateImage("up")}
+                  aria-label="Thumbs up"
+                  className={cn(
+                    "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors",
+                    imageRating === "up"
+                      ? "bg-green-500/20 border-green-500/40 text-green-400"
+                      : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+                  )}
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleRateImage("down")}
+                  aria-label="Thumbs down"
+                  className={cn(
+                    "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors",
+                    imageRating === "down"
+                      ? "bg-red-500/20 border-red-500/40 text-red-400"
+                      : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+                  )}
+                >
+                  <ThumbsDown className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Report</span>
+              <button
+                onClick={handleReportImage}
+                aria-label="Report image"
+                disabled={imageReported}
+                className={cn(
+                  "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors disabled:pointer-events-none",
+                  imageReported
+                    ? "bg-orange-500/20 border-orange-500/40 text-orange-400"
+                    : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80"
+                )}
+              >
+                <Flag className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
           {/* Answer area */}
           <AnimatePresence mode="wait">
             {roundState === "answering" && (
@@ -883,6 +991,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             round={currentIndex + 1}
             totalRounds={gameData.rounds.length}
             totalScore={score}
+            imageRating={imageRating}
+            onRate={handleRateImage}
             onNext={handleNext}
           />
         )}
