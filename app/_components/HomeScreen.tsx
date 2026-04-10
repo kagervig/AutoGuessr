@@ -272,7 +272,7 @@ export default function HomeScreen({ initialFilterError }: Props) {
       </section>
 
       {/* Sticky Bottom CTA */}
-      <div className="fixed bottom-0 inset-x-0 z-50 p-6 glass-panel border-t border-white/10 flex flex-col items-center gap-3">
+      <div className="fixed bottom-0 inset-x-0 z-50 pt-6 px-6 glass-panel border-t border-white/10 flex flex-col items-center gap-3" style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}>
         {isProd && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
           <div className={cn("transition-opacity duration-300", turnstileToken ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
             <div
