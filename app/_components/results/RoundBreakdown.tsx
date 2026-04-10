@@ -86,6 +86,18 @@ function RoundRow({ round, mode }: { round: RoundData; mode: string }) {
               )}
             </div>
           )}
+
+          {/* Guessed vehicle — shown when any part of the guess was wrong */}
+          {g && (g.guessedVehicle || g.rawInput) && (!isCorrect || (g.yearDelta != null && g.yearDelta > 0)) && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Guessed:{" "}
+              <span className="text-white/70">
+                {g.guessedVehicle
+                  ? `${g.guessedVehicle.make} ${g.guessedVehicle.model}`
+                  : g.rawInput}
+              </span>
+            </p>
+          )}
         </div>
 
         {/* Points */}

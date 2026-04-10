@@ -26,7 +26,13 @@ export async function GET(request: NextRequest) {
               },
             },
           },
-          guess: true,
+          guess: {
+            include: {
+              guessedVehicle: {
+                select: { make: true, model: true, year: true },
+              },
+            },
+          },
         },
       },
     },
