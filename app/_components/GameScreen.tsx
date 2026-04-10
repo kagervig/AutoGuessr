@@ -276,8 +276,12 @@ function RoundResult({
               </div>
             </div>
             <div className="border-t border-white/10 mt-3 pt-3 flex items-center justify-between">
-              <span className="text-xs font-bold tracking-widest text-white/40 uppercase">Total Score</span>
-              <span className="text-lg font-black text-white">{totalScore.toLocaleString()}</span>
+              <span className="text-xs font-bold tracking-widest text-white/40 uppercase">
+                Total Score
+              </span>
+              <span className="text-lg font-black text-white">
+                {totalScore.toLocaleString()}
+              </span>
             </div>
           </motion.div>
         ) : reveal.pointsEarned > 0 ? (
@@ -305,8 +309,12 @@ function RoundResult({
               <span className="text-sm font-black text-white/50">0</span>
             </div>
             <div className="border-t border-white/10 mt-3 pt-3 flex items-center justify-between">
-              <span className="text-xs font-bold tracking-widest text-white/40 uppercase">Total Score</span>
-              <span className="text-lg font-black text-white">{totalScore.toLocaleString()}</span>
+              <span className="text-xs font-bold tracking-widest text-white/40 uppercase">
+                Total Score
+              </span>
+              <span className="text-lg font-black text-white">
+                {totalScore.toLocaleString()}
+              </span>
             </div>
           </motion.div>
         )}
