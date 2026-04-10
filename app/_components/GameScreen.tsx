@@ -761,7 +761,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         {/* Left column */}
         <div className="space-y-4">
           {/* Car image */}
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
               initial={{ opacity: 0, scale: 0.96 }}
