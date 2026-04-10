@@ -33,8 +33,8 @@ export function ScorePanel({ score, grade, gradeColor, approxMax, personalBest }
           </p>
         )}
       </div>
-      <div className="flex flex-col items-center justify-center py-8 px-0">
-        <Tachometer score={score} maxScore={approxMax} size={240} instanceId="results" variant="results" />
+      <div className="flex flex-col items-center justify-center py-6 px-2">
+        <Tachometer score={score} maxScore={approxMax} size={300} instanceId="results" variant="results" />
         <p className="text-xs text-muted-foreground font-mono tracking-widest mt-3 uppercase">
           Speed Rating
         </p>
