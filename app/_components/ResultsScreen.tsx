@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle, Share2 } from "lucide-react";
 import { MODES } from "@/app/lib/constants";
 import { ScoringNudge } from "@/app/components/ui/ScoringNudge";
-import { calcGrade, APPROX_MAX_PER_ROUND } from "@/app/lib/grade";
+import { calcGrade } from "@/app/lib/grade";
 import { InitialsEntry } from "./results/InitialsEntry";
 import { ScorePanel } from "./results/ScorePanel";
 import { RoundBreakdown } from "./results/RoundBreakdown";
@@ -21,9 +21,10 @@ interface Props {
   hasToken: boolean;
   mode: string;
   username: string;
+  maxScore?: number;
 }
 
-export default function ResultsScreen({ gameId, hasToken, mode, username }: Props) {
+export default function ResultsScreen({ gameId, hasToken, mode, username, maxScore }: Props) {
   const router = useRouter();
   const [session, setSession] = useState<SessionData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +80,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username }: Prop
 
   const score = session.finalScore ?? 0;
   const total = session.rounds.length;
-  const approxMax = total * APPROX_MAX_PER_ROUND;
+  const approxMax = maxScore ?? 0;
   const { grade, color: gradeColor } = calcGrade(score / approxMax);
   const modeLabel = MODE_LABELS[mode] || mode;
   const showLeaderboard = mode !== "practice" && score > 0;

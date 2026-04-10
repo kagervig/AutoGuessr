@@ -3,13 +3,14 @@ import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import ResultsScreen from "@/app/_components/ResultsScreen";
 import { prisma } from "@/app/lib/prisma";
-import { calcGrade, APPROX_MAX_PER_ROUND } from "@/app/lib/grade";
+import { calcGrade } from "@/app/lib/grade";
 import { MODES } from "@/app/lib/constants";
 
 interface SearchParams {
   gameId?: string;
   mode?: string;
   username?: string;
+  maxScore?: string;
 }
 
 const MODE_LABELS: Record<string, string> = Object.fromEntries(
@@ -21,21 +22,20 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<SearchParams>;
 }): Promise<Metadata> {
-  const { gameId, mode, username } = await searchParams;
+  const { gameId, mode, username, maxScore: maxScoreParam } = await searchParams;
 
   if (!gameId) return { title: "Autoguessr — Results" };
 
   const session = await prisma.gameSession.findUnique({
     where: { id: gameId },
-    select: { finalScore: true, rounds: { select: { id: true } } },
+    select: { finalScore: true },
   });
 
   if (!session) return { title: "Autoguessr — Results" };
 
   const score = session.finalScore ?? 0;
-  const roundCount = session.rounds.length;
-  const approxMax = roundCount * APPROX_MAX_PER_ROUND;
-  const { grade } = calcGrade(approxMax > 0 ? score / approxMax : 0);
+  const maxScore = maxScoreParam ? parseInt(maxScoreParam) : 0;
+  const { grade } = calcGrade(maxScore > 0 ? score / maxScore : 0);
   const modeLabel = MODE_LABELS[mode ?? ""] ?? mode ?? "";
 
   const headersList = await headers();
@@ -74,11 +74,11 @@ export default async function ResultsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { gameId, mode, username } = await searchParams;
+  const { gameId, mode, username, maxScore } = await searchParams;
   if (!gameId || !mode) redirect("/");
 
   const cookieStore = await cookies();
   const hasToken = cookieStore.has(`st_${gameId}`);
 
-  return <ResultsScreen gameId={gameId} hasToken={hasToken} mode={mode} username={username ?? ""} />;
+  return <ResultsScreen gameId={gameId} hasToken={hasToken} mode={mode} username={username ?? ""} maxScore={maxScore ? parseInt(maxScore) : undefined} />;
 }

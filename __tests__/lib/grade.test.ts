@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcGrade, GRADE_HEX, APPROX_MAX_PER_ROUND } from "@/app/lib/grade";
+import { calcGrade, GRADE_HEX } from "@/app/lib/grade";
 
 describe("calcGrade", () => {
   it("should return S grade at 90%", () => {
@@ -49,11 +49,5 @@ describe("GRADE_HEX", () => {
     for (const g of grades) {
       expect(GRADE_HEX[g]).toMatch(/^#[0-9a-f]{6}$/i);
     }
-  });
-});
-
-describe("APPROX_MAX_PER_ROUND", () => {
-  it("should be a positive number", () => {
-    expect(APPROX_MAX_PER_ROUND).toBeGreaterThan(0);
   });
 });
