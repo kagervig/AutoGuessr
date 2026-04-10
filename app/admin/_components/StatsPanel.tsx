@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type SortKey = "make" | "total" | "correct" | "incorrect" | "successRate";
+type SortKey = "make" | "total" | "correct" | "incorrect" | "successRate" | "thumbsUp" | "thumbsDown" | "reportCount";
 type SortDir = "asc" | "desc";
 
 interface ImageStatRow {
@@ -13,6 +13,9 @@ interface ImageStatRow {
     correctGuesses: number;
     incorrectGuesses: number;
     skipCount: number;
+    thumbsUp: number;
+    thumbsDown: number;
+    reportCount: number;
   } | null;
 }
 
@@ -87,6 +90,18 @@ export default function StatsPanel() {
         av = successRate(a);
         bv = successRate(b);
         break;
+      case "thumbsUp":
+        av = a.stats?.thumbsUp ?? 0;
+        bv = b.stats?.thumbsUp ?? 0;
+        break;
+      case "thumbsDown":
+        av = a.stats?.thumbsDown ?? 0;
+        bv = b.stats?.thumbsDown ?? 0;
+        break;
+      case "reportCount":
+        av = a.stats?.reportCount ?? 0;
+        bv = b.stats?.reportCount ?? 0;
+        break;
     }
     if (av < bv) return sortDir === "asc" ? -1 : 1;
     if (av > bv) return sortDir === "asc" ? 1 : -1;
@@ -135,6 +150,15 @@ export default function StatsPanel() {
                 <th className={`${thClass} text-right`} onClick={() => handleSort("successRate")}>
                   Success % <SortIndicator k="successRate" />
                 </th>
+                <th className={`${thClass} text-right`} onClick={() => handleSort("thumbsUp")}>
+                  Thumbs Up <SortIndicator k="thumbsUp" />
+                </th>
+                <th className={`${thClass} text-right`} onClick={() => handleSort("thumbsDown")}>
+                  Thumbs Down <SortIndicator k="thumbsDown" />
+                </th>
+                <th className={`${thClass} text-right`} onClick={() => handleSort("reportCount")}>
+                  Reports <SortIndicator k="reportCount" />
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -170,6 +194,15 @@ export default function StatsPanel() {
                           {Math.round(rate * 100)}%
                         </span>
                       )}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-green-600">
+                      {row.stats?.thumbsUp ?? 0}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-red-500">
+                      {row.stats?.thumbsDown ?? 0}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-700">
+                      {row.stats?.reportCount ?? 0}
                     </td>
                   </tr>
                 );
