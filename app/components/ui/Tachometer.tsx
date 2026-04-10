@@ -60,8 +60,8 @@ export function Tachometer({ score, maxScore, size = 260, instanceId = "default"
   const minorTicks = Array.from({ length: 51 }, (_, i) => i);
 
   return (
-    <div style={{ width: size, height: size }} className="relative select-none">
-      <svg viewBox="0 0 200 200" width={size} height={size}>
+    <div style={{ width: size, maxWidth: "100%", aspectRatio: "1" }} className="relative select-none">
+      <svg viewBox="0 0 200 200" width="100%" height="100%">
         <defs>
           <radialGradient id={`gaugeGlow-${id}`} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#111" />

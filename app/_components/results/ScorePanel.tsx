@@ -46,13 +46,13 @@ export function ScorePanel({
   personalBest,
 }: Props) {
   return (
-    <div className="grid grid-cols-[2fr_3fr] sm:grid-cols-2 border-t border-white/10">
-      <div className="flex flex-col items-center justify-center py-8 px-4 border-r border-white/10">
+    <div className="grid grid-cols-2 border-t border-white/10">
+      <div className="flex flex-col items-center justify-center py-4 sm:py-8 px-2 border-r border-white/10">
         <div
-          className="relative mb-3"
-          style={{ width: GAUGE_SIZE, height: GAUGE_SIZE }}
+          className="relative mb-3 w-full"
+          style={{ maxWidth: GAUGE_SIZE, aspectRatio: "1" }}
         >
-          <svg viewBox="0 0 200 200" width={GAUGE_SIZE} height={GAUGE_SIZE}>
+          <svg viewBox="0 0 200 200" width="100%" height="100%">
             <defs>
               <radialGradient id="scoreGaugeGlow" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#111" />
@@ -184,7 +184,7 @@ export function ScorePanel({
           </p>
         )}
       </div>
-      <div className="flex flex-col items-center justify-center py-6 px-2">
+      <div className="flex flex-col items-center justify-center pt-4 pb-2 sm:py-6 px-2">
         <Tachometer
           score={score}
           maxScore={approxMax}
