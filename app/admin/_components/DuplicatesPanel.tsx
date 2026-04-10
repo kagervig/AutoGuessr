@@ -21,8 +21,10 @@ interface DuplicateGroup {
 interface ScanResult {
   algorithm: Algorithm;
   threshold?: number;
+  offset: number;
   scanned: number;
   total: number;
+  hasMore: boolean;
   duplicateGroups: DuplicateGroup[];
   fetchErrors: string[];
 }
@@ -57,6 +59,8 @@ async function rejectImage(img: DuplicateImage): Promise<void> {
   }
 }
 
+const PAGE_SIZE = 500;
+
 export default function DuplicatesPanel() {
   const [algorithm, setAlgorithm] = useState<Algorithm>("sha256");
   const [threshold, setThreshold] = useState(10);
@@ -66,20 +70,39 @@ export default function DuplicatesPanel() {
   const [errorsOpen, setErrorsOpen] = useState(false);
   const [rejecting, setRejecting] = useState<Set<string>>(new Set());
   const [rejectErrors, setRejectErrors] = useState<Record<string, string>>({});
+  const [scannedSoFar, setScannedSoFar] = useState(0);
 
-  async function runScan() {
+  async function runScan(offset = 0) {
     setScanning(true);
-    setGroups([]);
-    setSummary(null);
-    setRejectErrors({});
-    const qs = new URLSearchParams({ algorithm });
+    if (offset === 0) {
+      setGroups([]);
+      setSummary(null);
+      setRejectErrors({});
+      setScannedSoFar(0);
+    }
+    const qs = new URLSearchParams({ algorithm, offset: String(offset), limit: String(PAGE_SIZE) });
     if (algorithm === "phash") qs.set("threshold", String(threshold));
     const res = await fetch(`/api/admin/duplicates?${qs}`);
     const data: ScanResult = await res.json();
     const { duplicateGroups, ...rest } = data;
-    setGroups(duplicateGroups);
+    setGroups((prev) => mergeGroups(prev, duplicateGroups));
+    setScannedSoFar((prev) => prev + data.scanned);
     setSummary(rest);
     setScanning(false);
+  }
+
+  function mergeGroups(existing: DuplicateGroup[], incoming: DuplicateGroup[]): DuplicateGroup[] {
+    const map = new Map(existing.map((g) => [g.hash, g]));
+    for (const g of incoming) {
+      const prev = map.get(g.hash);
+      if (prev) {
+        const ids = new Set(prev.images.map((i) => i.id));
+        map.set(g.hash, { ...g, images: [...prev.images, ...g.images.filter((i) => !ids.has(i.id))] });
+      } else {
+        map.set(g.hash, g);
+      }
+    }
+    return Array.from(map.values());
   }
 
   async function handleReject(img: DuplicateImage) {
@@ -143,7 +166,7 @@ export default function DuplicatesPanel() {
         )}
 
         <button
-          onClick={runScan}
+          onClick={() => runScan(0)}
           disabled={scanning}
           className="px-4 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
         >
@@ -162,22 +185,34 @@ export default function DuplicatesPanel() {
       {/* Results */}
       {summary && (
         <div>
-          <p className="text-sm text-gray-600 mb-4">
-            Scanned{" "}
-            <span className="font-medium text-gray-900">{summary.scanned}</span>
-            {summary.total !== summary.scanned && <> of {summary.total}</>}{" "}
-            images using{" "}
-            <span className="font-medium text-gray-900">{summary.algorithm.toUpperCase()}</span>
-            {summary.threshold !== undefined && <> (threshold {summary.threshold}/64)</>}
-            {" — "}
-            {groups.length === 0 ? (
-              <span className="text-green-600">no duplicates found</span>
-            ) : (
-              <span className="text-red-600 font-medium">
-                {groups.length} duplicate group{groups.length !== 1 ? "s" : ""} found
-              </span>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-600">
+              Scanned{" "}
+              <span className="font-medium text-gray-900">{scannedSoFar}</span>
+              {" of "}
+              <span className="font-medium text-gray-900">{summary.total}</span>{" "}
+              images using{" "}
+              <span className="font-medium text-gray-900">{summary.algorithm.toUpperCase()}</span>
+              {summary.threshold !== undefined && <> (threshold {summary.threshold}/64)</>}
+              {" — "}
+              {groups.length === 0 ? (
+                <span className="text-green-600">no duplicates found</span>
+              ) : (
+                <span className="text-red-600 font-medium">
+                  {groups.length} duplicate group{groups.length !== 1 ? "s" : ""} found
+                </span>
+              )}
+            </p>
+            {summary.hasMore && (
+              <button
+                onClick={() => runScan(summary.offset + PAGE_SIZE)}
+                disabled={scanning}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 transition-colors whitespace-nowrap"
+              >
+                {scanning ? "Scanning…" : `Scan next ${PAGE_SIZE}`}
+              </button>
             )}
-          </p>
+          </div>
 
           {summary.fetchErrors.length > 0 && (
             <div className="mb-4">
