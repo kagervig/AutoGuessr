@@ -10,7 +10,8 @@ npm run dev
 npm run lint
 
 # Prisma
-npx prisma db push       # apply schema changes
+npx prisma migrate dev --name <migration-name>  # create and apply a migration (ALWAYS use for schema changes)
+npx prisma db push       # local prototyping only — never use for production schema changes
 npx prisma db seed       # seed categories, regions, flags, sample vehicles
 npx prisma studio        # open DB browser
 
@@ -39,6 +40,7 @@ npx tsx scripts/import-cars.ts --file ./path/to/cars.csv # import directly from 
 - Run typecheck after making a series of code changes
 - Prefer fixing the root cause over adding workarounds
 - When unsure about approach, use plan mode (`Shift+Tab`) before coding
+- ALWAYS create a migration file with `prisma migrate dev` when modifying `schema.prisma` — never rely on `db push` for schema changes, as it bypasses migration tracking and changes won't be applied on deploy
 
 ## Don'ts
 
