@@ -160,7 +160,6 @@ export default function IdentifyScreen() {
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Self-contained refresh used by event handlers (onVoted, submit)
   const fetchImages = useCallback(async () => {
     setLoading(true);
     try {
@@ -173,14 +172,7 @@ export default function IdentifyScreen() {
     }
   }, []);
 
-  // NOTE: this fetch is intentionally separate from fetchImages above to avoid calling a
-  // setState-containing function from an effect. Keep error handling in sync with fetchImages.
-  useEffect(() => {
-    fetch("/api/identify")
-      .then((r) => { if (!r.ok) throw new Error("Failed"); return r.json(); })
-      .then((data) => { setImages(data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+  useEffect(() => { fetchImages(); }, [fetchImages]);
 
   function getForm(id: string): SuggestForm {
     return forms[id] ?? { make: "", model: "", year: "", trim: "" };
