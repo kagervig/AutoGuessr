@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/admin/categories/route";
 import { PUT, DELETE } from "@/app/api/admin/categories/[id]/route";
 

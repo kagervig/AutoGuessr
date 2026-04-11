@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import type { StagingStatus, BodyStyle } from "../../../../generated/prisma/client";
+import type { StagingStatus } from "../../../../generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
