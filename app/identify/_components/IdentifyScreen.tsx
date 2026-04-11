@@ -173,10 +173,11 @@ export default function IdentifyScreen() {
     }
   }, []);
 
-  // Initial load — inline promise chain so no setState-containing function is called from the effect
+  // NOTE: this fetch is intentionally separate from fetchImages above to avoid calling a
+  // setState-containing function from an effect. Keep error handling in sync with fetchImages.
   useEffect(() => {
     fetch("/api/identify")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("Failed"); return r.json(); })
       .then((data) => { setImages(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);

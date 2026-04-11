@@ -68,6 +68,7 @@ export default function MakesModelsPanel() {
     fetch("/api/admin/makes")
       .then((r) => r.json())
       .then((d) => setMakes(d))
+      .catch(() => setError("Failed to load makes."))
       .finally(() => setLoadingMakes(false));
   }, []);
 
