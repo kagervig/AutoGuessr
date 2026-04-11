@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import Combobox from "@/app/_components/Combobox";
 import { eraFromYear } from "@/app/lib/constants";
 import MakesModelsPanel from "./MakesModelsPanel";
@@ -528,9 +529,9 @@ export default function AdminPanel() {
             ))}
           </nav>
         </div>
-        <a href="/" className="text-sm text-gray-400 hover:text-gray-600">
+        <Link href="/" className="text-sm text-gray-400 hover:text-gray-600">
           ← Game
-        </a>
+        </Link>
       </header>
 
       {activePage === "makes-models" && <MakesModelsPanel />}
