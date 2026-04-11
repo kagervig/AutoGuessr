@@ -12,7 +12,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "json"],
-      include: ["app/lib/**", "app/api/**", "app/_components/**"],
+      include: ["app/lib/**", "app/api/**", "app/_components/**", "app/components/**"],
       exclude: [
         "app/lib/prisma.ts",   // DB client singleton — not unit testable
         "app/lib/staging.ts",  // admin utility dependent on external services
