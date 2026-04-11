@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import type { StagingStatus, BodyStyle } from "../../../../generated/prisma/client";
+import { Prisma } from "../../../../generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
@@ -31,7 +32,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
     return Response.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const updated = await prisma.$transaction(async (tx) => {
+  let updated;
+  try {
+    updated = await prisma.$transaction(async (tx) => {
     const stagingImage = await tx.stagingImage.update({
       where: { id },
       data: {
@@ -62,7 +65,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     // Deactivate the published image when a staging image is rejected.
     // Image.filename is set to StagingImage.cloudinaryPublicId at publish time.
-    if (status === "REJECTED") {
+    if (stagingImage.status === "REJECTED") {
       await tx.image.updateMany({
         where: { filename: stagingImage.cloudinaryPublicId },
         data: { isActive: false },
@@ -70,7 +73,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
     }
 
     return stagingImage;
-  });
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+      return Response.json({ error: "Not found" }, { status: 404 });
+    }
+    throw e;
+  }
 
   const agreements = computeAgreements(updated.suggestions);
 
