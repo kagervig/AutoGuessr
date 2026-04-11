@@ -8,11 +8,7 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
-    setupFilesAfterFramework: ["./vitest.setup.ts"],
-    environmentMatchGlobs: [
-      ["app/_components/**/*.test.tsx", "happy-dom"],
-      ["app/_hooks/**/*.test.ts", "happy-dom"],
-    ],
+    setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "json"],
