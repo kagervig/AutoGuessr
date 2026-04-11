@@ -13,18 +13,22 @@ export default function StandardModeInput({ makes, disabled, onSubmit }: Props) 
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
-  const [models, setModels] = useState<string[]>([]);
-  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelData, setModelData] = useState<{ make: string; models: string[] } | null>(null);
+  // Derived: loading whenever we have a make but no data for it yet
+  const loading = !!make && modelData?.make !== make;
+  const models = modelData?.make === make ? modelData.models : [];
+
+  const handleMakeChange = (newMake: string) => {
+    setMake(newMake);
+    setModel("");
+  };
 
   useEffect(() => {
-    setModel("");
-    setModels([]);
     if (!make) return;
-    setLoadingModels(true);
     fetch(`/api/models?make=${encodeURIComponent(make)}`)
       .then((r) => r.json())
-      .then((data) => setModels(data.models ?? []))
-      .finally(() => setLoadingModels(false));
+      .then((data) => setModelData({ make, models: data.models ?? [] }))
+      .catch(() => setModelData({ make, models: [] }));
   }, [make]);
 
   const canSubmit = !!make && !!model && !!year;
@@ -33,7 +37,7 @@ export default function StandardModeInput({ makes, disabled, onSubmit }: Props) 
     <div className="space-y-3">
       <Combobox
         value={make}
-        onChange={setMake}
+        onChange={handleMakeChange}
         options={makes}
         placeholder="Make (e.g. Ferrari)"
         disabled={disabled}
@@ -42,8 +46,8 @@ export default function StandardModeInput({ makes, disabled, onSubmit }: Props) 
         value={model}
         onChange={setModel}
         options={models}
-        placeholder={make ? (loadingModels ? "Loading…" : "Model") : "Select make first"}
-        disabled={disabled || !make}
+        placeholder={make ? (loading ? "Loading…" : "Model") : "Select make first"}
+        disabled={disabled || !make || loading}
       />
       <input
         type="number"

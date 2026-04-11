@@ -14,17 +14,17 @@ export default function CustomModeInput({ makes, showYear, disabled, onSubmit }:
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
-  const [models, setModels] = useState<string[]>([]);
-  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelData, setModelData] = useState<{ make: string; models: string[] } | null>(null);
+  // Derived: loading whenever we have a make but no data for it yet
+  const loading = !!make && modelData?.make !== make;
+  const models = modelData?.make === make ? modelData.models : [];
 
   useEffect(() => {
-    setModels([]);
     if (!make) return;
-    setLoadingModels(true);
     fetch(`/api/models?make=${encodeURIComponent(make)}`)
       .then((r) => r.json())
-      .then((data) => setModels(data.models ?? []))
-      .finally(() => setLoadingModels(false));
+      .then((data) => setModelData({ make, models: data.models ?? [] }))
+      .catch(() => setModelData({ make, models: [] }));
   }, [make]);
 
   const canSubmit = !!make || !!model;
@@ -42,7 +42,7 @@ export default function CustomModeInput({ makes, showYear, disabled, onSubmit }:
         value={model}
         onChange={setModel}
         options={models}
-        placeholder={loadingModels ? "Loading…" : "Model (e.g. Mustang)"}
+        placeholder={loading ? "Loading…" : "Model (e.g. Mustang)"}
         disabled={disabled}
       />
       {showYear && (
