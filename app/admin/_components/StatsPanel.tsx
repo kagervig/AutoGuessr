@@ -32,6 +32,11 @@ function totalPlays(row: ImageStatRow): number {
   return row.stats.correctGuesses + row.stats.incorrectGuesses;
 }
 
+function SortIndicator({ k, sortKey, sortDir }: { k: SortKey; sortKey: SortKey; sortDir: SortDir }) {
+  if (sortKey !== k) return <span className="text-gray-300 ml-1">↕</span>;
+  return <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>;
+}
+
 export default function StatsPanel() {
   const [rows, setRows] = useState<ImageStatRow[]>([]);
   const [loading, setLoading] = useState(true);
