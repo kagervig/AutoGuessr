@@ -43,8 +43,11 @@ describe("levenshtein", () => {
     expect(levenshtein("cars", "car")).toBe(1);
   });
 
-  it("should return 2 for two edits", () => {
-    expect(levenshtein("ford", "fird")).toBe(1); // sanity
+  it("should return 1 for a single substitution", () => {
+    expect(levenshtein("ford", "fird")).toBe(1);
+  });
+
+  it("should return 3 for kitten to sitting", () => {
     expect(levenshtein("kitten", "sitting")).toBe(3);
   });
 });
@@ -288,7 +291,18 @@ describe("scoreRound", () => {
       expect(result.modelPoints).toBe(0);
     });
 
-    it("should scale year bonus down proportionally to yearDelta", () => {
+    it("should reduce year bonus proportionally for a mid-range yearDelta", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: 2,
+        mode: "standard",
+      });
+      expect(result.yearBonus).toBe(120); // 200 * (1 - 2/5) = 120
+    });
+
+    it("should reduce year bonus to 0 when yearDelta reaches the maximum", () => {
       const result = scoreRound({
         ...BASE_PARAMS,
         makeCorrect: true,

@@ -28,11 +28,13 @@ describe("Tachometer", () => {
     });
   });
 
-  it("always renders the AUTOGUESSR label", () => {
-    const { rerender } = render(<Tachometer score={500} maxScore={5000} variant="game" />);
+  it("renders the AUTOGUESSR label in game variant", () => {
+    render(<Tachometer score={500} maxScore={5000} variant="game" />);
     expect(screen.getByText("AUTOGUESSR")).toBeInTheDocument();
+  });
 
-    rerender(<Tachometer score={500} maxScore={5000} variant="results" />);
+  it("renders the AUTOGUESSR label in results variant", () => {
+    render(<Tachometer score={500} maxScore={5000} variant="results" />);
     expect(screen.getByText("AUTOGUESSR")).toBeInTheDocument();
   });
 

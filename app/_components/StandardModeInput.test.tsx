@@ -36,9 +36,9 @@ describe("StandardModeInput", () => {
     await selectMake("Toyota");
     await userEvent.click(await screen.findByPlaceholderText("Model"));
 
-    for (const model of MODELS) {
-      expect(screen.getByRole("option", { name: model })).toBeInTheDocument();
-    }
+    expect(screen.getByRole("option", { name: "Supra" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Corolla" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Camry" })).toBeInTheDocument();
   });
 
   it("calls onSubmit with the correct make, model, and year", async () => {

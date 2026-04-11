@@ -20,12 +20,9 @@ beforeEach(() => {
 });
 
 describe("HomeScreen", () => {
-  it("renders a card for every mode in MODES", async () => {
+  it.each([...MODES])("renders the $label mode card", ({ label }) => {
     render(<HomeScreen />);
-
-    for (const mode of MODES) {
-      expect(screen.getByText(mode.label)).toBeInTheDocument();
-    }
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 
   it("renders the Community card", () => {

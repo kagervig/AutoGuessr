@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RoundResult } from "./RoundResult";
 import type { RevealInfo } from "./RoundResult";
 
@@ -33,6 +33,10 @@ const baseProps = {
   onNext: vi.fn(),
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("RoundResult", () => {
   describe("score breakdown", () => {
     it("renders the total points earned from the reveal", () => {
@@ -40,10 +44,14 @@ describe("RoundResult", () => {
       expect(screen.getByText(`+${(350).toLocaleString()}`)).toBeInTheDocument();
     });
 
-    it("renders individual breakdown line items that are non-zero", () => {
+    it("renders the make breakdown line item", () => {
       render(<RoundResult {...baseProps} />);
       expect(screen.getByText("Correct make")).toBeInTheDocument();
       expect(screen.getByText(`+${baseReveal.breakdown!.makePoints}`)).toBeInTheDocument();
+    });
+
+    it("renders the model breakdown line item", () => {
+      render(<RoundResult {...baseProps} />);
       expect(screen.getByText("Correct model")).toBeInTheDocument();
       expect(screen.getByText(`+${baseReveal.breakdown!.modelPoints}`)).toBeInTheDocument();
     });

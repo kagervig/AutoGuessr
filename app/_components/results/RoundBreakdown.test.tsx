@@ -96,93 +96,75 @@ describe("RoundBreakdown", () => {
   });
 
   describe("bonus categories", () => {
-    it("shows Make bonus only when makePoints > 0", () => {
-      const withMake = { ...correctGuess, makePoints: 100, pointsEarned: 100 };
-      const withoutMake = { ...correctGuess, makePoints: 0, modelPoints: 200, pointsEarned: 200 };
-
-      const { rerender } = render(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withMake)]} mode="easy" />
-      );
+    it("shows Make bonus when makePoints > 0", () => {
+      const guess = { ...correctGuess, makePoints: 100, pointsEarned: 100 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="easy" />);
       expect(screen.getAllByText("Make")[0]).toBeInTheDocument();
+    });
 
-      rerender(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withoutMake)]} mode="easy" />
-      );
+    it("does not show Make bonus when makePoints is 0", () => {
+      const guess = { ...correctGuess, makePoints: 0, modelPoints: 200, pointsEarned: 200 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="easy" />);
       expect(screen.queryByText("Make")).not.toBeInTheDocument();
     });
 
-    it("shows Model bonus only when modelPoints > 0", () => {
-      const withModel = { ...correctGuess, modelPoints: 200, pointsEarned: 200 };
-      const withoutModel = { ...correctGuess, modelPoints: 0, makePoints: 100, yearBonus: null, timeBonus: 0, proBonus: 0, pointsEarned: 100 };
-
-      const { rerender } = render(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withModel)]} mode="easy" />
-      );
+    it("shows Model bonus when modelPoints > 0", () => {
+      const guess = { ...correctGuess, modelPoints: 200, pointsEarned: 200 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="easy" />);
       expect(screen.getAllByText("Model")[0]).toBeInTheDocument();
+    });
 
-      rerender(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withoutModel)]} mode="easy" />
-      );
+    it("does not show Model bonus when modelPoints is 0", () => {
+      const guess = { ...correctGuess, modelPoints: 0, makePoints: 100, yearBonus: null, timeBonus: 0, proBonus: 0, pointsEarned: 100 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="easy" />);
       expect(screen.queryByText("Model")).not.toBeInTheDocument();
     });
 
-    it("shows Year bonus only when yearBonus > 0", () => {
-      const withYear = { ...correctGuess, yearBonus: 50, pointsEarned: 350 };
-      const withoutYear = { ...correctGuess, yearBonus: null, pointsEarned: 300 };
-
-      const { rerender } = render(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withYear)]} mode="standard" />
-      );
+    it("shows Year bonus when yearBonus > 0", () => {
+      const guess = { ...correctGuess, yearBonus: 50, pointsEarned: 350 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="standard" />);
       expect(screen.getAllByText("Year")[0]).toBeInTheDocument();
+    });
 
-      rerender(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withoutYear)]} mode="standard" />
-      );
+    it("does not show Year bonus when yearBonus is null", () => {
+      const guess = { ...correctGuess, yearBonus: null, pointsEarned: 300 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="standard" />);
       expect(screen.queryByText("Year")).not.toBeInTheDocument();
     });
 
-    it("shows Speed bonus only when timeBonus > 0", () => {
-      const withSpeed = { ...correctGuess, timeBonus: 75, pointsEarned: 425 };
-      const withoutSpeed = { ...correctGuess, timeBonus: 0, pointsEarned: 350 };
-
-      const { rerender } = render(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withSpeed)]} mode="time_attack" />
-      );
+    it("shows Speed bonus when timeBonus > 0", () => {
+      const guess = { ...correctGuess, timeBonus: 75, pointsEarned: 425 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="time_attack" />);
       expect(screen.getAllByText("Speed")[0]).toBeInTheDocument();
+    });
 
-      rerender(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withoutSpeed)]} mode="time_attack" />
-      );
+    it("does not show Speed bonus when timeBonus is 0", () => {
+      const guess = { ...correctGuess, timeBonus: 0, pointsEarned: 350 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="time_attack" />);
       expect(screen.queryByText("Speed")).not.toBeInTheDocument();
     });
 
-    it("shows Mult bonus only when modeMultiplier > 1", () => {
-      const withMult = { ...correctGuess, modeMultiplier: 1.5, pointsEarned: 525 };
-      const withoutMult = { ...correctGuess, modeMultiplier: 1, pointsEarned: 350 };
-
-      const { rerender } = render(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withMult)]} mode="hardcore" />
-      );
+    it("shows Mult bonus when modeMultiplier > 1", () => {
+      const guess = { ...correctGuess, modeMultiplier: 1.5, pointsEarned: 525 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="hardcore" />);
       expect(screen.getAllByText("Mult")[0]).toBeInTheDocument();
+    });
 
-      rerender(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withoutMult)]} mode="hardcore" />
-      );
+    it("does not show Mult bonus when modeMultiplier is 1", () => {
+      const guess = { ...correctGuess, modeMultiplier: 1, pointsEarned: 350 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="hardcore" />);
       expect(screen.queryByText("Mult")).not.toBeInTheDocument();
     });
 
-    it("shows Pro bonus only when proBonus > 0", () => {
-      const withPro = { ...correctGuess, proBonus: 100, pointsEarned: 450 };
-      const withoutPro = { ...correctGuess, proBonus: 0, pointsEarned: 350 };
-
-      const { rerender } = render(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withPro)]} mode="standard" />
-      );
+    it("shows Pro bonus when proBonus > 0", () => {
+      const guess = { ...correctGuess, proBonus: 100, pointsEarned: 450 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="standard" />);
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
+    });
 
-      rerender(
-        <RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", withoutPro)]} mode="standard" />
-      );
+    it("does not show Pro bonus when proBonus is 0", () => {
+      const guess = { ...correctGuess, proBonus: 0, pointsEarned: 350 };
+      render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="standard" />);
       expect(screen.queryByText("Pro")).not.toBeInTheDocument();
     });
   });
