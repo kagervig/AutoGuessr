@@ -198,127 +198,6 @@ const vehicles = [
   },
 ];
 
-// Dev-only staging fixtures covering every admin workflow:
-//   - PENDING_REVIEW with AI data only (requires admin to fill fields before publishing)
-//   - PENDING_REVIEW with partial admin data already filled
-//   - READY with all required fields (can be published immediately)
-//   - PUBLISHED with a linked Image record (test reject → image deactivated)
-//   - REJECTED (test reactivating status back to PENDING_REVIEW)
-//
-// cloudinaryPublicId is a fake placeholder; imageUrl() falls back to picsum.photos
-// when CLOUDINARY_CLOUD_NAME is unset, so images render in the local admin panel.
-const stagingFixtures = [
-  {
-    cloudinaryPublicId: "dev/staging_pending_ai_only",
-    filename: "staging_pending_ai_only.jpg",
-    status: "PENDING_REVIEW" as const,
-    aiMake: "Toyota",
-    aiModel: "Supra",
-    aiYear: 1993,
-    aiBodyStyle: "coupe",
-    aiConfidence: 0.91,
-  },
-  {
-    cloudinaryPublicId: "dev/staging_pending_partial_admin",
-    filename: "staging_pending_partial_admin.jpg",
-    status: "PENDING_REVIEW" as const,
-    aiMake: "Porsche",
-    aiModel: "911",
-    aiYear: 2019,
-    aiBodyStyle: "coupe",
-    aiConfidence: 0.87,
-    adminMake: "Porsche",
-    adminModel: "911",
-    adminYear: 2019,
-  },
-  {
-    cloudinaryPublicId: "dev/staging_ready_mustang",
-    filename: "staging_ready_mustang.jpg",
-    status: "READY" as const,
-    aiMake: "Ford",
-    aiModel: "Mustang",
-    aiYear: 1969,
-    aiBodyStyle: "coupe",
-    aiConfidence: 0.95,
-    adminMake: "Ford",
-    adminModel: "Mustang",
-    adminYear: 1969,
-    adminBodyStyle: "coupe",
-    adminEra: "classic",
-    adminRarity: "uncommon",
-    adminRegionSlug: "north_america",
-    adminCountryOfOrigin: "US",
-    adminCategories: ["muscle", "classic"],
-    adminIsHardcoreEligible: false,
-    adminIsVehicleUnmodified: true,
-  },
-  {
-    cloudinaryPublicId: "dev/staging_ready_ferrari",
-    filename: "staging_ready_ferrari.jpg",
-    status: "READY" as const,
-    aiMake: "Ferrari",
-    aiModel: "458 Italia",
-    aiYear: 2009,
-    aiBodyStyle: "coupe",
-    aiConfidence: 0.93,
-    adminMake: "Ferrari",
-    adminModel: "458 Italia",
-    adminYear: 2009,
-    adminBodyStyle: "coupe",
-    adminEra: "modern",
-    adminRarity: "rare",
-    adminRegionSlug: "europe",
-    adminCountryOfOrigin: "IT",
-    adminCategories: ["supercar", "european"],
-    adminIsHardcoreEligible: true,
-    adminIsVehicleUnmodified: true,
-  },
-  // PUBLISHED fixture — also creates the linked Vehicle+Image so reject can deactivate it
-  {
-    cloudinaryPublicId: "dev/staging_published_camaro",
-    filename: "staging_published_camaro.jpg",
-    status: "PUBLISHED" as const,
-    aiMake: "Chevrolet",
-    aiModel: "Camaro",
-    aiYear: 1969,
-    aiBodyStyle: "coupe",
-    aiConfidence: 0.89,
-    adminMake: "Chevrolet",
-    adminModel: "Camaro",
-    adminYear: 1969,
-    adminBodyStyle: "coupe",
-    adminEra: "classic",
-    adminRarity: "uncommon",
-    adminRegionSlug: "north_america",
-    adminCountryOfOrigin: "US",
-    adminCategories: ["muscle", "classic"],
-    adminIsHardcoreEligible: false,
-    adminIsVehicleUnmodified: true,
-    reviewedAt: new Date(),
-  },
-  {
-    cloudinaryPublicId: "dev/staging_rejected_lambo",
-    filename: "staging_rejected_lambo.jpg",
-    status: "REJECTED" as const,
-    aiMake: "Lamborghini",
-    aiModel: "Aventador",
-    aiYear: 2011,
-    aiBodyStyle: "coupe",
-    aiConfidence: 0.78,
-    adminMake: "Lamborghini",
-    adminModel: "Aventador",
-    adminYear: 2011,
-    adminBodyStyle: "coupe",
-    adminEra: "modern",
-    adminRarity: "ultra_rare",
-    adminRegionSlug: "europe",
-    adminCountryOfOrigin: "IT",
-    adminCategories: ["supercar", "exotic", "european"],
-    adminIsHardcoreEligible: true,
-    adminIsVehicleUnmodified: true,
-    reviewedAt: new Date(),
-  },
-];
 
 async function main() {
   console.log("Seeding categories...");
@@ -422,44 +301,100 @@ async function main() {
   }
 
   console.log("Seeding staging fixtures...");
+
+  // Look up the existing Image records for the PUBLISHED and REJECTED fixtures.
+  // Their cloudinaryPublicId must match an existing Image.filename so that
+  // rejecting them triggers image deactivation. PENDING/READY fixtures use
+  // vehicle-named IDs that don't exist in Image.filename yet — this lets
+  // the publish flow create the Image record without a unique-constraint conflict.
+  const [camaroImg, lamboImg] = await Promise.all([
+    prisma.image.findFirst({ where: { vehicle: { make: "Chevrolet", model: "Camaro", year: 1969 } } }),
+    prisma.image.findFirst({ where: { vehicle: { make: "Lamborghini", model: "Aventador", year: 2011 } } }),
+  ]);
+
+  // Dev-only staging fixtures covering every admin workflow:
+  //   - PENDING_REVIEW with AI data only (requires admin to fill fields before publishing)
+  //   - PENDING_REVIEW with partial admin data already filled
+  //   - READY with all required fields (can be published immediately)
+  //   - PUBLISHED — cloudinaryPublicId matches an existing Image.filename so
+  //     reject triggers image deactivation
+  //   - REJECTED (test reactivating status back to PENDING_REVIEW)
+  const fixtures = [
+    {
+      cloudinaryPublicId: "autoguessr/toyota-supra-1993-001",
+      filename: "toyota-supra-1993-001.jpg",
+      status: "PENDING_REVIEW" as const,
+      aiMake: "Toyota", aiModel: "Supra", aiYear: 1993,
+      aiBodyStyle: "coupe", aiConfidence: 0.91,
+    },
+    {
+      cloudinaryPublicId: "autoguessr/porsche-911-gt3-2019-001",
+      filename: "porsche-911-gt3-2019-001.jpg",
+      status: "PENDING_REVIEW" as const,
+      aiMake: "Porsche", aiModel: "911", aiYear: 2019,
+      aiBodyStyle: "coupe", aiConfidence: 0.87,
+      adminMake: "Porsche", adminModel: "911", adminYear: 2019,
+    },
+    {
+      cloudinaryPublicId: "autoguessr/ford-mustang-mach1-1969-001",
+      filename: "ford-mustang-mach1-1969-001.jpg",
+      status: "READY" as const,
+      aiMake: "Ford", aiModel: "Mustang", aiYear: 1969,
+      aiBodyStyle: "coupe", aiConfidence: 0.95,
+      adminMake: "Ford", adminModel: "Mustang", adminYear: 1969,
+      adminBodyStyle: "coupe", adminEra: "classic", adminRarity: "uncommon",
+      adminRegionSlug: "north_america", adminCountryOfOrigin: "US",
+      adminCategories: ["muscle", "classic"],
+      adminIsHardcoreEligible: false, adminIsVehicleUnmodified: true,
+    },
+    {
+      cloudinaryPublicId: "autoguessr/ferrari-458-italia-2009-001",
+      filename: "ferrari-458-italia-2009-001.jpg",
+      status: "READY" as const,
+      aiMake: "Ferrari", aiModel: "458 Italia", aiYear: 2009,
+      aiBodyStyle: "coupe", aiConfidence: 0.93,
+      adminMake: "Ferrari", adminModel: "458 Italia", adminYear: 2009,
+      adminBodyStyle: "coupe", adminEra: "modern", adminRarity: "rare",
+      adminRegionSlug: "europe", adminCountryOfOrigin: "IT",
+      adminCategories: ["supercar", "european"],
+      adminIsHardcoreEligible: true, adminIsVehicleUnmodified: true,
+    },
+    camaroImg && {
+      cloudinaryPublicId: camaroImg.filename,
+      filename: camaroImg.filename,
+      status: "PUBLISHED" as const,
+      aiMake: "Chevrolet", aiModel: "Camaro", aiYear: 1969,
+      aiBodyStyle: "coupe", aiConfidence: 0.89,
+      adminMake: "Chevrolet", adminModel: "Camaro", adminYear: 1969,
+      adminBodyStyle: "coupe", adminEra: "classic", adminRarity: "uncommon",
+      adminRegionSlug: "north_america", adminCountryOfOrigin: "US",
+      adminCategories: ["muscle", "classic"],
+      adminIsHardcoreEligible: false, adminIsVehicleUnmodified: true,
+      reviewedAt: new Date(),
+    },
+    lamboImg && {
+      cloudinaryPublicId: lamboImg.filename,
+      filename: lamboImg.filename,
+      status: "REJECTED" as const,
+      aiMake: "Lamborghini", aiModel: "Aventador", aiYear: 2011,
+      aiBodyStyle: "coupe", aiConfidence: 0.78,
+      adminMake: "Lamborghini", adminModel: "Aventador", adminYear: 2011,
+      adminBodyStyle: "coupe", adminEra: "modern", adminRarity: "ultra_rare",
+      adminRegionSlug: "europe", adminCountryOfOrigin: "IT",
+      adminCategories: ["supercar", "exotic", "european"],
+      adminIsHardcoreEligible: true, adminIsVehicleUnmodified: true,
+      reviewedAt: new Date(),
+    },
+  ].filter(Boolean) as NonNullable<(typeof fixtures)[number]>[];
+
   let stagingCount = 0;
-  for (const fixture of stagingFixtures) {
+  for (const fixture of fixtures) {
     const existing = await prisma.stagingImage.findUnique({
       where: { cloudinaryPublicId: fixture.cloudinaryPublicId },
     });
     if (existing) continue;
 
     await prisma.stagingImage.create({ data: fixture });
-
-    // PUBLISHED fixtures need a linked Vehicle+Image so that rejecting the staging
-    // image can deactivate the correct Image record (matched by filename = cloudinaryPublicId).
-    if (fixture.status === "PUBLISHED" && fixture.adminMake && fixture.adminModel && fixture.adminYear && fixture.adminRegionSlug) {
-      const region = await prisma.region.findUnique({ where: { slug: fixture.adminRegionSlug } });
-      if (region) {
-        const vehicle = await prisma.vehicle.create({
-          data: {
-            make: fixture.adminMake,
-            model: fixture.adminModel,
-            year: fixture.adminYear,
-            countryOfOrigin: fixture.adminCountryOfOrigin ?? "US",
-            regionId: region.id,
-            bodyStyle: (fixture.adminBodyStyle as never) ?? "coupe",
-            era: (fixture.adminEra as never) ?? "classic",
-            rarity: (fixture.adminRarity as never) ?? "common",
-          },
-        });
-        const image = await prisma.image.create({
-          data: {
-            vehicleId: vehicle.id,
-            filename: fixture.cloudinaryPublicId,
-            isActive: true,
-            isHardcoreEligible: fixture.adminIsHardcoreEligible ?? false,
-          },
-        });
-        await prisma.imageStats.create({ data: { imageId: image.id } });
-      }
-    }
-
     console.log(`  ✓ ${fixture.status} — ${fixture.cloudinaryPublicId}`);
     stagingCount++;
   }
