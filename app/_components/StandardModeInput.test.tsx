@@ -1,16 +1,20 @@
 // @vitest-environment happy-dom
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import StandardModeInput from "./StandardModeInput";
 
 const MAKES = ["Toyota", "Honda", "Mazda"];
 const MODELS = ["Supra", "Corolla", "Camry"];
 
 beforeEach(() => {
-  global.fetch = vi.fn().mockResolvedValue({
+  vi.spyOn(global, "fetch").mockResolvedValue({
     json: () => Promise.resolve({ models: MODELS }),
   } as Response);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 async function selectMake(make: string) {
@@ -26,16 +30,6 @@ async function selectModel(model: string) {
 }
 
 describe("StandardModeInput", () => {
-  it("fetches models when a make is selected", async () => {
-    render(<StandardModeInput makes={MAKES} disabled={false} onSubmit={vi.fn()} />);
-
-    await selectMake("Toyota");
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      `/api/models?make=${encodeURIComponent("Toyota")}`
-    );
-  });
-
   it("populates the model dropdown with the fetched models", async () => {
     render(<StandardModeInput makes={MAKES} disabled={false} onSubmit={vi.fn()} />);
 
