@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/app/lib/utils";
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
 export default function Combobox({ value, onChange, options, placeholder, disabled, variant = "game" }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
 
   const filtered = value
     ? options.filter((o) => o.toLowerCase().includes(value.toLowerCase()))
@@ -48,8 +49,10 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
+        role="combobox"
         aria-autocomplete="list"
         aria-expanded={open}
+        aria-controls={listboxId}
         className={variant === "admin"
           ? "w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
           : cn(
@@ -62,6 +65,7 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
       />
       {open && filtered.length > 0 && (
         <ul
+          id={listboxId}
           role="listbox"
           className={variant === "admin"
             ? "absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded border border-gray-200 bg-white py-1 shadow-md"

@@ -39,23 +39,27 @@ export default function LeaderboardScreen({ initialMode }: Props) {
   const router = useRouter();
   const [period, setPeriod] = useState<PeriodId>("alltime");
   const [mode, setMode] = useState(initialMode ?? "");
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [leaderboardData, setLeaderboardData] = useState<{
+    period: PeriodId;
+    mode: string;
+    entries: LeaderboardEntry[];
+    error: string | null;
+  } | null>(null);
+  // Derived: loading whenever the fetched data doesn't match current filters
+  const loading = leaderboardData?.period !== period || leaderboardData?.mode !== mode;
+  const error = loading ? null : leaderboardData?.error ?? null;
+  const entries = loading ? [] : leaderboardData?.entries ?? [];
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
     const params = new URLSearchParams({ period });
     if (mode) params.set("mode", mode);
     fetch(`/api/leaderboard?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => {
         if (!Array.isArray(data)) throw new Error("Unexpected response");
-        setEntries(data);
+        setLeaderboardData({ period, mode, entries: data, error: null });
       })
-      .catch(() => setError("Failed to load leaderboard."))
-      .finally(() => setLoading(false));
+      .catch(() => setLeaderboardData({ period, mode, entries: [], error: "Failed to load leaderboard." }));
   }, [period, mode]);
 
   const modeLabel = LEADERBOARD_MODES.find((m) => m.id === mode)?.label;

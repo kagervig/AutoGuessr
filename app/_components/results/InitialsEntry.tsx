@@ -15,11 +15,7 @@ export function InitialsEntry({
   const [letters, setLetters] = useState(["", "", ""]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const inputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null]);
 
   const initials = letters.join("");
   const canSubmit = initials.length >= 1 && !submitting;
@@ -30,7 +26,7 @@ export function InitialsEntry({
     next[index] = letter;
     setLetters(next);
     if (letter && index < 2) {
-      inputRefs[index + 1].current?.focus();
+      inputRefs.current[index + 1]?.focus();
     }
   }
 
@@ -39,7 +35,7 @@ export function InitialsEntry({
       const next = [...letters];
       next[index - 1] = "";
       setLetters(next);
-      inputRefs[index - 1].current?.focus();
+      inputRefs.current[index - 1]?.focus();
     }
     if (e.key === "Enter" && canSubmit) {
       submit();
@@ -78,10 +74,10 @@ export function InitialsEntry({
       </div>
       <p className="text-base text-muted-foreground mb-3">Enter your initials</p>
       <div className="flex items-center gap-2">
-        {inputRefs.map((ref, i) => (
+        {[0, 1, 2].map((i) => (
           <input
             key={i}
-            ref={ref}
+            ref={(el) => { inputRefs.current[i] = el; }}
             type="text"
             inputMode="text"
             maxLength={1}

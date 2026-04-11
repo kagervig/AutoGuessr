@@ -4,14 +4,6 @@ import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
 
-const VALID_STATUSES: StagingStatus[] = [
-  "PENDING_REVIEW",
-  "COMMUNITY_REVIEW",
-  "READY",
-  "PUBLISHED",
-  "REJECTED",
-];
-
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const statusParam = searchParams.get("status") as StagingStatus | null;

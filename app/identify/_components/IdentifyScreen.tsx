@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Navbar } from "@/app/components/layout/Navbar";
 
@@ -151,23 +152,24 @@ function SuggestionCard({
 export default function IdentifyScreen() {
   const [images, setImages] = useState<CommunityImage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(
+    () => (typeof window !== "undefined" ? localStorage.getItem("autoguessr_username") : null) ?? ""
+  );
   const [forms, setForms] = useState<Record<string, SuggestForm>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const stored = localStorage.getItem("autoguessr_username");
-    if (stored) setUsername(stored);
-  }, []);
-
   const fetchImages = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/identify");
-    const data = await res.json();
-    setImages(data);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/identify");
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setImages(data);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetchImages(); }, [fetchImages]);
@@ -276,7 +278,7 @@ export default function IdentifyScreen() {
             <p className="text-white font-bold">No images need identifying right now.</p>
             <p className="text-sm text-muted-foreground mt-1">
               Check back later or{" "}
-              <a href="/" className="text-primary hover:underline">play the game</a>.
+              <Link href="/" className="text-primary hover:underline">play the game</Link>.
             </p>
           </motion.div>
         )}
