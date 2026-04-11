@@ -151,25 +151,22 @@ function SuggestionCard({
 export default function IdentifyScreen() {
   const [images, setImages] = useState<CommunityImage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(
+    () => localStorage.getItem("autoguessr_username") ?? ""
+  );
   const [forms, setForms] = useState<Record<string, SuggestForm>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const stored = localStorage.getItem("autoguessr_username");
-    if (stored) setUsername(stored);
-  }, []);
-
   const fetchImages = useCallback(async () => {
-    setLoading(true);
     const res = await fetch("/api/identify");
     const data = await res.json();
     setImages(data);
     setLoading(false);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- setState calls in fetchImages are async (after await), not synchronous cascades
   useEffect(() => { fetchImages(); }, [fetchImages]);
 
   function getForm(id: string): SuggestForm {
@@ -211,6 +208,7 @@ export default function IdentifyScreen() {
 
     if (res.ok) {
       setSubmitted((s) => new Set(s).add(id));
+      setLoading(true);
       await fetchImages();
     } else {
       const d = await res.json();
@@ -327,7 +325,7 @@ export default function IdentifyScreen() {
                         suggestion={s}
                         username={username}
                         imageId={img.id}
-                        onVoted={fetchImages}
+                        onVoted={() => { setLoading(true); fetchImages(); }}
                       />
                     ))}
                   </div>

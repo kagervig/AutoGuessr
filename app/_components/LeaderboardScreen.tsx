@@ -40,12 +40,14 @@ export default function LeaderboardScreen({ initialMode }: Props) {
   const [period, setPeriod] = useState<PeriodId>("alltime");
   const [mode, setMode] = useState(initialMode ?? "");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchState, setFetchState] = useState<{ loading: boolean; error: string | null }>({
+    loading: true,
+    error: null,
+  });
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- single atomic state update to reset before fetch
+    setFetchState({ loading: true, error: null });
     const params = new URLSearchParams({ period });
     if (mode) params.set("mode", mode);
     fetch(`/api/leaderboard?${params.toString()}`)
@@ -53,9 +55,9 @@ export default function LeaderboardScreen({ initialMode }: Props) {
       .then((data) => {
         if (!Array.isArray(data)) throw new Error("Unexpected response");
         setEntries(data);
+        setFetchState({ loading: false, error: null });
       })
-      .catch(() => setError("Failed to load leaderboard."))
-      .finally(() => setLoading(false));
+      .catch(() => setFetchState({ loading: false, error: "Failed to load leaderboard." }));
   }, [period, mode]);
 
   const modeLabel = LEADERBOARD_MODES.find((m) => m.id === mode)?.label;
@@ -130,21 +132,21 @@ export default function LeaderboardScreen({ initialMode }: Props) {
           ))}
         </div>
 
-        {loading && (
+        {fetchState.loading && (
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           </div>
         )}
 
-        {error && <p className="text-center text-red-400">{error}</p>}
+        {fetchState.error && <p className="text-center text-red-400">{fetchState.error}</p>}
 
-        {!loading && !error && entries.length === 0 && (
+        {!fetchState.loading && !fetchState.error && entries.length === 0 && (
           <p className="text-center text-muted-foreground py-12">
             No scores yet. Be the first!
           </p>
         )}
 
-        {!loading && !error && entries.length > 0 && (
+        {!fetchState.loading && !fetchState.error && entries.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

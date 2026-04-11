@@ -13,18 +13,24 @@ export default function StandardModeInput({ makes, disabled, onSubmit }: Props) 
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
-  const [models, setModels] = useState<string[]>([]);
-  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelFetch, setModelFetch] = useState<{ models: string[]; loading: boolean }>({
+    models: [],
+    loading: false,
+  });
+
+  const handleMakeChange = (newMake: string) => {
+    setMake(newMake);
+    setModel("");
+  };
 
   useEffect(() => {
-    setModel("");
-    setModels([]);
     if (!make) return;
-    setLoadingModels(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- single atomic state update to reset models before fetch
+    setModelFetch({ models: [], loading: true });
     fetch(`/api/models?make=${encodeURIComponent(make)}`)
       .then((r) => r.json())
-      .then((data) => setModels(data.models ?? []))
-      .finally(() => setLoadingModels(false));
+      .then((data) => setModelFetch({ models: data.models ?? [], loading: false }))
+      .catch(() => setModelFetch({ models: [], loading: false }));
   }, [make]);
 
   const canSubmit = !!make && !!model && !!year;
@@ -33,7 +39,7 @@ export default function StandardModeInput({ makes, disabled, onSubmit }: Props) 
     <div className="space-y-3">
       <Combobox
         value={make}
-        onChange={setMake}
+        onChange={handleMakeChange}
         options={makes}
         placeholder="Make (e.g. Ferrari)"
         disabled={disabled}
@@ -41,9 +47,9 @@ export default function StandardModeInput({ makes, disabled, onSubmit }: Props) 
       <Combobox
         value={model}
         onChange={setModel}
-        options={models}
-        placeholder={make ? (loadingModels ? "Loading…" : "Model") : "Select make first"}
-        disabled={disabled || !make}
+        options={modelFetch.models}
+        placeholder={make ? (modelFetch.loading ? "Loading…" : "Model") : "Select make first"}
+        disabled={disabled || !make || modelFetch.loading}
       />
       <input
         type="number"
