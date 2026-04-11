@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Navbar } from "@/app/components/layout/Navbar";
 
@@ -274,7 +275,7 @@ export default function IdentifyScreen() {
             <p className="text-white font-bold">No images need identifying right now.</p>
             <p className="text-sm text-muted-foreground mt-1">
               Check back later or{" "}
-              <a href="/" className="text-primary hover:underline">play the game</a>.
+              <Link href="/" className="text-primary hover:underline">play the game</Link>.
             </p>
           </motion.div>
         )}
