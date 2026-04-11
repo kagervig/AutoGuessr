@@ -261,6 +261,19 @@ describe("scoreRound", () => {
       expect(result.modelPoints).toBe(0);
       expect(result.pointsEarned).toBe(0);
     });
+
+    it("should reduce the time bonus when elapsed time is greater than zero", () => {
+      const result = scoreRound({
+        elapsedMs: 30_000,
+        timeLimitMs: 60_000,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: null,
+        mode: "easy",
+      });
+      expect(result.timeBonus).toBeLessThan(100);
+      expect(result.timeBonus).toBeGreaterThan(0);
+    });
   });
 
   describe("standard mode", () => {

@@ -159,4 +159,36 @@ describe("RoundResult", () => {
       expect(screen.getByText("Miss!")).toBeInTheDocument();
     });
   });
+
+  describe("reveal labels", () => {
+    it("renders the correct answer label", () => {
+      render(<RoundResult {...baseProps} />);
+      expect(screen.getByText("Toyota Supra")).toBeInTheDocument();
+    });
+
+    it("shows the guess label with 'You said:' prefix when incorrect", () => {
+      const reveal = { ...baseReveal, isCorrect: false, guessLabel: "Honda Civic", pointsEarned: 0, breakdown: undefined };
+      render(<RoundResult {...baseProps} reveal={reveal} />);
+      expect(screen.getByText("You said: Honda Civic")).toBeInTheDocument();
+    });
+
+    it("does not show a guess label when the guess is correct", () => {
+      render(<RoundResult {...baseProps} reveal={{ ...baseReveal, isCorrect: true }} />);
+      expect(screen.queryByText(/You said:/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("imageRating pre-set", () => {
+    it("still renders both rating buttons when imageRating is already up", () => {
+      render(<RoundResult {...baseProps} imageRating="up" />);
+      expect(screen.getByLabelText("Thumbs up")).toBeInTheDocument();
+      expect(screen.getByLabelText("Thumbs down")).toBeInTheDocument();
+    });
+
+    it("still renders both rating buttons when imageRating is already down", () => {
+      render(<RoundResult {...baseProps} imageRating="down" />);
+      expect(screen.getByLabelText("Thumbs up")).toBeInTheDocument();
+      expect(screen.getByLabelText("Thumbs down")).toBeInTheDocument();
+    });
+  });
 });
