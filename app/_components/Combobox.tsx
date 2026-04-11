@@ -48,6 +48,7 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
+        role="combobox"
         aria-autocomplete="list"
         aria-expanded={open}
         className={variant === "admin"
