@@ -50,10 +50,10 @@ export default function MakesModelsPanel() {
   const [makes, setMakes] = useState<MakeRow[]>([]);
   const [loadingMakes, setLoadingMakes] = useState(true);
   const [selectedMake, setSelectedMake] = useState<string | null>(null);
-  const [modelFetch, setModelFetch] = useState<{ models: ModelRow[]; loading: boolean }>({
-    models: [],
-    loading: false,
-  });
+  const [modelData, setModelData] = useState<{ make: string; models: ModelRow[] } | null>(null);
+  // Derived: loading whenever we have a selection but no data for it yet
+  const modelLoading = !!selectedMake && modelData?.make !== selectedMake;
+  const models = modelData?.make === selectedMake ? modelData.models : [];
   const [editingMake, setEditingMake] = useState<string | null>(null);
   const [editingModel, setEditingModel] = useState<string | null>(null);
   const [confirmDeleteMake, setConfirmDeleteMake] = useState<string | null>(null);
@@ -73,12 +73,10 @@ export default function MakesModelsPanel() {
 
   useEffect(() => {
     if (!selectedMake) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- single atomic state update to reset models before fetch
-    setModelFetch({ models: [], loading: true });
     fetch(`/api/admin/makes/${encodeURIComponent(selectedMake)}/models`)
       .then((r) => r.json())
-      .then((d) => setModelFetch({ models: d, loading: false }))
-      .catch(() => setModelFetch({ models: [], loading: false }));
+      .then((d) => setModelData({ make: selectedMake, models: d }))
+      .catch(() => setModelData({ make: selectedMake, models: [] }));
   }, [selectedMake]);
 
   async function renameMake(from: string, to: string) {
@@ -108,7 +106,7 @@ export default function MakesModelsPanel() {
       body: JSON.stringify({ from, to }),
     });
     if (res.ok) {
-      setModelFetch((prev) => ({ ...prev, models: prev.models.map((m) => (m.model === from ? { ...m, model: to } : m)) }));
+      setModelData((prev) => prev ? ({ ...prev, models: prev.models.map((m) => (m.model === from ? { ...m, model: to } : m)) }) : prev);
     } else {
       const d = await res.json().catch(() => ({}));
       setError(d.error ?? "Rename failed");
@@ -125,7 +123,7 @@ export default function MakesModelsPanel() {
     });
     if (res.ok || res.status === 204) {
       setMakes((ms) => ms.filter((m) => m.make !== make));
-      if (selectedMake === make) { setSelectedMake(null); setModelFetch({ models: [], loading: false }); }
+      if (selectedMake === make) { setSelectedMake(null); setModelData(null); }
     } else {
       const d = await res.json().catch(() => ({}));
       setError(d.error ?? "Delete failed");
@@ -136,15 +134,17 @@ export default function MakesModelsPanel() {
   async function deleteModel(model: string) {
     if (!selectedMake) return;
     setError(null);
+    // Capture count before the async fetch to avoid stale closure in the setMakes updater
+    const modelCount = models.find((mo) => mo.model === model)?.count ?? 0;
     const res = await fetch(`/api/admin/makes/${encodeURIComponent(selectedMake)}/models`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model }),
     });
     if (res.ok || res.status === 204) {
-      setModelFetch((prev) => ({ ...prev, models: prev.models.filter((m) => m.model !== model) }));
+      setModelData((prev) => prev ? ({ ...prev, models: prev.models.filter((m) => m.model !== model) }) : prev);
       setMakes((ms) => ms.map((m) =>
-        m.make === selectedMake ? { ...m, count: m.count - (modelFetch.models.find((mo) => mo.model === model)?.count ?? 0) } : m
+        m.make === selectedMake ? { ...m, count: m.count - modelCount } : m
       ));
     } else {
       const d = await res.json().catch(() => ({}));
@@ -186,7 +186,7 @@ export default function MakesModelsPanel() {
     });
     setSavingNewModel(false);
     if (res.ok) {
-      setModelFetch((prev) => ({ ...prev, models: [...prev.models, { model, count: 0 }].sort((a, b) => a.model.localeCompare(b.model)) }));
+      setModelData((prev) => prev ? ({ ...prev, models: [...prev.models, { model, count: 0 }].sort((a, b) => a.model.localeCompare(b.model)) }) : prev);
       setNewModel("");
     } else {
       const d = await res.json().catch(() => ({}));
@@ -292,14 +292,14 @@ export default function MakesModelsPanel() {
           <div className="flex flex-col h-full">
             <div className="px-6 py-3 bg-white border-b border-gray-200">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Models for {selectedMake} ({modelFetch.models.length})
+                Models for {selectedMake} ({models.length})
               </p>
             </div>
-            {modelFetch.loading ? (
+            {modelLoading ? (
               <p className="text-sm text-gray-400 p-6">Loading…</p>
             ) : (
               <ul className="flex-1 divide-y divide-gray-100 overflow-y-auto">
-                {modelFetch.models.map((row) => (
+                {models.map((row) => (
                   <li
                     key={row.model}
                     className="group flex items-center gap-3 px-6 py-2.5 bg-white hover:bg-gray-50"

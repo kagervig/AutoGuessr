@@ -39,25 +39,27 @@ export default function LeaderboardScreen({ initialMode }: Props) {
   const router = useRouter();
   const [period, setPeriod] = useState<PeriodId>("alltime");
   const [mode, setMode] = useState(initialMode ?? "");
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [fetchState, setFetchState] = useState<{ loading: boolean; error: string | null }>({
-    loading: true,
-    error: null,
-  });
+  const [leaderboardData, setLeaderboardData] = useState<{
+    period: PeriodId;
+    mode: string;
+    entries: LeaderboardEntry[];
+    error: string | null;
+  } | null>(null);
+  // Derived: loading whenever the fetched data doesn't match current filters
+  const loading = leaderboardData?.period !== period || leaderboardData?.mode !== mode;
+  const error = loading ? null : leaderboardData?.error ?? null;
+  const entries = loading ? [] : leaderboardData?.entries ?? [];
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- single atomic state update to reset before fetch
-    setFetchState({ loading: true, error: null });
     const params = new URLSearchParams({ period });
     if (mode) params.set("mode", mode);
     fetch(`/api/leaderboard?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => {
         if (!Array.isArray(data)) throw new Error("Unexpected response");
-        setEntries(data);
-        setFetchState({ loading: false, error: null });
+        setLeaderboardData({ period, mode, entries: data, error: null });
       })
-      .catch(() => setFetchState({ loading: false, error: "Failed to load leaderboard." }));
+      .catch(() => setLeaderboardData({ period, mode, entries: [], error: "Failed to load leaderboard." }));
   }, [period, mode]);
 
   const modeLabel = LEADERBOARD_MODES.find((m) => m.id === mode)?.label;
@@ -132,21 +134,21 @@ export default function LeaderboardScreen({ initialMode }: Props) {
           ))}
         </div>
 
-        {fetchState.loading && (
+        {loading && (
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           </div>
         )}
 
-        {fetchState.error && <p className="text-center text-red-400">{fetchState.error}</p>}
+        {error && <p className="text-center text-red-400">{error}</p>}
 
-        {!fetchState.loading && !fetchState.error && entries.length === 0 && (
+        {!loading && !error && entries.length === 0 && (
           <p className="text-center text-muted-foreground py-12">
             No scores yet. Be the first!
           </p>
         )}
 
-        {!fetchState.loading && !fetchState.error && entries.length > 0 && (
+        {!loading && !error && entries.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -153,22 +153,33 @@ export default function IdentifyScreen() {
   const [images, setImages] = useState<CommunityImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState(
-    () => localStorage.getItem("autoguessr_username") ?? ""
+    () => (typeof window !== "undefined" ? localStorage.getItem("autoguessr_username") : null) ?? ""
   );
   const [forms, setForms] = useState<Record<string, SuggestForm>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Self-contained refresh used by event handlers (onVoted, submit)
   const fetchImages = useCallback(async () => {
-    const res = await fetch("/api/identify");
-    const data = await res.json();
-    setImages(data);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/identify");
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setImages(data);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- setState calls in fetchImages are async (after await), not synchronous cascades
-  useEffect(() => { fetchImages(); }, [fetchImages]);
+  // Initial load — inline promise chain so no setState-containing function is called from the effect
+  useEffect(() => {
+    fetch("/api/identify")
+      .then((r) => r.json())
+      .then((data) => { setImages(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
 
   function getForm(id: string): SuggestForm {
     return forms[id] ?? { make: "", model: "", year: "", trim: "" };
@@ -209,7 +220,6 @@ export default function IdentifyScreen() {
 
     if (res.ok) {
       setSubmitted((s) => new Set(s).add(id));
-      setLoading(true);
       await fetchImages();
     } else {
       const d = await res.json();
@@ -326,7 +336,7 @@ export default function IdentifyScreen() {
                         suggestion={s}
                         username={username}
                         imageId={img.id}
-                        onVoted={() => { setLoading(true); fetchImages(); }}
+                        onVoted={fetchImages}
                       />
                     ))}
                   </div>

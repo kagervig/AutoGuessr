@@ -14,19 +14,17 @@ export default function CustomModeInput({ makes, showYear, disabled, onSubmit }:
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
-  const [modelFetch, setModelFetch] = useState<{ models: string[]; loading: boolean }>({
-    models: [],
-    loading: false,
-  });
+  const [modelData, setModelData] = useState<{ make: string; models: string[] } | null>(null);
+  // Derived: loading whenever we have a make but no data for it yet
+  const loading = !!make && modelData?.make !== make;
+  const models = modelData?.make === make ? modelData.models : [];
 
   useEffect(() => {
     if (!make) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- single atomic state update to reset models before fetch
-    setModelFetch({ models: [], loading: true });
     fetch(`/api/models?make=${encodeURIComponent(make)}`)
       .then((r) => r.json())
-      .then((data) => setModelFetch({ models: data.models ?? [], loading: false }))
-      .catch(() => setModelFetch({ models: [], loading: false }));
+      .then((data) => setModelData({ make, models: data.models ?? [] }))
+      .catch(() => setModelData({ make, models: [] }));
   }, [make]);
 
   const canSubmit = !!make || !!model;
@@ -43,8 +41,8 @@ export default function CustomModeInput({ makes, showYear, disabled, onSubmit }:
       <Combobox
         value={model}
         onChange={setModel}
-        options={modelFetch.models}
-        placeholder={modelFetch.loading ? "Loading…" : "Model (e.g. Mustang)"}
+        options={models}
+        placeholder={loading ? "Loading…" : "Model (e.g. Mustang)"}
         disabled={disabled}
       />
       {showYear && (
