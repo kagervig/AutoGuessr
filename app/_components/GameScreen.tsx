@@ -151,7 +151,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [mode, username, filter]);
+  // NOTE: cfToken intentionally omitted — adding it would re-fetch and restart the game
+  // after Turnstile verification. It is only needed on the initial load.
+  }, [mode, username, filter, router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (introVisible) return;
