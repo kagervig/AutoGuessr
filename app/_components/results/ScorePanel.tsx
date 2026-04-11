@@ -1,7 +1,6 @@
 "use client";
 
 import { Tachometer } from "@/app/components/ui/Tachometer";
-import { cn } from "@/app/lib/utils";
 
 const CX = 100;
 const CY = 100;

@@ -32,6 +32,11 @@ function totalPlays(row: ImageStatRow): number {
   return row.stats.correctGuesses + row.stats.incorrectGuesses;
 }
 
+function SortIndicator({ k, sortKey, sortDir }: { k: SortKey; sortKey: SortKey; sortDir: SortDir }) {
+  if (sortKey !== k) return <span className="text-gray-300 ml-1">↕</span>;
+  return <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>;
+}
+
 export default function StatsPanel() {
   const [rows, setRows] = useState<ImageStatRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,11 +125,6 @@ export default function StatsPanel() {
     return 0;
   });
 
-  function SortIndicator({ k }: { k: SortKey }) {
-    if (sortKey !== k) return <span className="text-gray-300 ml-1">↕</span>;
-    return <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>;
-  }
-
   const thClass = "px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:text-gray-700 whitespace-nowrap";
 
   return (
@@ -148,28 +148,28 @@ export default function StatsPanel() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className={thClass} onClick={() => handleSort("make")}>
-                  Vehicle <SortIndicator k="make" />
+                  Vehicle <SortIndicator k="make" sortKey={sortKey} sortDir={sortDir} />
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort("total")}>
-                  Total <SortIndicator k="total" />
+                  Total <SortIndicator k="total" sortKey={sortKey} sortDir={sortDir} />
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort("correct")}>
-                  Correct <SortIndicator k="correct" />
+                  Correct <SortIndicator k="correct" sortKey={sortKey} sortDir={sortDir} />
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort("incorrect")}>
-                  Incorrect <SortIndicator k="incorrect" />
+                  Incorrect <SortIndicator k="incorrect" sortKey={sortKey} sortDir={sortDir} />
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort("successRate")}>
-                  Success % <SortIndicator k="successRate" />
+                  Success % <SortIndicator k="successRate" sortKey={sortKey} sortDir={sortDir} />
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort("thumbsUp")}>
-                  Thumbs Up <SortIndicator k="thumbsUp" />
+                  Thumbs Up <SortIndicator k="thumbsUp" sortKey={sortKey} sortDir={sortDir} />
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort("thumbsDown")}>
-                  Thumbs Down <SortIndicator k="thumbsDown" />
+                  Thumbs Down <SortIndicator k="thumbsDown" sortKey={sortKey} sortDir={sortDir} />
                 </th>
                 <th className={`${thClass} text-right`} onClick={() => handleSort("reportCount")}>
-                  Reports <SortIndicator k="reportCount" />
+                  Reports <SortIndicator k="reportCount" sortKey={sortKey} sortDir={sortDir} />
                 </th>
               </tr>
             </thead>

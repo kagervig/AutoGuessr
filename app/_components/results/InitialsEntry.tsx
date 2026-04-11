@@ -15,11 +15,10 @@ export function InitialsEntry({
   const [letters, setLetters] = useState(["", "", ""]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const inputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
+  const ref0 = useRef<HTMLInputElement>(null);
+  const ref1 = useRef<HTMLInputElement>(null);
+  const ref2 = useRef<HTMLInputElement>(null);
+  const inputRefs = [ref0, ref1, ref2];
 
   const initials = letters.join("");
   const canSubmit = initials.length >= 1 && !submitting;

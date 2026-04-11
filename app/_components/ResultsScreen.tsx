@@ -79,8 +79,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
   }
 
   const score = session.finalScore ?? 0;
-  const total = session.rounds.length;
-  const approxMax = maxScore ?? 0;
+const approxMax = maxScore ?? 0;
   const { grade, color: gradeColor } = calcGrade(approxMax > 0 ? score / approxMax : 0);
   const modeLabel = MODE_LABELS[mode] || mode;
   const showLeaderboard = mode !== "practice" && score > 0;

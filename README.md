@@ -16,6 +16,15 @@ A car identification game. Players are shown a photo of a car and must identify 
 - A Cloudinary account
 - A Gemini API key (for AI tagging)
 
+## Running locally
+
+After initial setup, start the database and dev server:
+
+```bash
+npm run db:up
+npm run dev
+```
+
 ## Initial setup
 
 **1. Install Docker**
@@ -54,6 +63,17 @@ The number controls how many vehicles to pull (defaults to 200). Vehicles are se
 **6. Start the dev server**
 
 ```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Running locally
+
+After initial setup, start the database and dev server:
+
+```bash
+npm run db:up
 npm run dev
 ```
 
