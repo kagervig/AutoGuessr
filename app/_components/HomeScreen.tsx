@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Script from "next/script";
 import { motion } from "framer-motion";
 import {
@@ -112,10 +113,11 @@ export default function HomeScreen({ initialFilterError }: Props) {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 z-0">
-          <img
+          <Image
             src="/images/hero-bg.png"
             alt=""
-            className="w-full h-full object-cover opacity-60 mix-blend-luminosity"
+            fill
+            className="object-cover opacity-60 mix-blend-luminosity"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" />
