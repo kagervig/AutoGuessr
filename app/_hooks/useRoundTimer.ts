@@ -9,18 +9,18 @@ interface Params {
   gameData: GameData | null;
   currentIndex: number;
   introVisible: boolean;
-  onTimeout: React.MutableRefObject<() => void>;
+  onTimeout: React.RefObject<() => void>;
 }
 
 interface Result {
   visiblePanels: boolean[];
-  hasSubmittedRef: React.MutableRefObject<boolean>;
-  roundStartRef: React.MutableRefObject<number>;
-  currentRoundIdRef: React.MutableRefObject<string>;
-  currentRoundImageUrlRef: React.MutableRefObject<string>;
-  autoSubmitRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
-  panelIndexRef: React.MutableRefObject<number>;
-  panelIntervalRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>;
+  hasSubmittedRef: React.RefObject<boolean>;
+  roundStartRef: React.RefObject<number>;
+  currentRoundIdRef: React.RefObject<string>;
+  currentRoundImageUrlRef: React.RefObject<string>;
+  autoSubmitRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
+  panelIndexRef: React.RefObject<number>;
+  panelIntervalRef: React.RefObject<ReturnType<typeof setInterval> | null>;
 }
 
 export function useRoundTimer({
