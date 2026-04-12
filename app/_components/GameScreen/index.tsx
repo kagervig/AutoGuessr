@@ -9,7 +9,7 @@ import {
   ScoringIntro,
   shouldShowIntro,
 } from "@/app/components/ui/ScoringIntro";
-import { RoundResult } from "./RoundResult";
+import { RoundResult } from "../RoundResult";
 import { GameHeader } from "./GameHeader";
 import { RoundImage } from "./RoundImage";
 import { AnswerSection } from "./AnswerSection";

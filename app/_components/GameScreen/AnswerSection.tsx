@@ -2,8 +2,8 @@
 // Mode-branching answer panel: choice grid for easy/practice/custom, text inputs for hard modes, Give Up button.
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/app/lib/utils";
-import CustomModeInput from "./CustomModeInput";
-import StandardModeInput from "./StandardModeInput";
+import CustomModeInput from "../CustomModeInput";
+import StandardModeInput from "../StandardModeInput";
 
 const HARD_MODES = ["standard", "hardcore", "time_attack"];
 const CHOICE_MODES = ["easy", "practice", "custom"];
