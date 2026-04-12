@@ -131,6 +131,10 @@ DATABASE_URL="<prod connection string>" npx prisma migrate deploy
 
 If `CLOUDINARY_CLOUD_NAME` is not set, the game uses [Lorem Picsum](https://picsum.photos) placeholder images — one stable image per vehicle. This is sufficient to play through all game modes locally.
 
+### Admin panel local dev
+
+The seed script (`npx prisma db seed`) creates staging fixtures in every status — `PENDING_REVIEW`, `READY`, `PUBLISHED`, and `REJECTED` — so all admin workflows (publish, reject, reactivate) can be tested without running the full image ingestion pipeline. The staging images display Lorem Picsum placeholders via the same fallback.
+
 ## Image ingestion pipeline
 
 The full pipeline for getting real images into the game:

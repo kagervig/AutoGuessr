@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import type { StagingStatus } from "../../../../generated/prisma/client";
+import { Prisma } from "../../../../generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
@@ -31,33 +32,54 @@ export async function PUT(request: NextRequest, { params }: Params) {
     return Response.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const updated = await prisma.stagingImage.update({
-    where: { id },
-    data: {
-      ...(make !== undefined && { adminMake: make || null }),
-      ...(model !== undefined && { adminModel: model || null }),
-      ...(year !== undefined && { adminYear: year ? parseInt(year, 10) : null }),
-      ...(trim !== undefined && { adminTrim: trim || null }),
-      ...(bodyStyle !== undefined && { adminBodyStyle: bodyStyle || null }),
-      ...(rarity !== undefined && { adminRarity: rarity || null }),
-      ...(era !== undefined && { adminEra: era || null }),
-      ...(regionSlug !== undefined && { adminRegionSlug: regionSlug || null }),
-      ...(countryOfOrigin !== undefined && { adminCountryOfOrigin: countryOfOrigin || null }),
-      ...(categories !== undefined && { adminCategories: Array.isArray(categories) ? categories : [] }),
-      ...(isHardcoreEligible !== undefined && { adminIsHardcoreEligible: Boolean(isHardcoreEligible) }),
-      ...(notes !== undefined && { adminNotes: notes || null }),
-      ...(copyrightHolder !== undefined && { adminCopyrightHolder: copyrightHolder || null }),
-      ...(isCropped !== undefined && { adminIsCropped: Boolean(isCropped) }),
-      ...(isLogoVisible !== undefined && { adminIsLogoVisible: Boolean(isLogoVisible) }),
-      ...(isModelNameVisible !== undefined && { adminIsModelNameVisible: Boolean(isModelNameVisible) }),
-      ...(hasMultipleVehicles !== undefined && { adminHasMultipleVehicles: Boolean(hasMultipleVehicles) }),
-      ...(isFaceVisible !== undefined && { adminIsFaceVisible: Boolean(isFaceVisible) }),
-      ...(isVehicleUnmodified !== undefined && { adminIsVehicleUnmodified: Boolean(isVehicleUnmodified) }),
-      ...(status !== undefined && { status }),
-      reviewedAt: new Date(),
-    },
-    include: { suggestions: true },
-  });
+  let updated;
+  try {
+    updated = await prisma.$transaction(async (tx) => {
+    const stagingImage = await tx.stagingImage.update({
+      where: { id },
+      data: {
+        ...(make !== undefined && { adminMake: make || null }),
+        ...(model !== undefined && { adminModel: model || null }),
+        ...(year !== undefined && { adminYear: year ? parseInt(year, 10) : null }),
+        ...(trim !== undefined && { adminTrim: trim || null }),
+        ...(bodyStyle !== undefined && { adminBodyStyle: bodyStyle || null }),
+        ...(rarity !== undefined && { adminRarity: rarity || null }),
+        ...(era !== undefined && { adminEra: era || null }),
+        ...(regionSlug !== undefined && { adminRegionSlug: regionSlug || null }),
+        ...(countryOfOrigin !== undefined && { adminCountryOfOrigin: countryOfOrigin || null }),
+        ...(categories !== undefined && { adminCategories: Array.isArray(categories) ? categories : [] }),
+        ...(isHardcoreEligible !== undefined && { adminIsHardcoreEligible: Boolean(isHardcoreEligible) }),
+        ...(notes !== undefined && { adminNotes: notes || null }),
+        ...(copyrightHolder !== undefined && { adminCopyrightHolder: copyrightHolder || null }),
+        ...(isCropped !== undefined && { adminIsCropped: Boolean(isCropped) }),
+        ...(isLogoVisible !== undefined && { adminIsLogoVisible: Boolean(isLogoVisible) }),
+        ...(isModelNameVisible !== undefined && { adminIsModelNameVisible: Boolean(isModelNameVisible) }),
+        ...(hasMultipleVehicles !== undefined && { adminHasMultipleVehicles: Boolean(hasMultipleVehicles) }),
+        ...(isFaceVisible !== undefined && { adminIsFaceVisible: Boolean(isFaceVisible) }),
+        ...(isVehicleUnmodified !== undefined && { adminIsVehicleUnmodified: Boolean(isVehicleUnmodified) }),
+        ...(status !== undefined && { status }),
+        reviewedAt: new Date(),
+      },
+      include: { suggestions: true },
+    });
+
+    // Deactivate the published image when a staging image is rejected.
+    // Image.filename is set to StagingImage.cloudinaryPublicId at publish time.
+    if (stagingImage.status === "REJECTED") {
+      await tx.image.updateMany({
+        where: { filename: stagingImage.cloudinaryPublicId },
+        data: { isActive: false },
+      });
+    }
+
+    return stagingImage;
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+      return Response.json({ error: "Not found" }, { status: 404 });
+    }
+    throw e;
+  }
 
   const agreements = computeAgreements(updated.suggestions);
 

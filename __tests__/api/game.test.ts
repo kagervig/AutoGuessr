@@ -82,6 +82,18 @@ describe("GET /api/game", () => {
     expect(res.status).toBe(400);
   });
 
+  it("should only query images where isActive is true", async () => {
+    await GET(makeRequest({ mode: "custom" }));
+    const [call] = vi.mocked(prisma.image.findMany).mock.calls;
+    expect((call[0] as { where: { isActive: boolean } }).where.isActive).toBe(true);
+  });
+
+  it("should return 400 when all images are inactive", async () => {
+    vi.mocked(prisma.image.findMany).mockResolvedValueOnce([]);
+    const res = await GET(makeRequest({ mode: "easy" }));
+    expect(res.status).toBe(400);
+  });
+
   it("should return gameId (not sessionId) in the response body", async () => {
     const res = await GET(makeRequest({ mode: "custom" }));
     expect(res.status).toBe(200);
