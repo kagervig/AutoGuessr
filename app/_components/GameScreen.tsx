@@ -141,6 +141,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   if (!gameData || !round) return null;
 
   const isHardcore = mode === "hardcore";
+  const modeLabel = MODE_LABELS[mode] || mode;
 
   // Practice complete screen
   if (practiceComplete) {
@@ -163,7 +164,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
       </AnimatePresence>
 
       <GameHeader
-        modeLabel={MODE_LABELS[mode] || mode}
+        modeLabel={modeLabel}
         username={username}
         currentIndex={currentIndex}
         totalRounds={gameData.rounds.length}
@@ -203,7 +204,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         {/* Right column */}
         <ScoreSidebar
           mode={mode}
-          modeLabel={MODE_LABELS[mode] || mode}
+          modeLabel={modeLabel}
           score={score}
           maxTotalScore={maxTotalScore}
           currentIndex={currentIndex}
