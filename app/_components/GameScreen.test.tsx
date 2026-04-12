@@ -9,20 +9,12 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Render motion elements as plain HTML tags so animations don't interfere.
+const MOTION_PROP_KEYS = new Set(["initial", "animate", "exit", "transition", "whileTap", "variants", "layout"]);
 vi.mock("framer-motion", () => {
   function passthrough(tag: string) {
-    return function MotionElement({
-      children,
-      initial: _i,
-      animate: _a,
-      exit: _e,
-      transition: _t,
-      whileTap: _w,
-      variants: _v,
-      layout: _l,
-      ...rest
-    }: React.HTMLAttributes<HTMLElement> & Record<string, unknown>) {
-      return React.createElement(tag, rest, children as React.ReactNode);
+    return function MotionElement({ children, ...rest }: React.HTMLAttributes<HTMLElement> & Record<string, unknown>) {
+      const htmlProps = Object.fromEntries(Object.entries(rest).filter(([k]) => !MOTION_PROP_KEYS.has(k)));
+      return React.createElement(tag, htmlProps, children as React.ReactNode);
     };
   }
   return {

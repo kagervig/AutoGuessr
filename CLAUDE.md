@@ -55,6 +55,7 @@ npx tsx scripts/import-cars.ts --file ./path/to/cars.csv # import directly from 
 ## Style
 
 - Canadian spelling in docs/commits; American in code
+- Every new file must have a one-line comment at the top (after any directives like `"use client"` or `// @vitest-environment`) describing its purpose
 
 ## Planning
 
