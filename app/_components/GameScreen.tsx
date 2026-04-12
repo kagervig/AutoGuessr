@@ -3,14 +3,8 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowLeft,
-  Star,
-  Flag,
-  RotateCcw,
-} from "lucide-react";
+import { ArrowLeft, Flag, RotateCcw } from "lucide-react";
 import { MODES } from "@/app/lib/constants";
-import { Tachometer } from "@/app/components/ui/Tachometer";
 import {
   ScoringIntro,
   shouldShowIntro,
@@ -20,6 +14,7 @@ import { RoundResult } from "./RoundResult";
 import { GameHeader } from "./GameHeader";
 import { RoundImage } from "./RoundImage";
 import { AnswerSection } from "./AnswerSection";
+import { ScoreSidebar } from "./ScoreSidebar";
 import { useGameLoader } from "@/app/_hooks/useGameLoader";
 import { useRoundTimer } from "@/app/_hooks/useRoundTimer";
 import { useGameSession } from "@/app/_hooks/useGameSession";
@@ -278,57 +273,14 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         </div>
 
         {/* Right column */}
-        <div className="flex flex-col items-center gap-5 lg:sticky lg:top-20">
-          {/* Tachometer */}
-          <div className="glass-panel rounded-3xl p-6 border border-white/10 w-full flex flex-col items-center">
-            <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
-              Score Gauge
-            </p>
-            <Tachometer score={score} maxScore={maxTotalScore} size={300} />
-            <div className="mt-4 w-full space-y-2">
-              <div className="flex justify-between text-xs font-mono text-muted-foreground">
-                <span>ROUND</span>
-                <span className="text-white font-bold">
-                  {currentIndex + 1} / {gameData.rounds.length}
-                </span>
-              </div>
-              <div className="flex justify-between text-xs font-mono text-muted-foreground">
-                <span>TOTAL SCORE</span>
-                <span className="text-white font-bold">
-                  {score.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between text-xs font-mono text-muted-foreground">
-                <span>MAX POSSIBLE</span>
-                <span className="text-white/40">
-                  {maxTotalScore.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Mode info chip */}
-          <div className="glass-panel rounded-2xl p-4 border border-white/10 w-full">
-            <div className="flex items-center gap-3 mb-2">
-              <Star className="w-4 h-4 text-primary" />
-              <span className="text-sm font-black tracking-widest uppercase">
-                {MODE_LABELS[mode] || mode}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {mode === "easy" && "Pick the right car from 4 choices."}
-              {mode === "custom" &&
-                "Pick the right car from 4 choices. Filtered to your chosen collection."}
-              {mode === "standard" && "Type make, model, and year."}
-              {mode === "hardcore" &&
-                "Same as Standard. Panels are removed every 5 seconds to reveal the car."}
-              {mode === "time_attack" &&
-                "Race the clock — faster answers earn bonus points."}
-              {mode === "practice" &&
-                "No leaderboard pressure. Drill your knowledge."}
-            </p>
-          </div>
-        </div>
+        <ScoreSidebar
+          mode={mode}
+          modeLabel={MODE_LABELS[mode] || mode}
+          score={score}
+          maxTotalScore={maxTotalScore}
+          currentIndex={currentIndex}
+          totalRounds={gameData.rounds.length}
+        />
       </div>
 
       <AnimatePresence>
