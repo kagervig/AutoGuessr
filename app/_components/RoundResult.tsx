@@ -282,7 +282,7 @@ export function RoundResult({
               aria-label="Report image"
               disabled={imageReported}
               className={cn(
-                "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors disabled:pointer-events-none sm:hidden",
+                "w-11 h-11 rounded-xl flex items-center justify-center border transition-colors disabled:pointer-events-none",
                 imageReported
                   ? "bg-orange-500/20 border-orange-500/40 text-orange-400"
                   : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/80",
