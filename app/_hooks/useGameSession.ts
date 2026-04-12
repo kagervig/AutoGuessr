@@ -50,14 +50,14 @@ interface Params {
   mediumYearGuessing: boolean;
   currentIndex: number;
   setCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
-  handleTimeoutRef: React.RefObject<() => void>;
-  hasSubmittedRef: React.RefObject<boolean>;
-  roundStartRef: React.RefObject<number>;
-  currentRoundIdRef: React.RefObject<string>;
-  currentRoundImageUrlRef: React.RefObject<string>;
-  autoSubmitRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
-  panelIndexRef: React.RefObject<number>;
-  panelIntervalRef: React.RefObject<ReturnType<typeof setInterval> | null>;
+  handleTimeoutRef: { current: () => void };
+  hasSubmittedRef: { current: boolean };
+  roundStartRef: { current: number };
+  currentRoundIdRef: { current: string };
+  currentRoundImageUrlRef: { current: string };
+  autoSubmitRef: { current: ReturnType<typeof setTimeout> | null };
+  panelIndexRef: { current: number };
+  panelIntervalRef: { current: ReturnType<typeof setInterval> | null };
 }
 
 interface Result {
