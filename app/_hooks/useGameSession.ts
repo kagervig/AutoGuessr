@@ -1,4 +1,5 @@
 "use client";
+// Manages all round-level state and handlers for an active game session.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { GameData } from "./useGameLoader";

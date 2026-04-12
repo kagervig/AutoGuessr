@@ -1,4 +1,5 @@
 "use client";
+// Manages the per-round countdown timer, auto-submit timeout, and hardcore panel reveal interval.
 import { useEffect, useRef, useState } from "react";
 import { shuffle, TIME_LIMITS } from "@/app/lib/game";
 import type { GameData } from "./useGameLoader";

@@ -1,4 +1,5 @@
 "use client";
+// Fetches game data and feature flags for a game session.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 

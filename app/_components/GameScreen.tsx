@@ -21,6 +21,7 @@ import { cn } from "@/app/lib/utils";
 import CustomModeInput from "./CustomModeInput";
 import StandardModeInput from "./StandardModeInput";
 import { RoundResult } from "./RoundResult";
+import { GameHeader } from "./GameHeader";
 import { useGameLoader } from "@/app/_hooks/useGameLoader";
 import { useRoundTimer } from "@/app/_hooks/useRoundTimer";
 import { useGameSession } from "@/app/_hooks/useGameSession";
@@ -243,49 +244,13 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Sticky top HUD */}
-      <div className="sticky top-0 z-40 glass-panel border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-          <button
-            onClick={() => router.push("/")}
-            className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors text-sm font-bold"
-          >
-            <ArrowLeft className="w-4 h-4" /> Garage
-          </button>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1">
-              {gameData.rounds.map((_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "w-2 h-2 rounded-full transition-all",
-                    i < currentIndex
-                      ? "bg-green-500"
-                      : i === currentIndex
-                        ? "bg-primary scale-125"
-                        : "bg-white/15",
-                  )}
-                />
-              ))}
-            </div>
-            <span className="text-xs font-mono text-muted-foreground">
-              {currentIndex + 1}/{gameData.rounds.length}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-bold tracking-widest text-primary uppercase">
-              {MODE_LABELS[mode] || mode}
-            </span>
-            {username && (
-              <span className="hidden sm:block text-xs font-mono text-muted-foreground">
-                {username}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      <GameHeader
+        modeLabel={MODE_LABELS[mode] || mode}
+        username={username}
+        currentIndex={currentIndex}
+        totalRounds={gameData.rounds.length}
+        onBack={() => router.push("/")}
+      />
 
       {/* Main layout */}
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">

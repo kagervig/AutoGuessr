@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+// Tests for useGameSession.
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
