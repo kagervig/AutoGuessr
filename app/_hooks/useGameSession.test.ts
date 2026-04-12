@@ -216,6 +216,135 @@ describe("useGameSession", () => {
     expect(result.current.reveal?.pointsEarned).toBe(0);
   });
 
+  describe("handleHardSubmit", () => {
+    it("resolves the round with zero points without calling fetch when make and model are both empty", async () => {
+      global.fetch = vi.fn();
+      const refs = makeRefs();
+      const { result } = renderHook(() =>
+        useGameSession({ mode: "standard", username: "test", filter: "", gameData: GAME_DATA_ONE_ROUND, mediumYearGuessing: false, currentIndex: 0, setCurrentIndex: vi.fn(), ...refs }),
+      );
+
+      await act(async () => {
+        await result.current.handleHardSubmit("", "", "");
+      });
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(result.current.roundState).toBe("revealed");
+      expect(result.current.score).toBe(0);
+      expect(result.current.reveal?.isCorrect).toBe(false);
+    });
+
+    it("includes guessedYear as a number in the request body", async () => {
+      mockFetchGuessSuccess();
+      const refs = makeRefs();
+      const { result } = renderHook(() =>
+        useGameSession({ mode: "standard", username: "test", filter: "", gameData: GAME_DATA_ONE_ROUND, mediumYearGuessing: false, currentIndex: 0, setCurrentIndex: vi.fn(), ...refs }),
+      );
+
+      await act(async () => {
+        await result.current.handleHardSubmit("Toyota", "Supra", "1994");
+      });
+
+      const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1]!.body) as string);
+      expect(body.guessedYear).toBe(1994);
+    });
+
+    it("includes panelsRevealed in the request body for hardcore mode", async () => {
+      mockFetchGuessSuccess();
+      const refs = makeRefs();
+      refs.panelIndexRef.current = 3;
+      const { result } = renderHook(() =>
+        useGameSession({ mode: "hardcore", username: "test", filter: "", gameData: GAME_DATA_ONE_ROUND, mediumYearGuessing: false, currentIndex: 0, setCurrentIndex: vi.fn(), ...refs }),
+      );
+
+      await act(async () => {
+        await result.current.handleHardSubmit("Toyota", "Supra", "1994");
+      });
+
+      const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1]!.body) as string);
+      expect(body.panelsRevealed).toBe(3);
+    });
+
+    it("omits panelsRevealed from the request body for non-hardcore modes", async () => {
+      mockFetchGuessSuccess();
+      const refs = makeRefs();
+      const { result } = renderHook(() =>
+        useGameSession({ mode: "standard", username: "test", filter: "", gameData: GAME_DATA_ONE_ROUND, mediumYearGuessing: false, currentIndex: 0, setCurrentIndex: vi.fn(), ...refs }),
+      );
+
+      await act(async () => {
+        await result.current.handleHardSubmit("Toyota", "Supra", "1994");
+      });
+
+      const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1]!.body) as string);
+      expect(body.panelsRevealed).toBeUndefined();
+    });
+  });
+
+  describe("handleMediumSubmit", () => {
+    it("omits guessedYear from the request body when mediumYearGuessing is false", async () => {
+      mockFetchGuessSuccess();
+      const refs = makeRefs();
+      const { result } = renderHook(() =>
+        useGameSession({ mode: "custom", username: "test", filter: "", gameData: GAME_DATA_ONE_ROUND, mediumYearGuessing: false, currentIndex: 0, setCurrentIndex: vi.fn(), ...refs }),
+      );
+
+      await act(async () => {
+        await result.current.handleMediumSubmit("Toyota", "Supra", "1994");
+      });
+
+      const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1]!.body) as string);
+      expect(body.guessedYear).toBeUndefined();
+    });
+
+    it("includes guessedYear in the request body when mediumYearGuessing is true", async () => {
+      mockFetchGuessSuccess();
+      const refs = makeRefs();
+      const { result } = renderHook(() =>
+        useGameSession({ mode: "custom", username: "test", filter: "", gameData: GAME_DATA_ONE_ROUND, mediumYearGuessing: true, currentIndex: 0, setCurrentIndex: vi.fn(), ...refs }),
+      );
+
+      await act(async () => {
+        await result.current.handleMediumSubmit("Toyota", "Supra", "1994");
+      });
+
+      const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1]!.body) as string);
+      expect(body.guessedYear).toBe(1994);
+    });
+  });
+
+  describe("401 handling", () => {
+    it("navigates to home when /api/guess returns 401 via handleEasyAnswer", async () => {
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401, json: vi.fn() } as unknown as Response);
+      const refs = makeRefs();
+      const { result } = renderHook(() =>
+        useGameSession({ mode: "easy", username: "test", filter: "", gameData: GAME_DATA_ONE_ROUND, mediumYearGuessing: false, currentIndex: 0, setCurrentIndex: vi.fn(), ...refs }),
+      );
+
+      await act(async () => {
+        await result.current.handleEasyAnswer("v1");
+      });
+
+      expect(mockPush).toHaveBeenCalledWith("/");
+      expect(result.current.roundState).toBe("answering");
+    });
+
+    it("navigates to home when /api/guess returns 401 via handleHardSubmit", async () => {
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401, json: vi.fn() } as unknown as Response);
+      const refs = makeRefs();
+      const { result } = renderHook(() =>
+        useGameSession({ mode: "standard", username: "test", filter: "", gameData: GAME_DATA_ONE_ROUND, mediumYearGuessing: false, currentIndex: 0, setCurrentIndex: vi.fn(), ...refs }),
+      );
+
+      await act(async () => {
+        await result.current.handleHardSubmit("Toyota", "Supra", "1994");
+      });
+
+      expect(mockPush).toHaveBeenCalledWith("/");
+      expect(result.current.roundState).toBe("answering");
+    });
+  });
+
   it("syncs handleTimeoutRef.current to the latest handleTimeout after render", async () => {
     const refs = makeRefs();
     global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) } as unknown as Response);

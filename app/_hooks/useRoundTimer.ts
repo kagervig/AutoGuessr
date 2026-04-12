@@ -51,8 +51,13 @@ export function useRoundTimer({
     hasSubmittedRef.current = false;
     roundStartRef.current = Date.now();
     if (gameData) {
-      currentRoundIdRef.current = gameData.rounds[currentIndex].roundId;
-      currentRoundImageUrlRef.current = gameData.rounds[currentIndex].imageUrl;
+      const currentRound = gameData.rounds[currentIndex];
+      if (!currentRound) {
+        console.error("[useRoundTimer] currentIndex out of bounds:", currentIndex, { total: gameData.rounds.length });
+        return;
+      }
+      currentRoundIdRef.current = currentRound.roundId;
+      currentRoundImageUrlRef.current = currentRound.imageUrl;
       const limit = gameData.timeLimitMs ?? TIME_LIMITS[mode];
       if (limit) {
         autoSubmitRef.current = setTimeout(() => onTimeout.current(), limit);
