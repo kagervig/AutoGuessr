@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -11,7 +11,6 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from "lucide-react";
-import { TIME_LIMITS, shuffle } from "@/app/lib/game";
 import { MODES } from "@/app/lib/constants";
 import { Tachometer } from "@/app/components/ui/Tachometer";
 import {
@@ -21,53 +20,14 @@ import {
 import { cn } from "@/app/lib/utils";
 import CustomModeInput from "./CustomModeInput";
 import StandardModeInput from "./StandardModeInput";
-import { RoundResult, type RevealInfo, type PointsBreakdown } from "./RoundResult";
+import { RoundResult } from "./RoundResult";
+import { useGameLoader } from "@/app/_hooks/useGameLoader";
+import { useRoundTimer } from "@/app/_hooks/useRoundTimer";
+import { useGameSession } from "@/app/_hooks/useGameSession";
 
 const MODE_LABELS: Record<string, string> = Object.fromEntries(
   MODES.map((m) => [m.id, m.label]),
 );
-
-// Approximate max per-round score for tachometer calibration
-const MAX_MULTIPLIERS: Record<string, number> = {
-  easy: 1.0,
-  custom: 1.3,
-  standard: 1.7,
-  hardcore: 2.2,
-  time_attack: 2.0,
-  practice: 1.0,
-};
-
-interface VehicleInfo {
-  make: string;
-  model: string;
-  year: number;
-}
-
-interface RoundData {
-  roundId: string;
-  sequenceNumber: number;
-  imageId: string;
-  imageUrl: string;
-}
-
-interface Choice {
-  vehicleId: string;
-  label: string;
-}
-
-interface GameData {
-  gameId: string;
-  rounds: RoundData[];
-  easyChoices?: Record<string, Choice[]>;
-  makes?: string[];
-  timeLimitMs?: number;
-}
-
-interface CompletedRound {
-  imageUrl: string;
-  correctLabel: string;
-  isCorrect: boolean;
-}
 
 interface Props {
   mode: string;
@@ -79,194 +39,70 @@ interface Props {
 const HARD_MODES = ["standard", "hardcore", "time_attack"];
 const CHOICE_MODES = ["easy", "practice", "custom"];
 
-// A single retry absorbs transient network blips (mobile handoff, Wi-Fi reconnect).
-async function fetchWithRetry(
-  input: string,
-  init: RequestInit,
-): Promise<Response> {
-  try {
-    return await fetch(input, init);
-  } catch (err) {
-    if (!(err instanceof TypeError)) throw err;
-    console.error("[fetchWithRetry] First attempt failed, retrying once:", err);
-    return await fetch(input, init);
-  }
-}
-
 // ─── Main Game component ───────────────────────────────────────────────────
 
 export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const router = useRouter();
 
-  const [gameData, setGameData] = useState<GameData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [mediumYearGuessing, setMediumYearGuessing] = useState(false);
+  const { gameData, loading, error, mediumYearGuessing } = useGameLoader({ mode, username, filter, cfToken });
   const [introVisible, setIntroVisible] = useState(() => shouldShowIntro(mode));
 
+  // currentIndex is declared here so it can be passed to both useRoundTimer and useGameSession.
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [roundState, setRoundState] = useState<"answering" | "revealed">(
-    "answering",
-  );
-  const [selectedEasyId, setSelectedEasyId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [score, setScore] = useState(0);
-  const [reveal, setReveal] = useState<RevealInfo | null>(null);
-  const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
-  const [practiceComplete, setPracticeComplete] = useState(false);
-  const [networkError, setNetworkError] = useState(false);
-  const [imageRating, setImageRating] = useState<"up" | "down" | null>(null);
-  const [imageReported, setImageReported] = useState(false);
 
-  const autoSubmitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const roundStartRef = useRef<number>(Date.now());
-  const currentRoundIdRef = useRef<string>("");
-  const currentRoundImageUrlRef = useRef<string>("");
-  // Synchronously set to true the moment any submission begins so that
-  // concurrent handlers (timer vs. user click) cannot both proceed.
-  const hasSubmittedRef = useRef(false);
+  // handleTimeoutRef is declared before useRoundTimer so it can be passed as onTimeout.
+  // useGameSession syncs it to the latest handleTimeout internally.
+  const handleTimeoutRef = useRef<() => void>(() => {});
 
-  // Hardcore grid
-  const [visiblePanels, setVisiblePanels] = useState<boolean[]>(
-    Array(9).fill(true),
-  );
-  const panelOrderRef = useRef<number[]>([]);
-  const panelIndexRef = useRef(0);
-  const panelIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const {
+    visiblePanels,
+    hasSubmittedRef,
+    roundStartRef,
+    currentRoundIdRef,
+    currentRoundImageUrlRef,
+    autoSubmitRef,
+    panelIndexRef,
+    panelIntervalRef,
+  } = useRoundTimer({ mode, gameData, currentIndex, introVisible, onTimeout: handleTimeoutRef });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = new URLSearchParams({ mode });
-    if (username) params.set("username", username);
-    if (filter) params.set("filter", filter);
-    if (cfToken) params.set("cf_token", cfToken);
-
-    Promise.all([
-      fetch(`/api/game?${params.toString()}`, {
-        signal: controller.signal,
-      }).then((r) => r.json()),
-      fetch("/api/flags", { signal: controller.signal }).then((r) => r.json()),
-    ])
-      .then(([game, flags]) => {
-        if (game.error) {
-          if (
-            typeof game.error === "string" &&
-            game.error.toLowerCase().includes("not enough")
-          ) {
-            router.replace(`/?filterError=${encodeURIComponent(game.error)}`);
-          } else {
-            setError(game.error);
-          }
-        } else {
-          setGameData(game);
-          setMediumYearGuessing(flags?.medium_year_guessing === true);
-        }
-      })
-      .catch((err) => {
-        if (err.name !== "AbortError") {
-          console.error("[GameScreen] Failed to load game:", err);
-          setError("Failed to load game. Please try again.");
-        }
-      })
-      .finally(() => setLoading(false));
-
-    return () => controller.abort();
-  // NOTE: cfToken intentionally omitted — adding it would re-fetch and restart the game
-  // after Turnstile verification. It is only needed on the initial load.
-  }, [mode, username, filter, router]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (introVisible) return;
-
-    hasSubmittedRef.current = false;
-    roundStartRef.current = Date.now();
-    if (gameData) {
-      currentRoundIdRef.current = gameData.rounds[currentIndex].roundId;
-      currentRoundImageUrlRef.current = gameData.rounds[currentIndex].imageUrl;
-      const limit = gameData.timeLimitMs ?? TIME_LIMITS[mode];
-      if (limit) {
-        autoSubmitRef.current = setTimeout(
-          () => handleTimeoutRef.current(),
-          limit,
-        );
-      }
-    }
-
-    if (mode === "hardcore") {
-      const order = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
-      const initialPanels = Array(9).fill(true);
-      initialPanels[order[0]] = false;
-      setVisiblePanels(initialPanels);
-      panelOrderRef.current = order;
-      panelIndexRef.current = 1;
-      panelIntervalRef.current = setInterval(() => {
-        const idx = panelOrderRef.current[panelIndexRef.current];
-        panelIndexRef.current++;
-        if (idx !== undefined) {
-          setVisiblePanels((prev) => {
-            const next = [...prev];
-            next[idx] = false;
-            return next;
-          });
-        }
-      }, 5000);
-    }
-
-    return () => {
-      if (autoSubmitRef.current !== null) clearTimeout(autoSubmitRef.current);
-      if (panelIntervalRef.current !== null)
-        clearInterval(panelIntervalRef.current);
-    };
-  }, [currentIndex, mode, gameData, introVisible]);
-
-  const handleTimeout = useCallback(async () => {
-    if (roundState !== "answering" || hasSubmittedRef.current) return;
-    hasSubmittedRef.current = true;
-    const roundId = currentRoundIdRef.current;
-    let vehicle: VehicleInfo | undefined;
-    if (roundId) {
-      try {
-        const res = await fetch("/api/guess", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            roundId,
-            rawInput: "",
-            timeTakenMs: Date.now() - roundStartRef.current,
-          }),
-        });
-        if (res.status === 401) {
-          router.push("/");
-          return;
-        }
-        if (res.ok) {
-          const data = await res.json();
-          vehicle = data.vehicle;
-        }
-      } catch (err) {
-        // Timeout submits are best-effort — a failure here is non-fatal because
-        // resolveAndReveal will proceed with an empty vehicle label.
-        console.error("[GameScreen] Timeout guess submission failed:", err);
-      }
-    }
-    resolveAndReveal({
-      imageUrl: currentRoundImageUrlRef.current,
-      makeCorrect: false,
-      modelCorrect: false,
-      guessLabel: "",
-      pointsEarned: 0,
-      vehicle,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roundState]);
-
-  // Keep a ref to the latest handleTimeout so the round-reset effect can schedule
-  // it without taking a dependency on roundState (which would restart the timer
-  // on every state change mid-round).
-  const handleTimeoutRef = useRef(handleTimeout);
-  useEffect(() => {
-    handleTimeoutRef.current = handleTimeout;
-  }, [handleTimeout]);
+  const {
+    roundState,
+    selectedEasyId,
+    isSubmitting,
+    score,
+    reveal,
+    completedRounds,
+    practiceComplete,
+    networkError,
+    imageRating,
+    imageReported,
+    maxTotalScore,
+    round,
+    choices,
+    handleTimeout,
+    handleEasyAnswer,
+    handleMediumSubmit,
+    handleHardSubmit,
+    handleNext,
+    handleRateImage,
+    handleReportImage,
+  } = useGameSession({
+    mode,
+    username,
+    filter,
+    gameData,
+    mediumYearGuessing,
+    currentIndex,
+    setCurrentIndex,
+    handleTimeoutRef,
+    hasSubmittedRef,
+    roundStartRef,
+    currentRoundIdRef,
+    currentRoundImageUrlRef,
+    autoSubmitRef,
+    panelIndexRef,
+    panelIntervalRef,
+  });
 
   if (loading) {
     return (
@@ -311,285 +147,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     );
   }
 
-  if (!gameData) return null;
+  if (!gameData || !round) return null;
 
-  const round = gameData.rounds[currentIndex];
-  const choices = gameData.easyChoices?.[round.roundId] ?? [];
-  const isLastRound = currentIndex === gameData.rounds.length - 1;
   const isHardcore = mode === "hardcore";
-  const maxTotalScore =
-    gameData.rounds.length * Math.floor(1000 * (MAX_MULTIPLIERS[mode] ?? 1.0));
-
-  function resolveAndReveal({
-    imageUrl,
-    makeCorrect,
-    modelCorrect,
-    guessLabel,
-    pointsEarned,
-    vehicle,
-    breakdown,
-  }: {
-    imageUrl: string;
-    makeCorrect: boolean;
-    modelCorrect: boolean;
-    guessLabel: string;
-    pointsEarned: number;
-    vehicle?: VehicleInfo;
-    breakdown?: PointsBreakdown;
-  }) {
-    if (autoSubmitRef.current !== null) {
-      clearTimeout(autoSubmitRef.current);
-      autoSubmitRef.current = null;
-    }
-    if (panelIntervalRef.current !== null) {
-      clearInterval(panelIntervalRef.current);
-      panelIntervalRef.current = null;
-    }
-
-    const make = vehicle?.make ?? "";
-    const model = vehicle?.model ?? "";
-    const year = vehicle?.year ?? 0;
-    const correctLabel = HARD_MODES.includes(mode)
-      ? `${year} ${make} ${model}`.trim()
-      : `${make} ${model}`.trim();
-
-    setIsSubmitting(false);
-    setScore((s) => s + pointsEarned);
-    setReveal({
-      correctLabel,
-      guessLabel,
-      isCorrect: makeCorrect && modelCorrect,
-      pointsEarned,
-      breakdown,
-    });
-    setCompletedRounds((prev) => [
-      ...prev,
-      { imageUrl, correctLabel, isCorrect: makeCorrect && modelCorrect },
-    ]);
-    setRoundState("revealed");
-  }
-
-  async function submitGuess(
-    body: Record<string, unknown>,
-    guessLabel: string,
-  ) {
-    let res: Response;
-    try {
-      res = await fetchWithRetry("/api/guess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-    } catch {
-      setNetworkError(true);
-      return;
-    }
-    if (res.status === 401) {
-      router.push("/");
-      return;
-    }
-    if (!res.ok) {
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: false,
-        modelCorrect: false,
-        guessLabel,
-        pointsEarned: 0,
-      });
-      return;
-    }
-    const data = await res.json();
-    resolveAndReveal({
-      imageUrl: round.imageUrl,
-      makeCorrect: data.makeMatch,
-      modelCorrect: data.modelMatch,
-      guessLabel,
-      pointsEarned: data.pointsEarned,
-      vehicle: data.vehicle,
-      breakdown: {
-        makePoints: data.makePoints,
-        modelPoints: data.modelPoints,
-        yearBonus: data.yearBonus,
-        yearDelta: data.yearDelta,
-        timeBonus: data.timeBonus,
-        modeMultiplier: data.modeMultiplier,
-        proBonus: data.proBonus,
-      },
-    });
-  }
-
-  async function handleEasyAnswer(vehicleId: string) {
-    if (roundState === "revealed" || hasSubmittedRef.current) return;
-    hasSubmittedRef.current = true;
-    setSelectedEasyId(vehicleId);
-    setIsSubmitting(true);
-    const elapsedMs = Date.now() - roundStartRef.current;
-    const guessLabel =
-      choices.find((c) => c.vehicleId === vehicleId)?.label ?? "";
-    await submitGuess(
-      { roundId: round.roundId, rawInput: guessLabel, guessedVehicleId: vehicleId, timeTakenMs: elapsedMs },
-      guessLabel,
-    );
-  }
-
-  async function handleMediumSubmit(
-    make: string,
-    model: string,
-    year?: string,
-  ) {
-    if (roundState === "revealed" || hasSubmittedRef.current) return;
-    hasSubmittedRef.current = true;
-    const elapsedMs = Date.now() - roundStartRef.current;
-    const guessLabel = `${make} ${model}`;
-    await submitGuess(
-      {
-        roundId: round.roundId,
-        rawInput: guessLabel,
-        guessedMake: make,
-        guessedModel: model,
-        guessedYear: year && mediumYearGuessing ? parseInt(year) || undefined : undefined,
-        timeTakenMs: elapsedMs,
-      },
-      guessLabel,
-    );
-  }
-
-  async function handleHardSubmit(make: string, model: string, year: string) {
-    if (roundState === "revealed" || hasSubmittedRef.current) return;
-    hasSubmittedRef.current = true;
-    const elapsedMs = Date.now() - roundStartRef.current;
-    const guessLabel = `${year} ${make} ${model}`.trim();
-    if (!make && !model) {
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: false,
-        modelCorrect: false,
-        guessLabel: "",
-        pointsEarned: 0,
-      });
-      return;
-    }
-    await submitGuess(
-      {
-        roundId: round.roundId,
-        rawInput: guessLabel,
-        guessedMake: make,
-        guessedModel: model,
-        guessedYear: parseInt(year) || undefined,
-        timeTakenMs: elapsedMs,
-        panelsRevealed: mode === "hardcore" ? panelIndexRef.current : undefined,
-      },
-      guessLabel,
-    );
-  }
-
-  async function submitPracticeStats(roundResults: CompletedRound[]) {
-    if (!username) return;
-    const filterConfig = filter
-      ? (() => {
-          try {
-            return JSON.parse(decodeURIComponent(filter));
-          } catch {
-            return {};
-          }
-        })()
-      : {};
-    const correct = roundResults.filter((r) => r.isCorrect).length;
-    const incorrect = roundResults.length - correct;
-    const dimensions: Array<{ type: string; key: string }> = [
-      ...(filterConfig.categorySlugs ?? []).map((s: string) => ({
-        type: "category",
-        key: s,
-      })),
-      ...(filterConfig.regionSlugs ?? []).map((s: string) => ({
-        type: "region",
-        key: s,
-      })),
-      ...(filterConfig.countries ?? []).map((s: string) => ({
-        type: "country",
-        key: s,
-      })),
-    ];
-    try {
-      await Promise.all(
-        dimensions.map((d) =>
-          fetch("/api/practice/stats", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              username,
-              dimensionType: d.type,
-              dimensionKey: d.key,
-              correct,
-              incorrect,
-            }),
-          }),
-        ),
-      );
-    } catch (err) {
-      // Stats are best-effort — a failure here should not block the results screen.
-      console.error("[GameScreen] Failed to submit practice stats:", err);
-    }
-  }
-
-  async function handleNext() {
-    if (isLastRound) {
-      if (mode === "practice") {
-        await submitPracticeStats(completedRounds);
-        setPracticeComplete(true);
-        return;
-      }
-      try {
-        const endRes = await fetch("/api/session/end", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ gameId: gameData!.gameId, finalScore: score }),
-        });
-        if (endRes.status === 401) {
-          router.push("/");
-          return;
-        }
-        if (!endRes.ok) {
-          console.error("[GameScreen] Failed to end session:", endRes.status);
-        }
-      } catch (err) {
-        // A network failure here should not strand the user — navigate to results anyway.
-        console.error("[GameScreen] Failed to end session:", err);
-      }
-      const params = new URLSearchParams({
-        gameId: gameData!.gameId,
-        mode,
-        maxScore: String(maxTotalScore),
-        ...(username ? { username } : {}),
-      });
-      router.push(`/results?${params.toString()}`);
-      return;
-    }
-    setCurrentIndex((i) => i + 1);
-    setRoundState("answering");
-    setReveal(null);
-    setSelectedEasyId(null);
-    setIsSubmitting(false);
-    setImageRating(null);
-    setImageReported(false);
-  }
-
-  async function handleRateImage(value: "up" | "down") {
-    const next = imageRating === value ? null : value;
-    setImageRating(next);
-    if (next === null) return;
-    await fetch(`/api/image/${round.imageId}/rate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ value: next === "up" ? 1 : -1 }),
-    });
-  }
-
-  async function handleReportImage() {
-    if (imageReported) return;
-    setImageReported(true);
-    await fetch(`/api/image/${round.imageId}/report`, { method: "POST" });
-  }
 
   // Practice complete screen
   if (practiceComplete) {
