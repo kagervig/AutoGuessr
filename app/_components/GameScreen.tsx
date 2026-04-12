@@ -107,6 +107,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const roundStartRef = useRef<number>(Date.now());
   const currentRoundIdRef = useRef<string>("");
   const currentRoundImageUrlRef = useRef<string>("");
+  // Synchronously set to true the moment any submission begins so that
+  // concurrent handlers (timer vs. user click) cannot both proceed.
+  const hasSubmittedRef = useRef(false);
 
   // Hardcore grid
   const [visiblePanels, setVisiblePanels] = useState<boolean[]>(
@@ -158,6 +161,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   useEffect(() => {
     if (introVisible) return;
 
+    hasSubmittedRef.current = false;
     roundStartRef.current = Date.now();
     if (gameData) {
       currentRoundIdRef.current = gameData.rounds[currentIndex].roundId;
@@ -199,7 +203,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   }, [currentIndex, mode, gameData, introVisible]);
 
   const handleTimeout = useCallback(async () => {
-    if (roundState !== "answering") return;
+    if (roundState !== "answering" || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
     const roundId = currentRoundIdRef.current;
     let vehicle: VehicleInfo | undefined;
     if (roundId) {
@@ -328,7 +333,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   }
 
   async function handleEasyAnswer(vehicleId: string) {
-    if (roundState === "revealed") return;
+    if (roundState === "revealed" || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
     setSelectedEasyId(vehicleId);
     setIsSubmitting(true);
     const elapsedMs = Date.now() - roundStartRef.current;
@@ -393,7 +399,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     model: string,
     year?: string,
   ) {
-    if (roundState === "revealed") return;
+    if (roundState === "revealed" || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = `${make} ${model}`;
     try {
@@ -456,7 +463,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   }
 
   async function handleHardSubmit(make: string, model: string, year: string) {
-    if (roundState === "revealed") return;
+    if (roundState === "revealed" || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = `${year} ${make} ${model}`.trim();
     if (!make && !model) {
