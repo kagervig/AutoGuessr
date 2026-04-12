@@ -79,6 +79,18 @@ interface Props {
 const HARD_MODES = ["standard", "hardcore", "time_attack"];
 const CHOICE_MODES = ["easy", "practice", "custom"];
 
+// Retries a fetch once on network-level failure before throwing.
+async function fetchWithRetry(
+  input: string,
+  init: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch {
+    return await fetch(input, init);
+  }
+}
+
 // ─── Main Game component ───────────────────────────────────────────────────
 
 export default function GameScreen({ mode, username, filter, cfToken }: Props) {
@@ -100,6 +112,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const [reveal, setReveal] = useState<RevealInfo | null>(null);
   const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
   const [practiceComplete, setPracticeComplete] = useState(false);
+  const [networkError, setNetworkError] = useState(false);
   const [imageRating, setImageRating] = useState<"up" | "down" | null>(null);
   const [imageReported, setImageReported] = useState(false);
 
@@ -278,6 +291,22 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     );
   }
 
+  if (networkError) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
+        <p className="text-center text-muted-foreground">
+          Sorry, network failure. Your answer could not be submitted.
+        </p>
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center gap-2 glass-panel rounded-xl px-6 py-3 text-sm font-bold text-white hover:bg-white/10 transition-colors"
+        >
+          New Game
+        </button>
+      </main>
+    );
+  }
+
   if (!gameData) return null;
 
   const round = gameData.rounds[currentIndex];
@@ -344,8 +373,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel =
       choices.find((c) => c.vehicleId === vehicleId)?.label ?? "";
+    let res: Response;
     try {
-      const res = await fetch("/api/guess", {
+      res = await fetchWithRetry("/api/guess", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -355,39 +385,15 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           timeTakenMs: elapsedMs,
         }),
       });
-      if (res.status === 401) {
-        router.push("/");
-        return;
-      }
-      if (!res.ok) {
-        resolveAndReveal({
-          imageUrl: round.imageUrl,
-          makeCorrect: false,
-          modelCorrect: false,
-          guessLabel,
-          pointsEarned: 0,
-        });
-        return;
-      }
-      const data = await res.json();
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: data.makeMatch,
-        modelCorrect: data.modelMatch,
-        guessLabel,
-        pointsEarned: data.pointsEarned,
-        vehicle: data.vehicle,
-        breakdown: {
-          makePoints: data.makePoints,
-          modelPoints: data.modelPoints,
-          yearBonus: data.yearBonus,
-          yearDelta: data.yearDelta,
-          timeBonus: data.timeBonus,
-          modeMultiplier: data.modeMultiplier,
-          proBonus: data.proBonus,
-        },
-      });
     } catch {
+      setNetworkError(true);
+      return;
+    }
+    if (res.status === 401) {
+      router.push("/");
+      return;
+    }
+    if (!res.ok) {
       resolveAndReveal({
         imageUrl: round.imageUrl,
         makeCorrect: false,
@@ -395,7 +401,26 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         guessLabel,
         pointsEarned: 0,
       });
+      return;
     }
+    const data = await res.json();
+    resolveAndReveal({
+      imageUrl: round.imageUrl,
+      makeCorrect: data.makeMatch,
+      modelCorrect: data.modelMatch,
+      guessLabel,
+      pointsEarned: data.pointsEarned,
+      vehicle: data.vehicle,
+      breakdown: {
+        makePoints: data.makePoints,
+        modelPoints: data.modelPoints,
+        yearBonus: data.yearBonus,
+        yearDelta: data.yearDelta,
+        timeBonus: data.timeBonus,
+        modeMultiplier: data.modeMultiplier,
+        proBonus: data.proBonus,
+      },
+    });
   }
 
   async function handleMediumSubmit(
@@ -407,8 +432,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     hasSubmittedRef.current = true;
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = `${make} ${model}`;
+    let res: Response;
     try {
-      const res = await fetch("/api/guess", {
+      res = await fetchWithRetry("/api/guess", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -423,39 +449,15 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           timeTakenMs: elapsedMs,
         }),
       });
-      if (res.status === 401) {
-        router.push("/");
-        return;
-      }
-      if (!res.ok) {
-        resolveAndReveal({
-          imageUrl: round.imageUrl,
-          makeCorrect: false,
-          modelCorrect: false,
-          guessLabel,
-          pointsEarned: 0,
-        });
-        return;
-      }
-      const data = await res.json();
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: data.makeMatch,
-        modelCorrect: data.modelMatch,
-        guessLabel,
-        pointsEarned: data.pointsEarned,
-        vehicle: data.vehicle,
-        breakdown: {
-          makePoints: data.makePoints,
-          modelPoints: data.modelPoints,
-          yearBonus: data.yearBonus,
-          yearDelta: data.yearDelta,
-          timeBonus: data.timeBonus,
-          modeMultiplier: data.modeMultiplier,
-          proBonus: data.proBonus,
-        },
-      });
     } catch {
+      setNetworkError(true);
+      return;
+    }
+    if (res.status === 401) {
+      router.push("/");
+      return;
+    }
+    if (!res.ok) {
       resolveAndReveal({
         imageUrl: round.imageUrl,
         makeCorrect: false,
@@ -463,7 +465,26 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         guessLabel,
         pointsEarned: 0,
       });
+      return;
     }
+    const data = await res.json();
+    resolveAndReveal({
+      imageUrl: round.imageUrl,
+      makeCorrect: data.makeMatch,
+      modelCorrect: data.modelMatch,
+      guessLabel,
+      pointsEarned: data.pointsEarned,
+      vehicle: data.vehicle,
+      breakdown: {
+        makePoints: data.makePoints,
+        modelPoints: data.modelPoints,
+        yearBonus: data.yearBonus,
+        yearDelta: data.yearDelta,
+        timeBonus: data.timeBonus,
+        modeMultiplier: data.modeMultiplier,
+        proBonus: data.proBonus,
+      },
+    });
   }
 
   async function handleHardSubmit(make: string, model: string, year: string) {
@@ -481,8 +502,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
       });
       return;
     }
+    let res: Response;
     try {
-      const res = await fetch("/api/guess", {
+      res = await fetchWithRetry("/api/guess", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -496,39 +518,15 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             mode === "hardcore" ? panelIndexRef.current : undefined,
         }),
       });
-      if (res.status === 401) {
-        router.push("/");
-        return;
-      }
-      if (!res.ok) {
-        resolveAndReveal({
-          imageUrl: round.imageUrl,
-          makeCorrect: false,
-          modelCorrect: false,
-          guessLabel,
-          pointsEarned: 0,
-        });
-        return;
-      }
-      const data = await res.json();
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: data.makeMatch,
-        modelCorrect: data.modelMatch,
-        guessLabel,
-        pointsEarned: data.pointsEarned,
-        vehicle: data.vehicle,
-        breakdown: {
-          makePoints: data.makePoints,
-          modelPoints: data.modelPoints,
-          yearBonus: data.yearBonus,
-          yearDelta: data.yearDelta,
-          timeBonus: data.timeBonus,
-          modeMultiplier: data.modeMultiplier,
-          proBonus: data.proBonus,
-        },
-      });
     } catch {
+      setNetworkError(true);
+      return;
+    }
+    if (res.status === 401) {
+      router.push("/");
+      return;
+    }
+    if (!res.ok) {
       resolveAndReveal({
         imageUrl: round.imageUrl,
         makeCorrect: false,
@@ -536,7 +534,26 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         guessLabel,
         pointsEarned: 0,
       });
+      return;
     }
+    const data = await res.json();
+    resolveAndReveal({
+      imageUrl: round.imageUrl,
+      makeCorrect: data.makeMatch,
+      modelCorrect: data.modelMatch,
+      guessLabel,
+      pointsEarned: data.pointsEarned,
+      vehicle: data.vehicle,
+      breakdown: {
+        makePoints: data.makePoints,
+        modelPoints: data.modelPoints,
+        yearBonus: data.yearBonus,
+        yearDelta: data.yearDelta,
+        timeBonus: data.timeBonus,
+        modeMultiplier: data.modeMultiplier,
+        proBonus: data.proBonus,
+      },
+    });
   }
 
   async function submitPracticeStats(roundResults: CompletedRound[]) {
