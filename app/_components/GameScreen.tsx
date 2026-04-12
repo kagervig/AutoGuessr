@@ -79,6 +79,20 @@ interface Props {
 const HARD_MODES = ["standard", "hardcore", "time_attack"];
 const CHOICE_MODES = ["easy", "practice", "custom"];
 
+// A single retry absorbs transient network blips (mobile handoff, Wi-Fi reconnect).
+async function fetchWithRetry(
+  input: string,
+  init: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (err) {
+    if (!(err instanceof TypeError)) throw err;
+    console.error("[fetchWithRetry] First attempt failed, retrying once:", err);
+    return await fetch(input, init);
+  }
+}
+
 // ─── Main Game component ───────────────────────────────────────────────────
 
 export default function GameScreen({ mode, username, filter, cfToken }: Props) {
@@ -100,6 +114,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const [reveal, setReveal] = useState<RevealInfo | null>(null);
   const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
   const [practiceComplete, setPracticeComplete] = useState(false);
+  const [networkError, setNetworkError] = useState(false);
   const [imageRating, setImageRating] = useState<"up" | "down" | null>(null);
   const [imageReported, setImageReported] = useState(false);
 
@@ -107,6 +122,9 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const roundStartRef = useRef<number>(Date.now());
   const currentRoundIdRef = useRef<string>("");
   const currentRoundImageUrlRef = useRef<string>("");
+  // Synchronously set to true the moment any submission begins so that
+  // concurrent handlers (timer vs. user click) cannot both proceed.
+  const hasSubmittedRef = useRef(false);
 
   // Hardcore grid
   const [visiblePanels, setVisiblePanels] = useState<boolean[]>(
@@ -145,8 +163,10 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         }
       })
       .catch((err) => {
-        if (err.name !== "AbortError")
+        if (err.name !== "AbortError") {
+          console.error("[GameScreen] Failed to load game:", err);
           setError("Failed to load game. Please try again.");
+        }
       })
       .finally(() => setLoading(false));
 
@@ -158,6 +178,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   useEffect(() => {
     if (introVisible) return;
 
+    hasSubmittedRef.current = false;
     roundStartRef.current = Date.now();
     if (gameData) {
       currentRoundIdRef.current = gameData.rounds[currentIndex].roundId;
@@ -199,7 +220,8 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   }, [currentIndex, mode, gameData, introVisible]);
 
   const handleTimeout = useCallback(async () => {
-    if (roundState !== "answering") return;
+    if (roundState !== "answering" || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
     const roundId = currentRoundIdRef.current;
     let vehicle: VehicleInfo | undefined;
     if (roundId) {
@@ -213,14 +235,18 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             timeTakenMs: Date.now() - roundStartRef.current,
           }),
         });
-        if (!res.ok && res.status === 401) {
+        if (res.status === 401) {
           router.push("/");
           return;
         }
-        const data = await res.json();
-        vehicle = data.vehicle;
-      } catch {
-        /* ignore — reveal will show blank label */
+        if (res.ok) {
+          const data = await res.json();
+          vehicle = data.vehicle;
+        }
+      } catch (err) {
+        // Timeout submits are best-effort — a failure here is non-fatal because
+        // resolveAndReveal will proceed with an empty vehicle label.
+        console.error("[GameScreen] Timeout guess submission failed:", err);
       }
     }
     resolveAndReveal({
@@ -264,6 +290,22 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           className="flex items-center gap-2 glass-panel rounded-xl px-6 py-3 text-sm font-bold text-white hover:bg-white/10 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Garage
+        </button>
+      </main>
+    );
+  }
+
+  if (networkError) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
+        <p className="text-center text-muted-foreground">
+          Sorry, network failure. Your answer could not be submitted.
+        </p>
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center gap-2 glass-panel rounded-xl px-6 py-3 text-sm font-bold text-white hover:bg-white/10 transition-colors"
+        >
+          New Game
         </button>
       </main>
     );
@@ -327,57 +369,26 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     setRoundState("revealed");
   }
 
-  async function handleEasyAnswer(vehicleId: string) {
-    if (roundState === "revealed") return;
-    setSelectedEasyId(vehicleId);
-    setIsSubmitting(true);
-    const elapsedMs = Date.now() - roundStartRef.current;
-    const guessLabel =
-      choices.find((c) => c.vehicleId === vehicleId)?.label ?? "";
+  async function submitGuess(
+    body: Record<string, unknown>,
+    guessLabel: string,
+  ) {
+    let res: Response;
     try {
-      const res = await fetch("/api/guess", {
+      res = await fetchWithRetry("/api/guess", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roundId: round.roundId,
-          rawInput: guessLabel,
-          guessedVehicleId: vehicleId,
-          timeTakenMs: elapsedMs,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok && res.status === 401) {
-        router.push("/");
-        return;
-      }
-      if (!res.ok) {
-        resolveAndReveal({
-          imageUrl: round.imageUrl,
-          makeCorrect: false,
-          modelCorrect: false,
-          guessLabel,
-          pointsEarned: 0,
-        });
-        return;
-      }
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: data.makeMatch,
-        modelCorrect: data.modelMatch,
-        guessLabel,
-        pointsEarned: data.pointsEarned,
-        vehicle: data.vehicle,
-        breakdown: {
-          makePoints: data.makePoints,
-          modelPoints: data.modelPoints,
-          yearBonus: data.yearBonus,
-          yearDelta: data.yearDelta,
-          timeBonus: data.timeBonus,
-          modeMultiplier: data.modeMultiplier,
-          proBonus: data.proBonus,
-        },
+        body: JSON.stringify(body),
       });
     } catch {
+      setNetworkError(true);
+      return;
+    }
+    if (res.status === 401) {
+      router.push("/");
+      return;
+    }
+    if (!res.ok) {
       resolveAndReveal({
         imageUrl: round.imageUrl,
         makeCorrect: false,
@@ -385,7 +396,40 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         guessLabel,
         pointsEarned: 0,
       });
+      return;
     }
+    const data = await res.json();
+    resolveAndReveal({
+      imageUrl: round.imageUrl,
+      makeCorrect: data.makeMatch,
+      modelCorrect: data.modelMatch,
+      guessLabel,
+      pointsEarned: data.pointsEarned,
+      vehicle: data.vehicle,
+      breakdown: {
+        makePoints: data.makePoints,
+        modelPoints: data.modelPoints,
+        yearBonus: data.yearBonus,
+        yearDelta: data.yearDelta,
+        timeBonus: data.timeBonus,
+        modeMultiplier: data.modeMultiplier,
+        proBonus: data.proBonus,
+      },
+    });
+  }
+
+  async function handleEasyAnswer(vehicleId: string) {
+    if (roundState === "revealed" || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
+    setSelectedEasyId(vehicleId);
+    setIsSubmitting(true);
+    const elapsedMs = Date.now() - roundStartRef.current;
+    const guessLabel =
+      choices.find((c) => c.vehicleId === vehicleId)?.label ?? "";
+    await submitGuess(
+      { roundId: round.roundId, rawInput: guessLabel, guessedVehicleId: vehicleId, timeTakenMs: elapsedMs },
+      guessLabel,
+    );
   }
 
   async function handleMediumSubmit(
@@ -393,70 +437,26 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     model: string,
     year?: string,
   ) {
-    if (roundState === "revealed") return;
+    if (roundState === "revealed" || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = `${make} ${model}`;
-    try {
-      const res = await fetch("/api/guess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roundId: round.roundId,
-          rawInput: guessLabel,
-          guessedMake: make,
-          guessedModel: model,
-          guessedYear:
-            year && mediumYearGuessing
-              ? parseInt(year) || undefined
-              : undefined,
-          timeTakenMs: elapsedMs,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok && res.status === 401) {
-        router.push("/");
-        return;
-      }
-      if (!res.ok) {
-        resolveAndReveal({
-          imageUrl: round.imageUrl,
-          makeCorrect: false,
-          modelCorrect: false,
-          guessLabel,
-          pointsEarned: 0,
-        });
-        return;
-      }
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: data.makeMatch,
-        modelCorrect: data.modelMatch,
-        guessLabel,
-        pointsEarned: data.pointsEarned,
-        vehicle: data.vehicle,
-        breakdown: {
-          makePoints: data.makePoints,
-          modelPoints: data.modelPoints,
-          yearBonus: data.yearBonus,
-          yearDelta: data.yearDelta,
-          timeBonus: data.timeBonus,
-          modeMultiplier: data.modeMultiplier,
-          proBonus: data.proBonus,
-        },
-      });
-    } catch {
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: false,
-        modelCorrect: false,
-        guessLabel,
-        pointsEarned: 0,
-      });
-    }
+    await submitGuess(
+      {
+        roundId: round.roundId,
+        rawInput: guessLabel,
+        guessedMake: make,
+        guessedModel: model,
+        guessedYear: year && mediumYearGuessing ? parseInt(year) || undefined : undefined,
+        timeTakenMs: elapsedMs,
+      },
+      guessLabel,
+    );
   }
 
   async function handleHardSubmit(make: string, model: string, year: string) {
-    if (roundState === "revealed") return;
+    if (roundState === "revealed" || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = `${year} ${make} ${model}`.trim();
     if (!make && !model) {
@@ -469,62 +469,18 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
       });
       return;
     }
-    try {
-      const res = await fetch("/api/guess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roundId: round.roundId,
-          rawInput: guessLabel,
-          guessedMake: make,
-          guessedModel: model,
-          guessedYear: parseInt(year) || undefined,
-          timeTakenMs: elapsedMs,
-          panelsRevealed:
-            mode === "hardcore" ? panelIndexRef.current : undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok && res.status === 401) {
-        router.push("/");
-        return;
-      }
-      if (!res.ok) {
-        resolveAndReveal({
-          imageUrl: round.imageUrl,
-          makeCorrect: false,
-          modelCorrect: false,
-          guessLabel,
-          pointsEarned: 0,
-        });
-        return;
-      }
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: data.makeMatch,
-        modelCorrect: data.modelMatch,
-        guessLabel,
-        pointsEarned: data.pointsEarned,
-        vehicle: data.vehicle,
-        breakdown: {
-          makePoints: data.makePoints,
-          modelPoints: data.modelPoints,
-          yearBonus: data.yearBonus,
-          yearDelta: data.yearDelta,
-          timeBonus: data.timeBonus,
-          modeMultiplier: data.modeMultiplier,
-          proBonus: data.proBonus,
-        },
-      });
-    } catch {
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: false,
-        modelCorrect: false,
-        guessLabel,
-        pointsEarned: 0,
-      });
-    }
+    await submitGuess(
+      {
+        roundId: round.roundId,
+        rawInput: guessLabel,
+        guessedMake: make,
+        guessedModel: model,
+        guessedYear: parseInt(year) || undefined,
+        timeTakenMs: elapsedMs,
+        panelsRevealed: mode === "hardcore" ? panelIndexRef.current : undefined,
+      },
+      guessLabel,
+    );
   }
 
   async function submitPracticeStats(roundResults: CompletedRound[]) {
@@ -554,21 +510,26 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         key: s,
       })),
     ];
-    await Promise.all(
-      dimensions.map((d) =>
-        fetch("/api/practice/stats", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username,
-            dimensionType: d.type,
-            dimensionKey: d.key,
-            correct,
-            incorrect,
+    try {
+      await Promise.all(
+        dimensions.map((d) =>
+          fetch("/api/practice/stats", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username,
+              dimensionType: d.type,
+              dimensionKey: d.key,
+              correct,
+              incorrect,
+            }),
           }),
-        }),
-      ),
-    );
+        ),
+      );
+    } catch (err) {
+      // Stats are best-effort — a failure here should not block the results screen.
+      console.error("[GameScreen] Failed to submit practice stats:", err);
+    }
   }
 
   async function handleNext() {
@@ -578,14 +539,22 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         setPracticeComplete(true);
         return;
       }
-      const endRes = await fetch("/api/session/end", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameId: gameData!.gameId, finalScore: score }),
-      });
-      if (!endRes.ok && endRes.status === 401) {
-        router.push("/");
-        return;
+      try {
+        const endRes = await fetch("/api/session/end", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gameId: gameData!.gameId, finalScore: score }),
+        });
+        if (endRes.status === 401) {
+          router.push("/");
+          return;
+        }
+        if (!endRes.ok) {
+          console.error("[GameScreen] Failed to end session:", endRes.status);
+        }
+      } catch (err) {
+        // A network failure here should not strand the user — navigate to results anyway.
+        console.error("[GameScreen] Failed to end session:", err);
       }
       const params = new URLSearchParams({
         gameId: gameData!.gameId,

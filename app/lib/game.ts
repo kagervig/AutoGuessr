@@ -194,8 +194,8 @@ export function proLevelBonus(correctGuesses: number, incorrectGuesses: number):
 
 export const TIME_LIMITS: Record<string, number> = {
   easy: 30_000,
-  custom: 45_000,
-  standard: 60_000,
-  hardcore: 90_000,
-  time_attack: 30_000,
+  custom: 30_000,
+  standard: 30_000,
+  hardcore: 30_000,
+  time_attack: 15_000,
 };
