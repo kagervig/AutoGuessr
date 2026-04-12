@@ -148,8 +148,10 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         }
       })
       .catch((err) => {
-        if (err.name !== "AbortError")
+        if (err.name !== "AbortError") {
+          console.error("[GameScreen] Failed to load game:", err);
           setError("Failed to load game. Please try again.");
+        }
       })
       .finally(() => setLoading(false));
 
@@ -218,12 +220,14 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             timeTakenMs: Date.now() - roundStartRef.current,
           }),
         });
-        if (!res.ok && res.status === 401) {
+        if (res.status === 401) {
           router.push("/");
           return;
         }
-        const data = await res.json();
-        vehicle = data.vehicle;
+        if (res.ok) {
+          const data = await res.json();
+          vehicle = data.vehicle;
+        }
       } catch {
         /* ignore — reveal will show blank label */
       }
@@ -351,8 +355,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           timeTakenMs: elapsedMs,
         }),
       });
-      const data = await res.json();
-      if (!res.ok && res.status === 401) {
+      if (res.status === 401) {
         router.push("/");
         return;
       }
@@ -366,6 +369,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         });
         return;
       }
+      const data = await res.json();
       resolveAndReveal({
         imageUrl: round.imageUrl,
         makeCorrect: data.makeMatch,
@@ -419,8 +423,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           timeTakenMs: elapsedMs,
         }),
       });
-      const data = await res.json();
-      if (!res.ok && res.status === 401) {
+      if (res.status === 401) {
         router.push("/");
         return;
       }
@@ -434,6 +437,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         });
         return;
       }
+      const data = await res.json();
       resolveAndReveal({
         imageUrl: round.imageUrl,
         makeCorrect: data.makeMatch,
@@ -492,8 +496,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             mode === "hardcore" ? panelIndexRef.current : undefined,
         }),
       });
-      const data = await res.json();
-      if (!res.ok && res.status === 401) {
+      if (res.status === 401) {
         router.push("/");
         return;
       }
@@ -507,6 +510,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         });
         return;
       }
+      const data = await res.json();
       resolveAndReveal({
         imageUrl: round.imageUrl,
         makeCorrect: data.makeMatch,
@@ -562,21 +566,26 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         key: s,
       })),
     ];
-    await Promise.all(
-      dimensions.map((d) =>
-        fetch("/api/practice/stats", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username,
-            dimensionType: d.type,
-            dimensionKey: d.key,
-            correct,
-            incorrect,
+    try {
+      await Promise.all(
+        dimensions.map((d) =>
+          fetch("/api/practice/stats", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username,
+              dimensionType: d.type,
+              dimensionKey: d.key,
+              correct,
+              incorrect,
+            }),
           }),
-        }),
-      ),
-    );
+        ),
+      );
+    } catch (err) {
+      // Stats are best-effort — a failure here should not block the results screen.
+      console.error("[GameScreen] Failed to submit practice stats:", err);
+    }
   }
 
   async function handleNext() {
@@ -586,14 +595,22 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
         setPracticeComplete(true);
         return;
       }
-      const endRes = await fetch("/api/session/end", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameId: gameData!.gameId, finalScore: score }),
-      });
-      if (!endRes.ok && endRes.status === 401) {
-        router.push("/");
-        return;
+      try {
+        const endRes = await fetch("/api/session/end", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gameId: gameData!.gameId, finalScore: score }),
+        });
+        if (endRes.status === 401) {
+          router.push("/");
+          return;
+        }
+        if (!endRes.ok) {
+          console.error("[GameScreen] Failed to end session:", endRes.status);
+        }
+      } catch (err) {
+        // A network failure here should not strand the user — navigate to results anyway.
+        console.error("[GameScreen] Failed to end session:", err);
       }
       const params = new URLSearchParams({
         gameId: gameData!.gameId,
