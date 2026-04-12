@@ -79,14 +79,16 @@ interface Props {
 const HARD_MODES = ["standard", "hardcore", "time_attack"];
 const CHOICE_MODES = ["easy", "practice", "custom"];
 
-// Retries a fetch once on network-level failure before throwing.
+// A single retry absorbs transient network blips (mobile handoff, Wi-Fi reconnect).
 async function fetchWithRetry(
   input: string,
   init: RequestInit,
 ): Promise<Response> {
   try {
     return await fetch(input, init);
-  } catch {
+  } catch (err) {
+    if (!(err instanceof TypeError)) throw err;
+    console.error("[fetchWithRetry] First attempt failed, retrying once:", err);
     return await fetch(input, init);
   }
 }
@@ -241,8 +243,10 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
           const data = await res.json();
           vehicle = data.vehicle;
         }
-      } catch {
-        /* ignore — reveal will show blank label */
+      } catch (err) {
+        // Timeout submits are best-effort — a failure here is non-fatal because
+        // resolveAndReveal will proceed with an empty vehicle label.
+        console.error("[GameScreen] Timeout guess submission failed:", err);
       }
     }
     resolveAndReveal({
@@ -365,25 +369,16 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     setRoundState("revealed");
   }
 
-  async function handleEasyAnswer(vehicleId: string) {
-    if (roundState === "revealed" || hasSubmittedRef.current) return;
-    hasSubmittedRef.current = true;
-    setSelectedEasyId(vehicleId);
-    setIsSubmitting(true);
-    const elapsedMs = Date.now() - roundStartRef.current;
-    const guessLabel =
-      choices.find((c) => c.vehicleId === vehicleId)?.label ?? "";
+  async function submitGuess(
+    body: Record<string, unknown>,
+    guessLabel: string,
+  ) {
     let res: Response;
     try {
       res = await fetchWithRetry("/api/guess", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roundId: round.roundId,
-          rawInput: guessLabel,
-          guessedVehicleId: vehicleId,
-          timeTakenMs: elapsedMs,
-        }),
+        body: JSON.stringify(body),
       });
     } catch {
       setNetworkError(true);
@@ -423,6 +418,20 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     });
   }
 
+  async function handleEasyAnswer(vehicleId: string) {
+    if (roundState === "revealed" || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
+    setSelectedEasyId(vehicleId);
+    setIsSubmitting(true);
+    const elapsedMs = Date.now() - roundStartRef.current;
+    const guessLabel =
+      choices.find((c) => c.vehicleId === vehicleId)?.label ?? "";
+    await submitGuess(
+      { roundId: round.roundId, rawInput: guessLabel, guessedVehicleId: vehicleId, timeTakenMs: elapsedMs },
+      guessLabel,
+    );
+  }
+
   async function handleMediumSubmit(
     make: string,
     model: string,
@@ -432,59 +441,17 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     hasSubmittedRef.current = true;
     const elapsedMs = Date.now() - roundStartRef.current;
     const guessLabel = `${make} ${model}`;
-    let res: Response;
-    try {
-      res = await fetchWithRetry("/api/guess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roundId: round.roundId,
-          rawInput: guessLabel,
-          guessedMake: make,
-          guessedModel: model,
-          guessedYear:
-            year && mediumYearGuessing
-              ? parseInt(year) || undefined
-              : undefined,
-          timeTakenMs: elapsedMs,
-        }),
-      });
-    } catch {
-      setNetworkError(true);
-      return;
-    }
-    if (res.status === 401) {
-      router.push("/");
-      return;
-    }
-    if (!res.ok) {
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: false,
-        modelCorrect: false,
-        guessLabel,
-        pointsEarned: 0,
-      });
-      return;
-    }
-    const data = await res.json();
-    resolveAndReveal({
-      imageUrl: round.imageUrl,
-      makeCorrect: data.makeMatch,
-      modelCorrect: data.modelMatch,
-      guessLabel,
-      pointsEarned: data.pointsEarned,
-      vehicle: data.vehicle,
-      breakdown: {
-        makePoints: data.makePoints,
-        modelPoints: data.modelPoints,
-        yearBonus: data.yearBonus,
-        yearDelta: data.yearDelta,
-        timeBonus: data.timeBonus,
-        modeMultiplier: data.modeMultiplier,
-        proBonus: data.proBonus,
+    await submitGuess(
+      {
+        roundId: round.roundId,
+        rawInput: guessLabel,
+        guessedMake: make,
+        guessedModel: model,
+        guessedYear: year && mediumYearGuessing ? parseInt(year) || undefined : undefined,
+        timeTakenMs: elapsedMs,
       },
-    });
+      guessLabel,
+    );
   }
 
   async function handleHardSubmit(make: string, model: string, year: string) {
@@ -502,58 +469,18 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
       });
       return;
     }
-    let res: Response;
-    try {
-      res = await fetchWithRetry("/api/guess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roundId: round.roundId,
-          rawInput: guessLabel,
-          guessedMake: make,
-          guessedModel: model,
-          guessedYear: parseInt(year) || undefined,
-          timeTakenMs: elapsedMs,
-          panelsRevealed:
-            mode === "hardcore" ? panelIndexRef.current : undefined,
-        }),
-      });
-    } catch {
-      setNetworkError(true);
-      return;
-    }
-    if (res.status === 401) {
-      router.push("/");
-      return;
-    }
-    if (!res.ok) {
-      resolveAndReveal({
-        imageUrl: round.imageUrl,
-        makeCorrect: false,
-        modelCorrect: false,
-        guessLabel,
-        pointsEarned: 0,
-      });
-      return;
-    }
-    const data = await res.json();
-    resolveAndReveal({
-      imageUrl: round.imageUrl,
-      makeCorrect: data.makeMatch,
-      modelCorrect: data.modelMatch,
-      guessLabel,
-      pointsEarned: data.pointsEarned,
-      vehicle: data.vehicle,
-      breakdown: {
-        makePoints: data.makePoints,
-        modelPoints: data.modelPoints,
-        yearBonus: data.yearBonus,
-        yearDelta: data.yearDelta,
-        timeBonus: data.timeBonus,
-        modeMultiplier: data.modeMultiplier,
-        proBonus: data.proBonus,
+    await submitGuess(
+      {
+        roundId: round.roundId,
+        rawInput: guessLabel,
+        guessedMake: make,
+        guessedModel: model,
+        guessedYear: parseInt(year) || undefined,
+        timeTakenMs: elapsedMs,
+        panelsRevealed: mode === "hardcore" ? panelIndexRef.current : undefined,
       },
-    });
+      guessLabel,
+    );
   }
 
   async function submitPracticeStats(roundResults: CompletedRound[]) {
