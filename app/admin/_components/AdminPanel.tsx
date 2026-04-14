@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Combobox from "@/app/_components/Combobox";
 import { eraFromYear } from "@/app/lib/constants";
+import ImagesPanel from "./ImagesPanel";
 import MakesModelsPanel from "./MakesModelsPanel";
 import CategoriesPanel from "./CategoriesPanel";
 import RegionsPanel from "./RegionsPanel";
@@ -13,7 +14,7 @@ import ReportsPanel from "./ReportsPanel";
 import FlagsPanel from "./FlagsPanel";
 import CoveragePanel from "./CoveragePanel";
 
-type AdminPage = "staging" | "makes-models" | "categories" | "regions" | "stats" | "duplicates" | "flags" | "coverage" | "reports";
+type AdminPage = "images" | "staging" | "makes-models" | "categories" | "regions" | "stats" | "duplicates" | "flags" | "coverage" | "reports";
 
 type StagingStatus = "PENDING_REVIEW" | "COMMUNITY_REVIEW" | "READY" | "PUBLISHED" | "REJECTED";
 
@@ -201,7 +202,7 @@ function formFromImage(img: StagingImage): EditForm {
 }
 
 export default function AdminPanel() {
-  const [activePage, setActivePage] = useState<AdminPage>("staging");
+  const [activePage, setActivePage] = useState<AdminPage>("images");
   const [images, setImages] = useState<StagingImage[]>([]);
   const [counts, setCounts] = useState<Partial<Record<StagingStatus, number>>>({});
   const [statusFilter, setStatusFilter] = useState<StagingStatus | "ALL">("ALL");
@@ -501,6 +502,7 @@ export default function AdminPanel() {
 
   const isMultiSelect = selectedIds.length > 1;
   const selected = selectedIds.length === 1 ? (images.find((img) => img.id === selectedIds[0]) ?? null) : null;
+  const isPublished = selected?.status === "PUBLISHED";
 
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]">
@@ -510,6 +512,7 @@ export default function AdminPanel() {
           <nav className="flex gap-0.5">
             {(
               [
+                ["images", "Images"],
                 ["staging", "Staging"],
                 ["makes-models", "Makes & Models"],
                 ["categories", "Categories"],
@@ -540,6 +543,7 @@ export default function AdminPanel() {
         </Link>
       </header>
 
+      {activePage === "images" && <ImagesPanel />}
       {activePage === "makes-models" && <MakesModelsPanel />}
       {activePage === "categories" && <CategoriesPanel />}
       {activePage === "regions" && <RegionsPanel />}
@@ -750,8 +754,14 @@ export default function AdminPanel() {
 
               {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
 
+              {isPublished && (
+                <p className="text-sm text-amber-700 bg-amber-50 rounded px-3 py-2">
+                  This image is published. Edit it directly from the Images tab.
+                </p>
+              )}
+
               {/* Edit form */}
-              <div className="space-y-2">
+              <div className={`space-y-2 ${isPublished ? "opacity-50 pointer-events-none" : ""}`}>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                   Vehicle details
                 </p>
