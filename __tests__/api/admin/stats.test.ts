@@ -7,6 +7,11 @@ vi.mock("@/app/lib/prisma", () => ({
   },
 }));
 
+function makeRequest(params: Record<string, string> = {}) {
+  const url = new URL(`http://localhost/api/admin/stats?${new URLSearchParams(params)}`);
+  return { nextUrl: url } as import("next/server").NextRequest;
+}
+
 const { prisma } = await import("@/app/lib/prisma");
 
 beforeEach(() => {
@@ -24,7 +29,7 @@ describe("GET /api/admin/stats", () => {
       },
     ] as never);
 
-    const res = await GET();
+    const res = await GET(makeRequest());
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data).toHaveLength(1);
@@ -35,8 +40,44 @@ describe("GET /api/admin/stats", () => {
   it("should return an empty array when no active images exist", async () => {
     vi.mocked(prisma.image.findMany).mockResolvedValue([] as never);
 
-    const res = await GET();
+    const res = await GET(makeRequest());
     const data = await res.json();
     expect(data).toEqual([]);
+  });
+
+  it("should pass vehicleId filter to Prisma when provided", async () => {
+    vi.mocked(prisma.image.findMany).mockResolvedValue([] as never);
+
+    await GET(makeRequest({ vehicleId: "v-123" }));
+
+    expect(vi.mocked(prisma.image.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ vehicleId: "v-123" }) })
+    );
+  });
+
+  it("should pass make filter to Prisma when provided", async () => {
+    vi.mocked(prisma.image.findMany).mockResolvedValue([] as never);
+
+    await GET(makeRequest({ make: "Toyota" }));
+
+    expect(vi.mocked(prisma.image.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ vehicle: expect.objectContaining({ make: "Toyota" }) }),
+      })
+    );
+  });
+
+  it("should pass make and model filters together when both are provided", async () => {
+    vi.mocked(prisma.image.findMany).mockResolvedValue([] as never);
+
+    await GET(makeRequest({ make: "Toyota", model: "Supra" }));
+
+    expect(vi.mocked(prisma.image.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          vehicle: expect.objectContaining({ make: "Toyota", model: "Supra" }),
+        }),
+      })
+    );
   });
 });
