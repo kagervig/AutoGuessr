@@ -1,6 +1,6 @@
 // Tests for the eligibility report route and its response-shaping logic.
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { buildReport } from "@/app/api/admin/reports/eligibility/route";
+import { buildReport } from "@/app/api/admin/reports/eligibility/types";
 
 vi.mock("@/app/lib/prisma", () => ({
   prisma: {

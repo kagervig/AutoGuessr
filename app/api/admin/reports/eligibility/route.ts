@@ -1,55 +1,7 @@
 // Eligibility report: counts active images qualifying for each slot in each game mode tier.
 import { prisma } from "@/app/lib/prisma";
-import type { EligibilityReport } from "./types";
+import { buildReport, type SlotCount } from "./types";
 export type { EligibilityReport } from "./types";
-
-interface SlotCount {
-  slot: string;
-  count: bigint | number;
-}
-
-
-// Converts the flat CTE result rows into the structured EligibilityReport shape.
-// Exported for unit testing without a DB connection.
-export function buildReport(
-  rows: SlotCount[],
-  totalActiveImages: number,
-): EligibilityReport {
-  const m = new Map(rows.map((r) => [r.slot, Number(r.count)]));
-  const get = (key: string) => m.get(key) ?? 0;
-
-  return {
-    generatedAt: new Date().toISOString(),
-    totalActiveImages,
-    rookie: {
-      pool:         get("rookie_pool"),
-      standardPool: get("rookie_standard_pool"),
-      croppedPool:  get("rookie_cropped_pool"),
-      slotA:        get("rookie_slot_a"),
-      slotB:        get("rookie_slot_b"),
-      slotC:        get("rookie_slot_c"),
-      slotD:        get("rookie_slot_d"),
-    },
-    standard: {
-      pool:  get("standard_pool"),
-      slotA: get("standard_slot_a"),
-      slotB: get("standard_slot_b"),
-      slotC: get("standard_slot_c"),
-      slotD: get("standard_slot_d"),
-      slotE: get("standard_slot_e"),
-    },
-    hardcore: {
-      pool:           get("hardcore_pool"),
-      slotA:          get("hardcore_slot_a"),
-      slotAWithModel: get("hardcore_slot_a_with_model"),
-      slotANoModel:   get("hardcore_slot_a_no_model"),
-      slotB:          get("hardcore_slot_b"),
-      slotC:          get("hardcore_slot_c"),
-      slotD:          get("hardcore_slot_d"),
-      slotE:          get("hardcore_slot_e"),
-    },
-  };
-}
 
 export async function GET() {
   // correctRatio and totalServes are computed on the fly because the schema migration

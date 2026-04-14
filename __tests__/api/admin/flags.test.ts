@@ -1,6 +1,6 @@
 // Tests for the image flags breakdown route and its response-shaping logic.
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { buildFlagsReport } from "@/app/api/admin/flags/route";
+import { buildFlagsReport } from "@/app/api/admin/flags/types";
 
 vi.mock("@/app/lib/prisma", () => ({
   prisma: { $queryRaw: vi.fn() },

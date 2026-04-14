@@ -1,6 +1,6 @@
 // Tests for the image coverage report route and its response-shaping logic.
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { buildCoverageReport } from "@/app/api/admin/reports/coverage/route";
+import { buildCoverageReport } from "@/app/api/admin/reports/coverage/types";
 
 vi.mock("@/app/lib/prisma", () => ({
   prisma: { $queryRaw: vi.fn() },
