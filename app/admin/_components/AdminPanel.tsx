@@ -9,8 +9,11 @@ import CategoriesPanel from "./CategoriesPanel";
 import RegionsPanel from "./RegionsPanel";
 import StatsPanel from "./StatsPanel";
 import DuplicatesPanel from "./DuplicatesPanel";
+import ReportsPanel from "./ReportsPanel";
+import FlagsPanel from "./FlagsPanel";
+import CoveragePanel from "./CoveragePanel";
 
-type AdminPage = "staging" | "makes-models" | "categories" | "regions" | "stats" | "duplicates";
+type AdminPage = "staging" | "makes-models" | "categories" | "regions" | "stats" | "duplicates" | "flags" | "coverage" | "reports";
 
 type StagingStatus = "PENDING_REVIEW" | "COMMUNITY_REVIEW" | "READY" | "PUBLISHED" | "REJECTED";
 
@@ -513,6 +516,9 @@ export default function AdminPanel() {
                 ["regions", "Regions"],
                 ["stats", "Stats"],
                 ["duplicates", "Duplicates"],
+                ["flags", "Flags"],
+                ["coverage", "Coverage"],
+                ["reports", "Reports"],
               ] as [AdminPage, string][]
             ).map(([page, label]) => (
               <button
@@ -539,6 +545,9 @@ export default function AdminPanel() {
       {activePage === "regions" && <RegionsPanel />}
       {activePage === "stats" && <StatsPanel />}
       {activePage === "duplicates" && <DuplicatesPanel />}
+      {activePage === "flags" && <FlagsPanel />}
+      {activePage === "coverage" && <CoveragePanel />}
+      {activePage === "reports" && <ReportsPanel />}
 
       {activePage === "staging" && (
       <>
