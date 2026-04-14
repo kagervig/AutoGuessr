@@ -3,13 +3,8 @@
 
 import { useEffect, useState } from "react";
 import Combobox from "@/app/_components/Combobox";
-
-const BODY_STYLES = [
-  "coupe", "sedan", "convertible", "hatchback", "wagon",
-  "suv", "truck", "pickup", "van", "roadster", "targa", "compact", "special_purpose",
-];
-const ERAS = ["classic", "retro", "modern", "contemporary"];
-const RARITIES = ["common", "uncommon", "rare", "ultra_rare"];
+import CheckboxField from "./CheckboxField";
+import { BODY_STYLES, ERAS, RARITIES } from "@/app/lib/constants";
 
 interface ImageItem {
   id: string;
@@ -461,78 +456,14 @@ export default function ImagesPanel() {
                 />
               </div>
 
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editForm.isActive}
-                  onChange={(e) => setEditForm((f) => f && { ...f, isActive: e.target.checked })}
-                  className="rounded"
-                />
-                Active
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editForm.isHardcoreEligible}
-                  onChange={(e) => setEditForm((f) => f && { ...f, isHardcoreEligible: e.target.checked })}
-                  className="rounded"
-                />
-                Hardcore eligible
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editForm.isCropped}
-                  onChange={(e) => setEditForm((f) => f && { ...f, isCropped: e.target.checked })}
-                  className="rounded"
-                />
-                Cropped (partial view)
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editForm.isLogoVisible}
-                  onChange={(e) => setEditForm((f) => f && { ...f, isLogoVisible: e.target.checked })}
-                  className="rounded"
-                />
-                Logo visible
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editForm.isModelNameVisible}
-                  onChange={(e) => setEditForm((f) => f && { ...f, isModelNameVisible: e.target.checked })}
-                  className="rounded"
-                />
-                Model name visible
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editForm.hasMultipleVehicles}
-                  onChange={(e) => setEditForm((f) => f && { ...f, hasMultipleVehicles: e.target.checked })}
-                  className="rounded"
-                />
-                Multiple vehicles in image
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editForm.isFaceVisible}
-                  onChange={(e) => setEditForm((f) => f && { ...f, isFaceVisible: e.target.checked })}
-                  className="rounded"
-                />
-                Face visible
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editForm.isVehicleUnmodified}
-                  onChange={(e) => setEditForm((f) => f && { ...f, isVehicleUnmodified: e.target.checked })}
-                  className="rounded"
-                />
-                Vehicle unmodified
-              </label>
+              <CheckboxField label="Active" checked={editForm.isActive} onChange={(v) => setEditForm((f) => f && { ...f, isActive: v })} />
+              <CheckboxField label="Hardcore eligible" checked={editForm.isHardcoreEligible} onChange={(v) => setEditForm((f) => f && { ...f, isHardcoreEligible: v })} />
+              <CheckboxField label="Cropped (partial view)" checked={editForm.isCropped} onChange={(v) => setEditForm((f) => f && { ...f, isCropped: v })} />
+              <CheckboxField label="Logo visible" checked={editForm.isLogoVisible} onChange={(v) => setEditForm((f) => f && { ...f, isLogoVisible: v })} />
+              <CheckboxField label="Model name visible" checked={editForm.isModelNameVisible} onChange={(v) => setEditForm((f) => f && { ...f, isModelNameVisible: v })} />
+              <CheckboxField label="Multiple vehicles in image" checked={editForm.hasMultipleVehicles} onChange={(v) => setEditForm((f) => f && { ...f, hasMultipleVehicles: v })} />
+              <CheckboxField label="Face visible" checked={editForm.isFaceVisible} onChange={(v) => setEditForm((f) => f && { ...f, isFaceVisible: v })} />
+              <CheckboxField label="Vehicle unmodified" checked={editForm.isVehicleUnmodified} onChange={(v) => setEditForm((f) => f && { ...f, isVehicleUnmodified: v })} />
             </div>
 
             <button
