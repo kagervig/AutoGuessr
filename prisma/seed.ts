@@ -1,6 +1,7 @@
 // Seeds the StagingImage table from the Image table. All images get PUBLISHED status
-// except for a random sample assigned to each of the other statuses, which are deactivated
-// in the Image table to simulate the pre-publish pipeline state.
+// except for a random sample assigned to each of the other statuses, which are deleted
+// from the Image table to simulate the pre-publish pipeline state. On rerun, those
+// images are recreated in the Image table before re-seeding.
 import "dotenv/config";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -32,14 +33,59 @@ type ImageRow = {
   rarity: string;
 };
 
+async function restorePreviouslyDeletedImages() {
+  const nonPublishedStaging = await prisma.stagingImage.findMany({
+    where: { status: { not: StagingStatus.PUBLISHED } },
+  });
+
+  if (nonPublishedStaging.length === 0) return;
+
+  console.log("Restoring previously deleted images...");
+
+  for (const staging of nonPublishedStaging) {
+    const alreadyExists = await prisma.image.findUnique({
+      where: { filename: staging.cloudinaryPublicId },
+    });
+    if (alreadyExists) continue;
+
+    if (!staging.adminMake || !staging.adminModel || !staging.adminYear) continue;
+
+    const vehicle = await prisma.vehicle.findFirst({
+      where: {
+        make: staging.adminMake,
+        model: staging.adminModel,
+        year: staging.adminYear,
+      },
+    });
+    if (!vehicle) continue;
+
+    const image = await prisma.image.create({
+      data: {
+        vehicleId: vehicle.id,
+        filename: staging.cloudinaryPublicId,
+        isActive: true,
+        isHardcoreEligible: staging.adminIsHardcoreEligible ?? false,
+        sourceUrl: staging.sourceUrl,
+        attribution: staging.attribution,
+        copyrightHolder: staging.adminCopyrightHolder ?? null,
+        isCropped: staging.adminIsCropped ?? false,
+        isLogoVisible: staging.adminIsLogoVisible ?? false,
+        isModelNameVisible: staging.adminIsModelNameVisible ?? false,
+        hasMultipleVehicles: staging.adminHasMultipleVehicles ?? false,
+        isFaceVisible: staging.adminIsFaceVisible ?? false,
+        isVehicleUnmodified: staging.adminIsVehicleUnmodified ?? true,
+      },
+    });
+    await prisma.imageStats.create({ data: { imageId: image.id } });
+
+    console.log(`  ✓ restored ${staging.cloudinaryPublicId}`);
+  }
+}
+
 async function main() {
   const totalNonPublished = NON_PUBLISHED_STATUSES.length * IMAGES_PER_STATUS;
 
-  console.log("Restoring previously deactivated images...");
-  await prisma.image.updateMany({
-    where: { isActive: false },
-    data: { isActive: true },
-  });
+  await restorePreviouslyDeletedImages();
 
   const allImages = await prisma.$queryRaw<ImageRow[]>`
     SELECT
@@ -124,17 +170,19 @@ async function main() {
   }
   console.log(`  ✓ PUBLISHED — ${publishedImages.length} images`);
 
-  console.log("Deactivating non-published images...");
+  console.log("Deleting non-published images from Image table...");
   const nonPublishedIds = nonPublishedImages.map((img) => img.id);
-  await prisma.image.updateMany({
-    where: { id: { in: nonPublishedIds } },
-    data: { isActive: false },
+  await prisma.guess.deleteMany({
+    where: { round: { imageId: { in: nonPublishedIds } } },
   });
+  await prisma.round.deleteMany({ where: { imageId: { in: nonPublishedIds } } });
+  await prisma.imageStats.deleteMany({ where: { imageId: { in: nonPublishedIds } } });
+  await prisma.image.deleteMany({ where: { id: { in: nonPublishedIds } } });
 
   console.log(`\nDone.`);
   console.log(`  ${publishedImages.length} images active as PUBLISHED`);
   console.log(
-    `  ${nonPublishedIds.length} images deactivated across ${NON_PUBLISHED_STATUSES.length} non-published statuses`
+    `  ${nonPublishedIds.length} images deleted across ${NON_PUBLISHED_STATUSES.length} non-published statuses`
   );
 }
 
