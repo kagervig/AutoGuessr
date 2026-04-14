@@ -18,7 +18,6 @@ export const GameMode = {
   Practice: "practice",
 } as const;
 export type GameMode = (typeof GameMode)[keyof typeof GameMode];
-
 export const MODES = [
   {
     id: GameMode.Easy,
