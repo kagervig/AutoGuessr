@@ -1,5 +1,7 @@
 // Returns a count of active images with each boolean flag set, in a single aggregate query.
 import { prisma } from "@/app/lib/prisma";
+import type { FlagsReport } from "./types";
+export type { FlagsReport } from "./types";
 
 interface AggregateRow {
   total:                 bigint | number;
@@ -12,18 +14,6 @@ interface AggregateRow {
   vehicle_unmodified:    bigint | number;
 }
 
-export interface FlagsReport {
-  total: number;
-  flags: {
-    hardcoreEligible:    number;
-    cropped:             number;
-    logoVisible:         number;
-    modelNameVisible:    number;
-    hasMultipleVehicles: number;
-    faceVisible:         number;
-    vehicleUnmodified:   number;
-  };
-}
 
 // Converts the single aggregate row into the FlagsReport shape.
 // Exported for unit testing without a DB connection.

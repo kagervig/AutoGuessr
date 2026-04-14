@@ -2,7 +2,7 @@
 
 // Admin panel section for running the image eligibility report by game mode tier.
 import { useState } from "react";
-import type { EligibilityReport } from "@/app/api/admin/reports/eligibility/route";
+import type { EligibilityReport } from "@/app/api/admin/reports/eligibility/types";
 
 interface SlotRowDef {
   label: string;

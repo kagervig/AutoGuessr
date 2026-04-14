@@ -2,7 +2,7 @@
 
 // Admin panel section showing active image counts by vehicle, make, and make+model.
 import { useCallback, useEffect, useState } from "react";
-import type { CoverageReport } from "@/app/api/admin/reports/coverage/route";
+import type { CoverageReport } from "@/app/api/admin/reports/coverage/types";
 
 type View = "vehicle" | "make" | "model";
 type SortDir = "asc" | "desc";

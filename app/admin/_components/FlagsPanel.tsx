@@ -2,7 +2,7 @@
 
 // Admin panel section showing a breakdown of active images by boolean flag.
 import { useEffect, useState } from "react";
-import type { FlagsReport } from "@/app/api/admin/flags/route";
+import type { FlagsReport } from "@/app/api/admin/flags/types";
 
 const FLAG_ROWS: { key: keyof FlagsReport["flags"]; label: string }[] = [
   { key: "hardcoreEligible",    label: "Hardcore eligible" },
