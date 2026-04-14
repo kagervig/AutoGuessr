@@ -14,7 +14,8 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d && npx prisma migrate deploy",
-    "db:dump": "bash scripts/dump-prod-subset.sh"
+    "db:dump": "bash scripts/dump-prod-subset.sh",
+    "db:seed": "npx prisma db seed"
   },
   "dependencies": {
     "@google/genai": "^1.48.0",

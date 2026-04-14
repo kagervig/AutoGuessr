@@ -1,410 +1,141 @@
+// Seeds the StagingImage table from the Image table. All images get PUBLISHED status
+// except for a random sample assigned to each of the other statuses, which are deactivated
+// in the Image table to simulate the pre-publish pipeline state.
 import "dotenv/config";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../app/generated/prisma/client";
+import { PrismaClient, StagingStatus } from "../app/generated/prisma/client";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const categories = [
-  { slug: "classic", label: "Classic" },
-  { slug: "muscle", label: "Muscle" },
-  { slug: "supercar", label: "Supercar" },
-  { slug: "exotic", label: "Exotic" },
-  { slug: "rare", label: "Rare" },
-  { slug: "sports", label: "Sports" },
-  { slug: "european", label: "European" },
-  { slug: "family", label: "Family" },
-  { slug: "compact", label: "Compact" },
-  { slug: "race", label: "Race" },
-  { slug: "rally", label: "Rally" },
-  { slug: "jdm", label: "JDM" },
-  { slug: "luxury", label: "Luxury" },
-  { slug: "electric", label: "Electric" },
-  { slug: "concept", label: "Concept" },
+const NON_PUBLISHED_STATUSES: StagingStatus[] = [
+  StagingStatus.PENDING_REVIEW,
+  StagingStatus.COMMUNITY_REVIEW,
+  StagingStatus.READY,
+  StagingStatus.REJECTED,
 ];
+const IMAGES_PER_STATUS = 4;
 
-const regions = [
-  { slug: "north_america", label: "North America" },
-  { slug: "europe", label: "Europe" },
-  { slug: "east_asia", label: "East Asia" },
-  { slug: "south_asia", label: "South Asia" },
-  { slug: "jdm", label: "JDM" },
-  { slug: "south_america", label: "South America" },
-  { slug: "australia", label: "Australia" },
-  { slug: "nz_aus", label: "NZ / Australia" },
-  { slug: "africa", label: "Africa" },
-  { slug: "uk", label: "United Kingdom" },
-];
-
-// Sample vehicles: make, model, year, trim, country, region slug, bodyStyle, era, rarity, category slugs
-const vehicles = [
-  // North America — Muscle / Classic
-  {
-    make: "Ford", model: "Mustang", year: 1969, trim: "Mach 1",
-    country: "US", region: "north_america", bodyStyle: "coupe" as const,
-    era: "classic" as const, rarity: "uncommon" as const,
-    categories: ["muscle", "classic"],
-    aliases: [{ alias: "Mustang Mach 1", aliasType: "full" as const }],
-  },
-  {
-    make: "Chevrolet", model: "Camaro", year: 1969, trim: "SS 396",
-    country: "US", region: "north_america", bodyStyle: "coupe" as const,
-    era: "classic" as const, rarity: "uncommon" as const,
-    categories: ["muscle", "classic"],
-    aliases: [
-      { alias: "Chevy Camaro", aliasType: "full" as const },
-      { alias: "Chevy", aliasType: "make" as const },
-    ],
-  },
-  {
-    make: "Dodge", model: "Challenger", year: 1970, trim: "R/T",
-    country: "US", region: "north_america", bodyStyle: "coupe" as const,
-    era: "classic" as const, rarity: "uncommon" as const,
-    categories: ["muscle", "classic"],
-    aliases: [],
-  },
-  {
-    make: "Ford", model: "GT40", year: 1966, trim: "Mk II",
-    country: "US", region: "north_america", bodyStyle: "coupe" as const,
-    era: "classic" as const, rarity: "rare" as const,
-    categories: ["race", "exotic", "classic"],
-    aliases: [],
-  },
-  {
-    make: "Chevrolet", model: "Corvette", year: 1963, trim: "Sting Ray",
-    country: "US", region: "north_america", bodyStyle: "coupe" as const,
-    era: "classic" as const, rarity: "uncommon" as const,
-    categories: ["sports", "classic"],
-    aliases: [{ alias: "Chevy Corvette", aliasType: "full" as const }],
-  },
-
-  // Europe — Supercar / Sports / Classic
-  {
-    make: "Ferrari", model: "458 Italia", year: 2009, trim: null,
-    country: "IT", region: "europe", bodyStyle: "coupe" as const,
-    era: "modern" as const, rarity: "rare" as const,
-    categories: ["supercar", "european"],
-    aliases: [{ alias: "458", aliasType: "model" as const }],
-  },
-  {
-    make: "Lamborghini", model: "Aventador", year: 2011, trim: "LP 700-4",
-    country: "IT", region: "europe", bodyStyle: "coupe" as const,
-    era: "modern" as const, rarity: "ultra_rare" as const,
-    categories: ["supercar", "exotic", "european"],
-    aliases: [{ alias: "Lambo", aliasType: "make" as const }],
-  },
-  {
-    make: "Porsche", model: "911", year: 2019, trim: "GT3",
-    country: "DE", region: "europe", bodyStyle: "coupe" as const,
-    era: "contemporary" as const, rarity: "uncommon" as const,
-    categories: ["sports", "race", "european"],
-    aliases: [{ alias: "911 GT3", aliasType: "full" as const }],
-  },
-  {
-    make: "McLaren", model: "F1", year: 1993, trim: null,
-    country: "GB", region: "uk", bodyStyle: "coupe" as const,
-    era: "retro" as const, rarity: "ultra_rare" as const,
-    categories: ["supercar", "exotic"],
-    aliases: [],
-  },
-  {
-    make: "Aston Martin", model: "DB5", year: 1963, trim: null,
-    country: "GB", region: "uk", bodyStyle: "coupe" as const,
-    era: "classic" as const, rarity: "rare" as const,
-    categories: ["classic", "luxury", "european"],
-    aliases: [],
-  },
-  {
-    make: "Bugatti", model: "Veyron", year: 2005, trim: "16.4",
-    country: "FR", region: "europe", bodyStyle: "coupe" as const,
-    era: "modern" as const, rarity: "ultra_rare" as const,
-    categories: ["supercar", "exotic", "european"],
-    aliases: [],
-  },
-  {
-    make: "BMW", model: "M3", year: 1986, trim: "E30",
-    country: "DE", region: "europe", bodyStyle: "sedan" as const,
-    era: "retro" as const, rarity: "uncommon" as const,
-    categories: ["sports", "european"],
-    aliases: [{ alias: "E30 M3", aliasType: "full" as const }],
-  },
-  {
-    make: "Jaguar", model: "E-Type", year: 1961, trim: "Series 1",
-    country: "GB", region: "uk", bodyStyle: "roadster" as const,
-    era: "classic" as const, rarity: "uncommon" as const,
-    categories: ["classic", "european"],
-    aliases: [{ alias: "XKE", aliasType: "model" as const }],
-  },
-
-  // JDM
-  {
-    make: "Toyota", model: "Supra", year: 1993, trim: "MK4 RZ",
-    country: "JP", region: "jdm", bodyStyle: "coupe" as const,
-    era: "retro" as const, rarity: "uncommon" as const,
-    categories: ["sports", "jdm"],
-    aliases: [{ alias: "MK4 Supra", aliasType: "full" as const }],
-  },
-  {
-    make: "Nissan", model: "Skyline GT-R", year: 1999, trim: "R34",
-    country: "JP", region: "jdm", bodyStyle: "coupe" as const,
-    era: "retro" as const, rarity: "rare" as const,
-    categories: ["sports", "jdm"],
-    aliases: [
-      { alias: "GT-R R34", aliasType: "full" as const },
-      { alias: "Godzilla", aliasType: "nickname" as const },
-    ],
-  },
-  {
-    make: "Honda", model: "NSX", year: 1990, trim: null,
-    country: "JP", region: "jdm", bodyStyle: "coupe" as const,
-    era: "retro" as const, rarity: "uncommon" as const,
-    categories: ["sports", "jdm"],
-    aliases: [{ alias: "Acura NSX", aliasType: "full" as const }],
-  },
-  {
-    make: "Mazda", model: "RX-7", year: 1992, trim: "FD",
-    country: "JP", region: "jdm", bodyStyle: "coupe" as const,
-    era: "retro" as const, rarity: "uncommon" as const,
-    categories: ["sports", "jdm"],
-    aliases: [{ alias: "FD RX-7", aliasType: "full" as const }],
-  },
-  {
-    make: "Mitsubishi", model: "Lancer Evolution", year: 1999, trim: "VI",
-    country: "JP", region: "jdm", bodyStyle: "sedan" as const,
-    era: "retro" as const, rarity: "uncommon" as const,
-    categories: ["sports", "rally", "jdm"],
-    aliases: [
-      { alias: "Evo VI", aliasType: "full" as const },
-      { alias: "Evo", aliasType: "nickname" as const },
-    ],
-  },
-
-  // Australia
-  {
-    make: "Ford", model: "Falcon GT", year: 1971, trim: "HO Phase III",
-    country: "AU", region: "australia", bodyStyle: "sedan" as const,
-    era: "classic" as const, rarity: "rare" as const,
-    categories: ["muscle", "classic"],
-    aliases: [{ alias: "GTHO", aliasType: "nickname" as const }],
-  },
-  {
-    make: "Holden", model: "Monaro", year: 1969, trim: "GTS 350",
-    country: "AU", region: "australia", bodyStyle: "coupe" as const,
-    era: "classic" as const, rarity: "rare" as const,
-    categories: ["muscle", "classic"],
-    aliases: [],
-  },
-];
-
+type ImageRow = {
+  id: string;
+  filename: string;
+  make: string;
+  model: string;
+  year: number;
+  trim: string | null;
+  regionSlug: string;
+  countryOfOrigin: string;
+  bodyStyle: string;
+  era: string;
+  rarity: string;
+};
 
 async function main() {
-  console.log("Seeding categories...");
-  const categoryMap = new Map<string, string>();
-  for (const cat of categories) {
-    const record = await prisma.category.upsert({
-      where: { slug: cat.slug },
-      update: {},
-      create: cat,
-    });
-    categoryMap.set(cat.slug, record.id);
-  }
+  const totalNonPublished = NON_PUBLISHED_STATUSES.length * IMAGES_PER_STATUS;
 
-  console.log("Seeding regions...");
-  const regionMap = new Map<string, string>();
-  for (const reg of regions) {
-    const record = await prisma.region.upsert({
-      where: { slug: reg.slug },
-      update: {},
-      create: reg,
-    });
-    regionMap.set(reg.slug, record.id);
-  }
-
-  console.log("Seeding feature flags...");
-  await prisma.featureFlag.upsert({
-    where: { key: "medium_year_guessing" },
-    update: {},
-    create: {
-      key: "medium_year_guessing",
-      enabled: false,
-      description: "Adds year input to medium mode, enabling year_bonus scoring",
-    },
+  console.log("Restoring previously deactivated images...");
+  await prisma.image.updateMany({
+    where: { isActive: false },
+    data: { isActive: true },
   });
 
-  console.log("Seeding vehicles...");
-  for (const v of vehicles) {
-    const regionId = regionMap.get(v.region);
-    if (!regionId) throw new Error(`Unknown region slug: ${v.region}`);
+  const allImages = await prisma.$queryRaw<ImageRow[]>`
+    SELECT
+      i.id,
+      i.filename,
+      v.make,
+      v.model,
+      v.year,
+      v.trim,
+      v."countryOfOrigin",
+      v."bodyStyle",
+      v.era,
+      v.rarity,
+      r.slug AS "regionSlug"
+    FROM "Image" i
+    JOIN "Vehicle" v ON v.id = i."vehicleId"
+    JOIN "Region" r ON r.id = v."regionId"
+    ORDER BY RANDOM()
+  `;
 
-    let vehicle = await prisma.vehicle.findFirst({
-      where: { make: v.make, model: v.model, year: v.year, trim: v.trim ?? null },
-    });
-    if (!vehicle) {
-      vehicle = await prisma.vehicle.create({
-        data: {
-          make: v.make,
-          model: v.model,
-          year: v.year,
-          trim: v.trim,
-          countryOfOrigin: v.country,
-          regionId,
-          bodyStyle: v.bodyStyle,
-          era: v.era,
-          rarity: v.rarity,
-        },
-      });
-    }
-
-    // Categories
-    for (const slug of v.categories) {
-      const categoryId = categoryMap.get(slug);
-      if (!categoryId) throw new Error(`Unknown category slug: ${slug}`);
-      await prisma.vehicleCategory.upsert({
-        where: { vehicleId_categoryId: { vehicleId: vehicle.id, categoryId } },
-        update: {},
-        create: { vehicleId: vehicle.id, categoryId },
-      });
-    }
-
-    // Aliases
-    for (const a of v.aliases) {
-      const existing = await prisma.vehicleAlias.findFirst({
-        where: { vehicleId: vehicle.id, alias: a.alias },
-      });
-      if (!existing) {
-        await prisma.vehicleAlias.create({
-          data: { vehicleId: vehicle.id, alias: a.alias, aliasType: a.aliasType },
-        });
-      }
-    }
-
-    // Placeholder image + stats
-    const filename = `placeholder_${v.make.toLowerCase().replace(/\s/g, "_")}_${v.model.toLowerCase().replace(/[\s-]/g, "_")}_${v.year}.jpg`;
-    const existingImage = await prisma.image.findFirst({ where: { filename } });
-    if (!existingImage) {
-      const image = await prisma.image.create({
-        data: {
-          vehicleId: vehicle.id,
-          filename,
-          isActive: true,
-          isHardcoreEligible: false,
-        },
-      });
-      await prisma.imageStats.create({
-        data: { imageId: image.id },
-      });
-    }
-
-    console.log(`  ✓ ${v.year} ${v.make} ${v.model}`);
+  if (allImages.length < totalNonPublished) {
+    throw new Error(
+      `Need at least ${totalNonPublished} images but only found ${allImages.length} in the database`
+    );
   }
 
-  console.log("Seeding staging fixtures...");
+  // First slice gets distributed across non-published statuses; the rest stay published.
+  const nonPublishedImages = allImages.slice(0, totalNonPublished);
+  const publishedImages = allImages.slice(totalNonPublished);
 
-  // Look up the existing Image records for the PUBLISHED and REJECTED fixtures.
-  // Their cloudinaryPublicId must match an existing Image.filename so that
-  // rejecting them triggers image deactivation. PENDING/READY fixtures use
-  // vehicle-named IDs that don't exist in Image.filename yet — this lets
-  // the publish flow create the Image record without a unique-constraint conflict.
-  const [camaroImg, lamboImg] = await Promise.all([
-    prisma.image.findFirst({ where: { vehicle: { make: "Chevrolet", model: "Camaro", year: 1969 } } }),
-    prisma.image.findFirst({ where: { vehicle: { make: "Lamborghini", model: "Aventador", year: 2011 } } }),
-  ]);
+  console.log("Clearing existing staging data...");
+  await prisma.communityVote.deleteMany();
+  await prisma.communityIdentification.deleteMany();
+  await prisma.stagingImage.deleteMany();
 
-  // Dev-only staging fixtures covering every admin workflow:
-  //   - PENDING_REVIEW with AI data only (requires admin to fill fields before publishing)
-  //   - PENDING_REVIEW with partial admin data already filled
-  //   - READY with all required fields (can be published immediately)
-  //   - PUBLISHED — cloudinaryPublicId matches an existing Image.filename so
-  //     reject triggers image deactivation
-  //   - REJECTED (test reactivating status back to PENDING_REVIEW)
-  const fixtures = [
-    {
-      cloudinaryPublicId: "autoguessr/toyota-supra-1993-001",
-      filename: "toyota-supra-1993-001.jpg",
-      status: "PENDING_REVIEW" as const,
-      aiMake: "Toyota", aiModel: "Supra", aiYear: 1993,
-      aiBodyStyle: "coupe", aiConfidence: 0.91,
-    },
-    {
-      cloudinaryPublicId: "autoguessr/porsche-911-gt3-2019-001",
-      filename: "porsche-911-gt3-2019-001.jpg",
-      status: "PENDING_REVIEW" as const,
-      aiMake: "Porsche", aiModel: "911", aiYear: 2019,
-      aiBodyStyle: "coupe", aiConfidence: 0.87,
-      adminMake: "Porsche", adminModel: "911", adminYear: 2019,
-    },
-    {
-      cloudinaryPublicId: "autoguessr/ford-mustang-mach1-1969-001",
-      filename: "ford-mustang-mach1-1969-001.jpg",
-      status: "READY" as const,
-      aiMake: "Ford", aiModel: "Mustang", aiYear: 1969,
-      aiBodyStyle: "coupe", aiConfidence: 0.95,
-      adminMake: "Ford", adminModel: "Mustang", adminYear: 1969,
-      adminBodyStyle: "coupe", adminEra: "classic", adminRarity: "uncommon",
-      adminRegionSlug: "north_america", adminCountryOfOrigin: "US",
-      adminCategories: ["muscle", "classic"],
-      adminIsHardcoreEligible: false, adminIsVehicleUnmodified: true,
-    },
-    {
-      cloudinaryPublicId: "autoguessr/ferrari-458-italia-2009-001",
-      filename: "ferrari-458-italia-2009-001.jpg",
-      status: "READY" as const,
-      aiMake: "Ferrari", aiModel: "458 Italia", aiYear: 2009,
-      aiBodyStyle: "coupe", aiConfidence: 0.93,
-      adminMake: "Ferrari", adminModel: "458 Italia", adminYear: 2009,
-      adminBodyStyle: "coupe", adminEra: "modern", adminRarity: "rare",
-      adminRegionSlug: "europe", adminCountryOfOrigin: "IT",
-      adminCategories: ["supercar", "european"],
-      adminIsHardcoreEligible: true, adminIsVehicleUnmodified: true,
-    },
-    camaroImg && {
-      cloudinaryPublicId: camaroImg.filename,
-      filename: camaroImg.filename,
-      status: "PUBLISHED" as const,
-      aiMake: "Chevrolet", aiModel: "Camaro", aiYear: 1969,
-      aiBodyStyle: "coupe", aiConfidence: 0.89,
-      adminMake: "Chevrolet", adminModel: "Camaro", adminYear: 1969,
-      adminBodyStyle: "coupe", adminEra: "classic", adminRarity: "uncommon",
-      adminRegionSlug: "north_america", adminCountryOfOrigin: "US",
-      adminCategories: ["muscle", "classic"],
-      adminIsHardcoreEligible: false, adminIsVehicleUnmodified: true,
-      reviewedAt: new Date(),
-    },
-    lamboImg && {
-      cloudinaryPublicId: lamboImg.filename,
-      filename: lamboImg.filename,
-      status: "REJECTED" as const,
-      aiMake: "Lamborghini", aiModel: "Aventador", aiYear: 2011,
-      aiBodyStyle: "coupe", aiConfidence: 0.78,
-      adminMake: "Lamborghini", adminModel: "Aventador", adminYear: 2011,
-      adminBodyStyle: "coupe", adminEra: "modern", adminRarity: "ultra_rare",
-      adminRegionSlug: "europe", adminCountryOfOrigin: "IT",
-      adminCategories: ["supercar", "exotic", "european"],
-      adminIsHardcoreEligible: true, adminIsVehicleUnmodified: true,
-      reviewedAt: new Date(),
-    },
-  ].filter(Boolean) as NonNullable<(typeof fixtures)[number]>[];
+  console.log("Seeding staging images...");
 
-  let stagingCount = 0;
-  for (const fixture of fixtures) {
-    const existing = await prisma.stagingImage.findUnique({
-      where: { cloudinaryPublicId: fixture.cloudinaryPublicId },
-    });
-    if (existing) continue;
-
-    await prisma.stagingImage.create({ data: fixture });
-    console.log(`  ✓ ${fixture.status} — ${fixture.cloudinaryPublicId}`);
-    stagingCount++;
+  for (let i = 0; i < NON_PUBLISHED_STATUSES.length; i++) {
+    const status = NON_PUBLISHED_STATUSES[i];
+    const batch = nonPublishedImages.slice(
+      i * IMAGES_PER_STATUS,
+      (i + 1) * IMAGES_PER_STATUS
+    );
+    for (const image of batch) {
+      await prisma.stagingImage.create({
+        data: {
+          cloudinaryPublicId: image.filename,
+          filename: image.filename,
+          status,
+          adminMake: image.make,
+          adminModel: image.model,
+          adminYear: image.year,
+          adminTrim: image.trim,
+          adminRegionSlug: image.regionSlug,
+          adminCountryOfOrigin: image.countryOfOrigin,
+          adminBodyStyle: image.bodyStyle,
+          adminEra: image.era,
+          adminRarity: image.rarity,
+        },
+      });
+      console.log(`  ✓ ${status} — ${image.filename}`);
+    }
   }
 
-  console.log("\nDone. Seeded:");
-  console.log(`  ${categories.length} categories`);
-  console.log(`  ${regions.length} regions`);
-  console.log(`  1 feature flag`);
-  console.log(`  ${vehicles.length} vehicles with placeholder images`);
-  console.log(`  ${stagingCount} staging fixtures`);
+  for (const image of publishedImages) {
+    await prisma.stagingImage.create({
+      data: {
+        cloudinaryPublicId: image.filename,
+        filename: image.filename,
+        status: StagingStatus.PUBLISHED,
+        adminMake: image.make,
+        adminModel: image.model,
+        adminYear: image.year,
+        adminTrim: image.trim,
+        adminRegionSlug: image.regionSlug,
+        adminCountryOfOrigin: image.countryOfOrigin,
+        adminBodyStyle: image.bodyStyle,
+        adminEra: image.era,
+        adminRarity: image.rarity,
+      },
+    });
+  }
+  console.log(`  ✓ PUBLISHED — ${publishedImages.length} images`);
+
+  console.log("Deactivating non-published images...");
+  const nonPublishedIds = nonPublishedImages.map((img) => img.id);
+  await prisma.image.updateMany({
+    where: { id: { in: nonPublishedIds } },
+    data: { isActive: false },
+  });
+
+  console.log(`\nDone.`);
+  console.log(`  ${publishedImages.length} images active as PUBLISHED`);
+  console.log(
+    `  ${nonPublishedIds.length} images deactivated across ${NON_PUBLISHED_STATUSES.length} non-published statuses`
+  );
 }
 
 main()
