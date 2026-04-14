@@ -325,7 +325,7 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
   let result;
   try {
     result = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
