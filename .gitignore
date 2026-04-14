@@ -4,6 +4,7 @@
 .env.test
 .env.production
 coverage/
+!app/**/coverage/
 
 # Prisma
 app/generated/
