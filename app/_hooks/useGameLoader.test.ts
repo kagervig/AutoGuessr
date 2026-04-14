@@ -107,8 +107,8 @@ describe("useGameLoader", () => {
     );
     await waitFor(() => expect(result.current.loading).toBe(false));
     const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([url]: [string]) => url.startsWith("/api/game"),
+      ([url]: string[]) => url.startsWith("/api/game"),
     );
-    expect(fetchCall[0]).toContain("cf_token=abc123");
+    expect(fetchCall![0]).toContain("cf_token=abc123");
   });
 });

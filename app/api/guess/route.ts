@@ -129,6 +129,8 @@ export async function POST(request: NextRequest) {
 
   const totalPointsEarned = scoring.pointsEarned + proBonus;
 
+  const imageId = round.image.id;
+
   const [guess] = await prisma.$transaction([
     prisma.guess.create({
       data: {
@@ -150,16 +152,26 @@ export async function POST(request: NextRequest) {
       },
     }),
     prisma.imageStats.upsert({
-      where: { imageId: round.image.id },
+      where: { imageId },
       update: isCorrect
-        ? { correctGuesses: { increment: 1 } }
-        : { incorrectGuesses: { increment: 1 } },
+        ? { correctGuesses: { increment: 1 }, totalServes: { increment: 1 } }
+        : { incorrectGuesses: { increment: 1 }, totalServes: { increment: 1 } },
       create: {
-        imageId: round.image.id,
+        imageId,
         correctGuesses: isCorrect ? 1 : 0,
         incorrectGuesses: isCorrect ? 0 : 1,
+        totalServes: 1,
+        correctRatio: isCorrect ? 1.0 : 0.0,
       },
     }),
+    prisma.$executeRaw`
+      UPDATE "ImageStats"
+      SET "correctRatio" = CASE
+        WHEN ("correctGuesses" + "incorrectGuesses") = 0 THEN 1.0
+        ELSE CAST("correctGuesses" AS FLOAT) / ("correctGuesses" + "incorrectGuesses")
+      END
+      WHERE "imageId" = ${imageId}
+    `,
   ]);
 
   return Response.json({

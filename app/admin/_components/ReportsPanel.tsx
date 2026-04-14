@@ -2,25 +2,25 @@
 
 // Admin panel section for running the image eligibility report by game mode tier.
 import { useState } from "react";
-import type { EligibilityReport } from "@/app/api/admin/reports/eligibility/types";
+import type { EligibilityReport, SlotCounts } from "@/app/api/admin/reports/eligibility/types";
 
 interface SlotRowDef {
   label: string;
   criteria: string;
   need: number | null; // null = informational pool row (no status badge)
-  count: number;
+  count: SlotCounts;
   indent?: boolean;
 }
 
-function StatusBadge({ need, count }: { need: number | null; count: number }) {
+function StatusBadge({ need, count }: { need: number | null; count: SlotCounts }) {
   if (need === null) return <span className="text-gray-300">—</span>;
-  if (count === 0)
+  if (count.images === 0)
     return (
       <span className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-red-100 text-red-700">
         Empty
       </span>
     );
-  if (count < need)
+  if (count.images < need)
     return (
       <span className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700">
         Low
@@ -53,7 +53,8 @@ function ModeSection({ title, subtitle, rows }: { title: string; subtitle: strin
               <th className={thClass}>Slot</th>
               <th className={thClass}>Criteria</th>
               <th className={`${thClass} text-right`}>Need</th>
-              <th className={`${thClass} text-right`}>Eligible</th>
+              <th className={`${thClass} text-right`}>Images</th>
+              <th className={`${thClass} text-right`}>Distinct Cars</th>
               <th className={`${thClass} text-center`}>Status</th>
             </tr>
           </thead>
@@ -69,7 +70,10 @@ function ModeSection({ title, subtitle, rows }: { title: string; subtitle: strin
                   <NeedCell need={row.need} />
                 </td>
                 <td className="px-3 py-2 text-right tabular-nums font-medium text-gray-800">
-                  {row.count.toLocaleString()}
+                  {row.count.images.toLocaleString()}
+                </td>
+                <td className="px-3 py-2 text-right tabular-nums text-gray-500">
+                  {row.count.distinctCars.toLocaleString()}
                 </td>
                 <td className="px-3 py-2 text-center">
                   <StatusBadge need={row.need} count={row.count} />
@@ -108,14 +112,14 @@ function standardRows(r: EligibilityReport["standard"]): SlotRowDef[] {
 
 function hardcoreRows(r: EligibilityReport["hardcore"]): SlotRowDef[] {
   return [
-    { label: "Total pool",              criteria: "correctRatio < 0.80 or never shown",          need: null, count: r.pool },
-    { label: "Slot A – Cropped (4×)",   criteria: "isCropped",                                   need: 4,    count: r.slotA },
-    { label: "with model name",         criteria: "isCropped + isModelNameVisible (max 2 of 4)", need: null, count: r.slotAWithModel, indent: true },
-    { label: "without model name",      criteria: "isCropped + !isModelNameVisible (min 2 of 4)",need: null, count: r.slotANoModel,   indent: true },
-    { label: "Slot B – Hard/HC eligible",criteria: "correctRatio < 0.40 or isHardcoreEligible", need: 2,    count: r.slotB },
-    { label: "Slot C – Rare vehicle",   criteria: "rarity is rare or ultra_rare",                need: 1,    count: r.slotC },
-    { label: "Slot D – HC eligible",    criteria: "isHardcoreEligible",                          need: 2,    count: r.slotD },
-    { label: "Slot E – Fill",           criteria: "any from pool",                               need: 1,    count: r.slotE },
+    { label: "Total pool",               criteria: "correctRatio < 0.80 or never shown",          need: null, count: r.pool },
+    { label: "Slot A – Cropped (4×)",    criteria: "isCropped",                                   need: 4,    count: r.slotA },
+    { label: "with model name",          criteria: "isCropped + isModelNameVisible (max 2 of 4)", need: null, count: r.slotAWithModel, indent: true },
+    { label: "without model name",       criteria: "isCropped + !isModelNameVisible (min 2 of 4)",need: null, count: r.slotANoModel,   indent: true },
+    { label: "Slot B – Hard/HC eligible",criteria: "correctRatio < 0.40 or isHardcoreEligible",  need: 2,    count: r.slotB },
+    { label: "Slot C – Rare vehicle",    criteria: "rarity is rare or ultra_rare",                need: 1,    count: r.slotC },
+    { label: "Slot D – HC eligible",     criteria: "isHardcoreEligible",                          need: 2,    count: r.slotD },
+    { label: "Slot E – Fill",            criteria: "any from pool",                               need: 1,    count: r.slotE },
   ];
 }
 

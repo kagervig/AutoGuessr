@@ -139,7 +139,7 @@ function makeVehicle(
   id: string,
   make: string,
   model: string,
-  era: string,
+  era: VehicleForDistractor["era"],
   categorySlugs: string[] = []
 ): VehicleForDistractor {
   return { id, make, model, era, categorySlugs };
