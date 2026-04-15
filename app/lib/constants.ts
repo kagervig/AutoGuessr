@@ -9,15 +9,6 @@ export const ERAS = ["classic", "retro", "modern", "contemporary"] as const;
 
 export const RARITIES = ["common", "uncommon", "rare", "ultra_rare"] as const;
 
-export enum GameMode {
-  Easy = "easy",
-  Standard = "standard",
-  Hardcore = "hardcore",
-  TimeAttack = "time_attack",
-  Custom = "custom",
-  Practice = "practice",
-}
-
 export const MODES = [
   {
     id: GameMode.Easy,

@@ -60,7 +60,15 @@ PROD_DATABASE_URL="<prod connection string>" npm run db:dump
 
 The number controls how many vehicles to pull (defaults to 200). Vehicles are selected by most active images first.
 
-**6. Start the dev server**
+**6. Seed the staging table**
+
+```bash
+npm run db:seed
+```
+
+Populates `StagingImage` with all images from the database. All images default to `PUBLISHED`; a random sample of 4 per status is assigned to each of the other statuses (`PENDING_REVIEW`, `COMMUNITY_REVIEW`, `READY`, `REJECTED`) and removed from the `Image` table to simulate the pre-publish pipeline state.
+
+**7. Start the dev server**
 
 ```bash
 npm run dev
