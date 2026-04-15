@@ -149,7 +149,7 @@ const approxMax = maxScore ?? 0;
               }}
               className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-5 py-3 rounded-full hover:brightness-110 transition-all text-xs sm:text-sm"
             >
-              <RotateCcw className="w-4 h-4 shrink-0" /> Play Game
+              <RotateCcw className="w-4 h-4 shrink-0" /> {hasToken ? "Play Again" : "Play Game"}
             </button>
             {!hasToken && (
               <button
