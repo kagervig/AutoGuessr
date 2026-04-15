@@ -327,4 +327,79 @@ describe("ImagesPanel", () => {
       expect(screen.queryByText("Region not found")).not.toBeInTheDocument();
     });
   });
+
+  describe("deactivate", () => {
+    it("shows Deactivate button only for active images", async () => {
+      render(<ImagesPanel />);
+      await waitFor(() => expect(screen.queryByText("Loading…")).not.toBeInTheDocument());
+      await userEvent.click(screen.getByAltText("cars/img1"));
+      expect(screen.getByRole("button", { name: "Deactivate" })).toBeInTheDocument();
+    });
+
+    it("does not show Deactivate button for inactive images", async () => {
+      render(<ImagesPanel />);
+      await waitFor(() => expect(screen.queryByText("Loading…")).not.toBeInTheDocument());
+      await userEvent.click(screen.getByAltText("cars/img2"));
+      expect(screen.queryByRole("button", { name: "Deactivate" })).not.toBeInTheDocument();
+    });
+
+    it("sends PUT with isActive false when Deactivate is clicked", async () => {
+      render(<ImagesPanel />);
+      await waitFor(() => expect(screen.queryByText("Loading…")).not.toBeInTheDocument());
+      await userEvent.click(screen.getByAltText("cars/img1"));
+      await userEvent.click(screen.getByRole("button", { name: "Deactivate" }));
+
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const putCall = calls.find(([url, init]: [string, RequestInit]) =>
+        url === "/api/admin/images/img-1" && init?.method === "PUT"
+      );
+      expect(putCall).toBeDefined();
+      expect(JSON.parse(putCall[1].body as string)).toEqual({ isActive: false });
+    });
+
+    it("updates the image card to Inactive after deactivation", async () => {
+      global.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (url === "/api/admin/images/img-1" && init?.method === "PUT") {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ ...ACTIVE_IMAGE, isActive: false, vehicle: ACTIVE_IMAGE.vehicle }) } as Response);
+        }
+        return defaultFetchImpl(url, init);
+      });
+
+      render(<ImagesPanel />);
+      await waitFor(() => expect(screen.queryByText("Loading…")).not.toBeInTheDocument());
+      await userEvent.click(screen.getByAltText("cars/img1"));
+      await userEvent.click(screen.getByRole("button", { name: "Deactivate" }));
+      await waitFor(() => expect(screen.getAllByText("Inactive")).toHaveLength(2));
+    });
+
+    it("hides the Deactivate button after deactivation", async () => {
+      global.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (url === "/api/admin/images/img-1" && init?.method === "PUT") {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ ...ACTIVE_IMAGE, isActive: false, vehicle: ACTIVE_IMAGE.vehicle }) } as Response);
+        }
+        return defaultFetchImpl(url, init);
+      });
+
+      render(<ImagesPanel />);
+      await waitFor(() => expect(screen.queryByText("Loading…")).not.toBeInTheDocument());
+      await userEvent.click(screen.getByAltText("cars/img1"));
+      await userEvent.click(screen.getByRole("button", { name: "Deactivate" }));
+      await waitFor(() => expect(screen.queryByRole("button", { name: "Deactivate" })).not.toBeInTheDocument());
+    });
+
+    it("shows an error message when deactivation fails", async () => {
+      global.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (url === "/api/admin/images/img-1" && init?.method === "PUT") {
+          return Promise.resolve({ ok: false, json: () => Promise.resolve({ error: "Deactivate failed" }) } as Response);
+        }
+        return defaultFetchImpl(url, init);
+      });
+
+      render(<ImagesPanel />);
+      await waitFor(() => expect(screen.queryByText("Loading…")).not.toBeInTheDocument());
+      await userEvent.click(screen.getByAltText("cars/img1"));
+      await userEvent.click(screen.getByRole("button", { name: "Deactivate" }));
+      await waitFor(() => expect(screen.getByText("Deactivate failed")).toBeInTheDocument());
+    });
+  });
 });

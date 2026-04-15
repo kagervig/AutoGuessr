@@ -10,6 +10,7 @@ vi.mock("@/app/lib/prisma", () => ({
     region: { findUnique: vi.fn() },
     vehicleCategory: { deleteMany: vi.fn(), createMany: vi.fn() },
     category: { findMany: vi.fn() },
+    stagingImage: { updateMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -18,7 +19,7 @@ import { prisma } from "@/app/lib/prisma";
 
 const PARAMS = { params: Promise.resolve({ id: "img-1" }) };
 
-const DB_IMAGE_ROW = { vehicleId: "v-1" };
+const DB_IMAGE_ROW = { vehicleId: "v-1", filename: "cars/supra" };
 
 const UPDATED_IMAGE = {
   id: "img-1",
@@ -68,6 +69,7 @@ function setupHappyPath() {
       vehicle: { update: vi.fn() },
       vehicleCategory: { deleteMany: vi.fn(), createMany: vi.fn() },
       category: { findMany: vi.fn().mockResolvedValue([]) },
+      stagingImage: { updateMany: vi.fn() },
     });
   });
   vi.mocked(prisma.vehicle.findUnique).mockResolvedValue(FULL_VEHICLE as never);
@@ -127,6 +129,7 @@ describe("PUT /api/admin/images/[id]", () => {
           vehicle: { update: vi.fn() },
           vehicleCategory: { deleteMany: vi.fn(), createMany: vi.fn() },
           category: { findMany: vi.fn().mockResolvedValue([]) },
+          stagingImage: { updateMany: vi.fn() },
         });
       });
 
@@ -148,6 +151,7 @@ describe("PUT /api/admin/images/[id]", () => {
           vehicle: { update: vi.fn() },
           vehicleCategory: { deleteMany: vi.fn(), createMany: vi.fn() },
           category: { findMany: vi.fn().mockResolvedValue([]) },
+          stagingImage: { updateMany: vi.fn() },
         });
       });
 
@@ -295,6 +299,65 @@ describe("PUT /api/admin/images/[id]", () => {
       expect(prisma.vehicle.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: "v-1" } })
       );
+    });
+  });
+
+  describe("staging image sync on deactivation", () => {
+    it("rejects the corresponding staging image when isActive is set to false", async () => {
+      const stagingUpdateMany = vi.fn();
+      vi.mocked(prisma.image.findUnique).mockResolvedValue(DB_IMAGE_ROW as never);
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn({
+          image: { update: vi.fn().mockResolvedValue({ ...UPDATED_IMAGE, isActive: false }) },
+          vehicle: { update: vi.fn() },
+          vehicleCategory: { deleteMany: vi.fn(), createMany: vi.fn() },
+          category: { findMany: vi.fn().mockResolvedValue([]) },
+          stagingImage: { updateMany: stagingUpdateMany },
+        });
+      });
+      vi.mocked(prisma.vehicle.findUnique).mockResolvedValue(FULL_VEHICLE as never);
+
+      await PUT(makeRequest({ isActive: false }), PARAMS);
+      expect(stagingUpdateMany).toHaveBeenCalledWith({
+        where: { cloudinaryPublicId: "cars/supra", status: "PUBLISHED" },
+        data: { status: "REJECTED" },
+      });
+    });
+
+    it("does not touch staging images when isActive is set to true", async () => {
+      const stagingUpdateMany = vi.fn();
+      vi.mocked(prisma.image.findUnique).mockResolvedValue(DB_IMAGE_ROW as never);
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn({
+          image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
+          vehicle: { update: vi.fn() },
+          vehicleCategory: { deleteMany: vi.fn(), createMany: vi.fn() },
+          category: { findMany: vi.fn().mockResolvedValue([]) },
+          stagingImage: { updateMany: stagingUpdateMany },
+        });
+      });
+      vi.mocked(prisma.vehicle.findUnique).mockResolvedValue(FULL_VEHICLE as never);
+
+      await PUT(makeRequest({ isActive: true }), PARAMS);
+      expect(stagingUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it("does not touch staging images when isActive is not provided", async () => {
+      const stagingUpdateMany = vi.fn();
+      vi.mocked(prisma.image.findUnique).mockResolvedValue(DB_IMAGE_ROW as never);
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn({
+          image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
+          vehicle: { update: vi.fn() },
+          vehicleCategory: { deleteMany: vi.fn(), createMany: vi.fn() },
+          category: { findMany: vi.fn().mockResolvedValue([]) },
+          stagingImage: { updateMany: stagingUpdateMany },
+        });
+      });
+      vi.mocked(prisma.vehicle.findUnique).mockResolvedValue(FULL_VEHICLE as never);
+
+      await PUT(makeRequest({ make: "Toyota" }), PARAMS);
+      expect(stagingUpdateMany).not.toHaveBeenCalled();
     });
   });
 });

@@ -35,7 +35,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
   const image = await prisma.image.findUnique({
     where: { id },
-    select: { vehicleId: true },
+    select: { vehicleId: true, filename: true },
   });
 
   if (!image) {
@@ -104,6 +104,14 @@ export async function PUT(request: NextRequest, { params }: Params) {
           data: categoryRecords.map((c) => ({ vehicleId: image.vehicleId, categoryId: c.id })),
         });
       }
+    }
+
+    // Mirror the staging panel's reverse behaviour: deactivating a published image rejects its staging record.
+    if (isActive === false) {
+      await tx.stagingImage.updateMany({
+        where: { cloudinaryPublicId: image.filename, status: "PUBLISHED" },
+        data: { status: "REJECTED" },
+      });
     }
 
     return updatedImage;

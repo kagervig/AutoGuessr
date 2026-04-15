@@ -94,10 +94,16 @@ export default function ImagesPanel() {
   const [trimOptions] = useState<string[]>([]);
   const [countryOptions, setCountryOptions] = useState<string[]>([]);
   const [regionOptions, setRegionOptions] = useState<string[]>([]);
-  const [categoryOptions, setCategoryOptions] = useState<{ slug: string; label: string }[]>([]);
-  const [copyrightHolderOptions, setCopyrightHolderOptions] = useState<string[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<
+    { slug: string; label: string }[]
+  >([]);
+  const [copyrightHolderOptions, setCopyrightHolderOptions] = useState<
+    string[]
+  >([]);
   const [selectedMake, setSelectedMake] = useState<string>("");
-  const [activeFilter, setActiveFilter] = useState<"ALL" | "active" | "inactive">("ALL");
+  const [activeFilter, setActiveFilter] = useState<
+    "ALL" | "active" | "inactive"
+  >("ALL");
 
   useEffect(() => {
     let cancelled = false;
@@ -108,22 +114,44 @@ export default function ImagesPanel() {
         setImages(data.items);
         setLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Load autocomplete options once on mount
   useEffect(() => {
     const safeJson = (r: Response) => r.json().catch(() => null);
     fetch("/api/admin/autocomplete?field=make")
-      .then(safeJson).then((d) => d && setMakeOptions(d));
+      .then(safeJson)
+      .then((d) => d && setMakeOptions(d));
     fetch("/api/admin/autocomplete?field=country")
-      .then(safeJson).then((d) => d && setCountryOptions(d));
+      .then(safeJson)
+      .then((d) => d && setCountryOptions(d));
     fetch("/api/admin/autocomplete?field=copyright_holder")
-      .then(safeJson).then((d) => d && setCopyrightHolderOptions(d));
+      .then(safeJson)
+      .then((d) => d && setCopyrightHolderOptions(d));
     fetch("/api/filters")
-      .then(safeJson).then((d) => d && setRegionOptions((d.regions ?? []).map((r: { slug: string }) => r.slug)));
+      .then(safeJson)
+      .then(
+        (d) =>
+          d &&
+          setRegionOptions(
+            (d.regions ?? []).map((r: { slug: string }) => r.slug),
+          ),
+      );
     fetch("/api/admin/categories")
-      .then(safeJson).then((d) => d && setCategoryOptions(d.map((c: { slug: string; label: string }) => ({ slug: c.slug, label: c.label }))));
+      .then(safeJson)
+      .then(
+        (d) =>
+          d &&
+          setCategoryOptions(
+            d.map((c: { slug: string; label: string }) => ({
+              slug: c.slug,
+              label: c.label,
+            })),
+          ),
+      );
   }, []);
 
   // Reload model options when make changes
@@ -202,7 +230,7 @@ export default function ImagesPanel() {
             isVehicleUnmodified: updated.isVehicleUnmodified,
             vehicle: updated.vehicle ?? img.vehicle,
           };
-        })
+        }),
       );
     } else {
       const d = await res.json().catch(() => ({}));
@@ -210,7 +238,30 @@ export default function ImagesPanel() {
     }
   }
 
-  const selected = selectedId ? (images.find((img) => img.id === selectedId) ?? null) : null;
+  async function deactivate() {
+    if (!selectedId) return;
+    setSaving(true);
+    setError(null);
+    const res = await fetch(`/api/admin/images/${selectedId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive: false }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      setImages((prev) =>
+        prev.map((img) => (img.id === selectedId ? { ...img, isActive: false } : img))
+      );
+      setEditForm((f) => f && { ...f, isActive: false });
+    } else {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error ?? "Deactivate failed");
+    }
+  }
+
+  const selected = selectedId
+    ? (images.find((img) => img.id === selectedId) ?? null)
+    : null;
 
   const filteredImages = images.filter((img) => {
     if (activeFilter === "active") return img.isActive;
@@ -235,7 +286,10 @@ export default function ImagesPanel() {
           ).map(([filter, label]) => (
             <button
               key={filter}
-              onClick={() => { setActiveFilter(filter); setSelectedId(null); }}
+              onClick={() => {
+                setActiveFilter(filter);
+                setSelectedId(null);
+              }}
               className={`px-3 py-2.5 text-sm border-b-2 transition-colors ${
                 activeFilter === filter
                   ? "border-gray-900 text-gray-900 font-medium"
@@ -249,233 +303,348 @@ export default function ImagesPanel() {
       </div>
 
       <div className="flex flex-1 min-h-0">
-      {/* Image grid */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {loading ? (
-          <p className="text-sm text-gray-400 p-4">Loading…</p>
-        ) : filteredImages.length === 0 ? (
-          <p className="text-sm text-gray-400 p-4">No images.</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {filteredImages.map((img) => (
-              <div
-                key={img.id}
-                onClick={() => handleImageClick(img)}
-                className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
-                  selectedId === img.id
-                    ? "border-gray-900 shadow-md"
-                    : "border-transparent hover:border-gray-300"
-                }`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.imageUrl}
-                  alt={img.filename}
-                  className="w-full aspect-[4/3] object-cover bg-gray-100"
-                />
-                <div className="p-1.5 bg-white">
-                  <span
-                    className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                      img.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-600"
-                    }`}
-                  >
-                    {img.isActive ? "Active" : "Inactive"}
-                  </span>
-                  <p className="text-[11px] text-gray-600 mt-0.5 truncate">
-                    {img.vehicle.make} {img.vehicle.model}
-                  </p>
-                  <p className="text-[10px] text-gray-400">{img.vehicle.year}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Detail panel */}
-      {selected && editForm && (
-        <div className="w-96 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0">
-          <div className="p-4 space-y-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={selected.imageUrl}
-              alt={selected.filename}
-              className="w-full aspect-[4/3] object-cover rounded-lg bg-gray-100"
-            />
-
-            {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
-
-            {/* Vehicle details */}
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Vehicle details
-              </p>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-0.5">Make</label>
-                <Combobox
-                  variant="admin"
-                  value={editForm.make}
-                  onChange={(v) => { setSelectedMake(v); setEditForm((f) => f && { ...f, make: v }); }}
-                  options={makeOptions}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-0.5">Model</label>
-                <Combobox
-                  variant="admin"
-                  value={editForm.model}
-                  onChange={(v) => setEditForm((f) => f && { ...f, model: v })}
-                  options={modelOptions}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-0.5">Trim</label>
-                <Combobox
-                  variant="admin"
-                  value={editForm.trim}
-                  onChange={(v) => setEditForm((f) => f && { ...f, trim: v })}
-                  options={trimOptions}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-0.5">Year</label>
-                <input
-                  type="number"
-                  value={editForm.year}
-                  onChange={(e) => setEditForm((f) => f && { ...f, year: e.target.value })}
-                  className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
-                  placeholder="e.g. 1994"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Body style</label>
-                  <select
-                    value={editForm.bodyStyle}
-                    onChange={(e) => setEditForm((f) => f && { ...f, bodyStyle: e.target.value })}
-                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
-                  >
-                    <option value="">— select —</option>
-                    {BODY_STYLES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Era</label>
-                  <select
-                    value={editForm.era}
-                    onChange={(e) => setEditForm((f) => f && { ...f, era: e.target.value })}
-                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
-                  >
-                    <option value="">— select —</option>
-                    {ERAS.map((e) => (
-                      <option key={e} value={e}>{e}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Rarity</label>
-                  <select
-                    value={editForm.rarity}
-                    onChange={(e) => setEditForm((f) => f && { ...f, rarity: e.target.value })}
-                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
-                  >
-                    <option value="">— select —</option>
-                    {RARITIES.map((r) => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Region slug</label>
-                  <Combobox
-                    variant="admin"
-                    value={editForm.regionSlug}
-                    onChange={(v) => setEditForm((f) => f && { ...f, regionSlug: v })}
-                    options={regionOptions}
-                    placeholder="e.g. japan"
+        {/* Image grid */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {loading ? (
+            <p className="text-sm text-gray-400 p-4">Loading…</p>
+          ) : filteredImages.length === 0 ? (
+            <p className="text-sm text-gray-400 p-4">No images.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {filteredImages.map((img) => (
+                <div
+                  key={img.id}
+                  onClick={() => handleImageClick(img)}
+                  className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                    selectedId === img.id
+                      ? "border-gray-900 shadow-md"
+                      : "border-transparent hover:border-gray-300"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.imageUrl}
+                    alt={img.filename}
+                    className="w-full aspect-[4/3] object-cover bg-gray-100"
                   />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-0.5">Country of origin</label>
-                <Combobox
-                  variant="admin"
-                  value={editForm.countryOfOrigin}
-                  onChange={(v) => setEditForm((f) => f && { ...f, countryOfOrigin: v })}
-                  options={countryOptions}
-                  placeholder="e.g. Japan"
-                />
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Categories</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {categoryOptions.map(({ slug, label }) => (
-                    <button
-                      key={slug}
-                      type="button"
-                      onClick={() => toggleCategory(slug)}
-                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${
-                        editForm.categories.includes(slug)
-                          ? "bg-gray-900 text-white border-gray-900"
-                          : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+                  <div className="p-1.5 bg-white">
+                    <span
+                      className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                        img.isActive
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-600"
                       }`}
                     >
-                      {label}
-                    </button>
-                  ))}
+                      {img.isActive ? "Active" : "Inactive"}
+                    </span>
+                    <p className="text-[11px] text-gray-600 mt-0.5 truncate">
+                      {img.vehicle.make} {img.vehicle.model}
+                    </p>
+                    <p className="text-[10px] text-gray-400">
+                      {img.vehicle.year}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Detail panel */}
+        {selected && editForm && (
+          <div className="w-96 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0">
+            <div className="p-4 space-y-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selected.imageUrl}
+                alt={selected.filename}
+                className="w-full aspect-[4/3] object-cover rounded-lg bg-gray-100"
+              />
+
+              {error && (
+                <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">
+                  {error}
+                </p>
+              )}
+
+              {/* Vehicle details */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Vehicle details
+                </p>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">
+                    Make
+                  </label>
+                  <Combobox
+                    variant="admin"
+                    value={editForm.make}
+                    onChange={(v) => {
+                      setSelectedMake(v);
+                      setEditForm((f) => f && { ...f, make: v });
+                    }}
+                    options={makeOptions}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">
+                    Model
+                  </label>
+                  <Combobox
+                    variant="admin"
+                    value={editForm.model}
+                    onChange={(v) =>
+                      setEditForm((f) => f && { ...f, model: v })
+                    }
+                    options={modelOptions}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">
+                    Trim
+                  </label>
+                  <Combobox
+                    variant="admin"
+                    value={editForm.trim}
+                    onChange={(v) => setEditForm((f) => f && { ...f, trim: v })}
+                    options={trimOptions}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">
+                    Year
+                  </label>
+                  <input
+                    type="number"
+                    value={editForm.year}
+                    onChange={(e) =>
+                      setEditForm((f) => f && { ...f, year: e.target.value })
+                    }
+                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
+                    placeholder="e.g. 1994"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-0.5">
+                      Body style
+                    </label>
+                    <select
+                      value={editForm.bodyStyle}
+                      onChange={(e) =>
+                        setEditForm(
+                          (f) => f && { ...f, bodyStyle: e.target.value },
+                        )
+                      }
+                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
+                    >
+                      <option value="">— select —</option>
+                      {BODY_STYLES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-0.5">
+                      Era
+                    </label>
+                    <select
+                      value={editForm.era}
+                      onChange={(e) =>
+                        setEditForm((f) => f && { ...f, era: e.target.value })
+                      }
+                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
+                    >
+                      <option value="">— select —</option>
+                      {ERAS.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-0.5">
+                      Rarity
+                    </label>
+                    <select
+                      value={editForm.rarity}
+                      onChange={(e) =>
+                        setEditForm(
+                          (f) => f && { ...f, rarity: e.target.value },
+                        )
+                      }
+                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
+                    >
+                      <option value="">— select —</option>
+                      {RARITIES.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-0.5">
+                      Region slug
+                    </label>
+                    <Combobox
+                      variant="admin"
+                      value={editForm.regionSlug}
+                      onChange={(v) =>
+                        setEditForm((f) => f && { ...f, regionSlug: v })
+                      }
+                      options={regionOptions}
+                      placeholder="e.g. japan"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">
+                    Country of origin
+                  </label>
+                  <Combobox
+                    variant="admin"
+                    value={editForm.countryOfOrigin}
+                    onChange={(v) =>
+                      setEditForm((f) => f && { ...f, countryOfOrigin: v })
+                    }
+                    options={countryOptions}
+                    placeholder="e.g. Japan"
+                  />
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Categories</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {categoryOptions.map(({ slug, label }) => (
+                      <button
+                        key={slug}
+                        type="button"
+                        onClick={() => toggleCategory(slug)}
+                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                          editForm.categories.includes(slug)
+                            ? "bg-gray-900 text-white border-gray-900"
+                            : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Image metadata */}
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Image metadata
-              </p>
+              {/* Image metadata */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Image metadata
+                </p>
 
-              <div>
-                <label className="block text-xs text-gray-500 mb-0.5">Copyright holder</label>
-                <Combobox
-                  variant="admin"
-                  value={editForm.copyrightHolder}
-                  onChange={(v) => setEditForm((f) => f && { ...f, copyrightHolder: v })}
-                  options={copyrightHolderOptions}
-                  placeholder="e.g. Wikimedia Commons"
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">
+                    Copyright holder
+                  </label>
+                  <Combobox
+                    variant="admin"
+                    value={editForm.copyrightHolder}
+                    onChange={(v) =>
+                      setEditForm((f) => f && { ...f, copyrightHolder: v })
+                    }
+                    options={copyrightHolderOptions}
+                    placeholder="e.g. Wikimedia Commons"
+                  />
+                </div>
+
+                <CheckboxField
+                  label="Active"
+                  checked={editForm.isActive}
+                  onChange={(v) =>
+                    setEditForm((f) => f && { ...f, isActive: v })
+                  }
+                />
+                <CheckboxField
+                  label="Hardcore eligible"
+                  checked={editForm.isHardcoreEligible}
+                  onChange={(v) =>
+                    setEditForm((f) => f && { ...f, isHardcoreEligible: v })
+                  }
+                />
+                <CheckboxField
+                  label="Cropped (partial view)"
+                  checked={editForm.isCropped}
+                  onChange={(v) =>
+                    setEditForm((f) => f && { ...f, isCropped: v })
+                  }
+                />
+                <CheckboxField
+                  label="Logo visible"
+                  checked={editForm.isLogoVisible}
+                  onChange={(v) =>
+                    setEditForm((f) => f && { ...f, isLogoVisible: v })
+                  }
+                />
+                <CheckboxField
+                  label="Model name visible"
+                  checked={editForm.isModelNameVisible}
+                  onChange={(v) =>
+                    setEditForm((f) => f && { ...f, isModelNameVisible: v })
+                  }
+                />
+                <CheckboxField
+                  label="Multiple vehicles in image"
+                  checked={editForm.hasMultipleVehicles}
+                  onChange={(v) =>
+                    setEditForm((f) => f && { ...f, hasMultipleVehicles: v })
+                  }
+                />
+                <CheckboxField
+                  label="Face visible"
+                  checked={editForm.isFaceVisible}
+                  onChange={(v) =>
+                    setEditForm((f) => f && { ...f, isFaceVisible: v })
+                  }
+                />
+                <CheckboxField
+                  label="Vehicle unmodified"
+                  checked={editForm.isVehicleUnmodified}
+                  onChange={(v) =>
+                    setEditForm((f) => f && { ...f, isVehicleUnmodified: v })
+                  }
                 />
               </div>
 
-              <CheckboxField label="Active" checked={editForm.isActive} onChange={(v) => setEditForm((f) => f && { ...f, isActive: v })} />
-              <CheckboxField label="Hardcore eligible" checked={editForm.isHardcoreEligible} onChange={(v) => setEditForm((f) => f && { ...f, isHardcoreEligible: v })} />
-              <CheckboxField label="Cropped (partial view)" checked={editForm.isCropped} onChange={(v) => setEditForm((f) => f && { ...f, isCropped: v })} />
-              <CheckboxField label="Logo visible" checked={editForm.isLogoVisible} onChange={(v) => setEditForm((f) => f && { ...f, isLogoVisible: v })} />
-              <CheckboxField label="Model name visible" checked={editForm.isModelNameVisible} onChange={(v) => setEditForm((f) => f && { ...f, isModelNameVisible: v })} />
-              <CheckboxField label="Multiple vehicles in image" checked={editForm.hasMultipleVehicles} onChange={(v) => setEditForm((f) => f && { ...f, hasMultipleVehicles: v })} />
-              <CheckboxField label="Face visible" checked={editForm.isFaceVisible} onChange={(v) => setEditForm((f) => f && { ...f, isFaceVisible: v })} />
-              <CheckboxField label="Vehicle unmodified" checked={editForm.isVehicleUnmodified} onChange={(v) => setEditForm((f) => f && { ...f, isVehicleUnmodified: v })} />
-            </div>
+              <button
+                onClick={saveEdit}
+                disabled={saving}
+                className="w-full text-sm bg-gray-900 text-white rounded px-3 py-2 hover:bg-gray-700 disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Save changes"}
+              </button>
 
-            <button
-              onClick={saveEdit}
-              disabled={saving}
-              className="w-full text-sm bg-gray-900 text-white rounded px-3 py-2 hover:bg-gray-700 disabled:opacity-50"
-            >
-              {saving ? "Saving…" : "Save changes"}
-            </button>
+              {selected.isActive && (
+                <div className="pt-2 border-t border-gray-100">
+                  <button
+                    onClick={deactivate}
+                    disabled={saving}
+                    className="w-full text-sm border border-red-200 text-red-600 rounded px-3 py-2 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Deactivate
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );
