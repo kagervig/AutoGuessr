@@ -1,18 +1,11 @@
 import type { NextRequest } from "next/server";
 import type { BodyStyle, Era, Rarity } from "../../../../../generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
+import { BODY_STYLES, ERAS, RARITIES } from "@/app/lib/constants";
 
 interface Params {
   params: Promise<{ id: string }>;
 }
-
-const BODY_STYLES: BodyStyle[] = [
-  "coupe", "sedan", "convertible", "hatchback", "wagon",
-  "suv", "truck", "pickup", "van", "roadster", "targa", "compact", "special_purpose",
-];
-
-const ERAS: Era[] = ["classic", "retro", "modern", "contemporary"];
-const RARITIES: Rarity[] = ["common", "uncommon", "rare", "ultra_rare"];
 
 export async function POST(_request: NextRequest, { params }: Params) {
   const { id } = await params;

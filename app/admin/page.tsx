@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import AdminPanel from "./_components/AdminPanel";
+import StagingImagePanel from "./_components/StagingImagePanel";
 
 export const metadata: Metadata = {
   title: "Admin — Autoguessr",
 };
 
 export default function AdminPage() {
-  return <AdminPanel />;
+  return <StagingImagePanel />;
 }

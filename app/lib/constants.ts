@@ -1,5 +1,14 @@
 export const ROUNDS_PER_GAME = parseInt(process.env.ROUNDS_PER_GAME ?? "10", 10);
 
+export const BODY_STYLES = [
+  "coupe", "sedan", "convertible", "hatchback", "wagon",
+  "suv", "truck", "pickup", "van", "roadster", "targa", "compact", "special_purpose",
+] as const;
+
+export const ERAS = ["classic", "retro", "modern", "contemporary"] as const;
+
+export const RARITIES = ["common", "uncommon", "rare", "ultra_rare"] as const;
+
 export const MODES = [
   {
     id: "easy",
