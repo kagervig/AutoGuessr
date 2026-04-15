@@ -58,7 +58,7 @@ export function AnswerSection({
           className="glass-panel rounded-2xl p-5 border border-white/10"
         >
           <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">
-            {PROMPT_LABELS[mode] ?? ""}
+            {PROMPT_LABELS[mode as GameMode] ?? ""}
           </p>
 
           {CHOICE_MODES.includes(mode as GameMode) && (
