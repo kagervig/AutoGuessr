@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
     }));
     const vehicleMap = new Map(vehiclePool.map((v) => [v.id, v]));
     precomputedChoices = selected.map((image) => {
-      const correct = vehicleMap.get(image.vehicle.id) ?? { ...image.vehicle, categorySlugs: [] };
+      const correct = vehicleMap.get(image.vehicle.id) ?? { ...image.vehicle, categorySlugs: [] } as VehicleForDistractor;
       const distractors = selectDistractors(correct, vehiclePool);
       return shuffle([
         { vehicleId: correct.id, label: vehicleLabel(correct) },
@@ -233,7 +233,7 @@ export async function GET(request: NextRequest) {
 
     easyChoices = {};
     for (let i = 0; i < selected.length; i++) {
-      const correct = vehicleMap.get(selected[i].vehicle.id) ?? { ...selected[i].vehicle, categorySlugs: [] };
+      const correct = vehicleMap.get(selected[i].vehicle.id) ?? { ...selected[i].vehicle, categorySlugs: [] } as VehicleForDistractor;
       const distractors = selectDistractors(correct, vehiclePool);
       const choices = shuffle([
         { vehicleId: correct.id, label: vehicleLabel(correct) },
