@@ -149,6 +149,11 @@ export function selectRookieImages(pool: ScoredImage[]): SelectedImage[] {
     }
   }
 
+  // Fallback: fill remaining slots from the unrestricted pool
+  if (selected.length < 10) {
+    selected.push(...pickWeighted(excluding(pool, selected), 10 - selected.length));
+  }
+
   return shuffle(selected) as SelectedImage[];
 }
 
@@ -201,6 +206,11 @@ export function selectStandardImages(pool: ScoredImage[]): SelectedImage[] {
         console.warn(`[image-selection] Standard: make/model constraint unsatisfied (needed ${needed} swaps, got ${replacements.length})`);
       }
     }
+  }
+
+  // Fallback: fill remaining slots from the unrestricted pool
+  if (selected.length < 10) {
+    selected.push(...pickWeighted(excluding(pool, selected), 10 - selected.length));
   }
 
   return shuffle(selected) as SelectedImage[];
@@ -259,6 +269,11 @@ export function selectHardcoreImages(pool: ScoredImage[]): SelectedImage[] {
 
   // Slot E: 1× weighted filler
   selected.push(...pickWeighted(excl(hardcorePool), 1));
+
+  // Fallback: fill remaining slots from the unrestricted pool
+  if (selected.length < 10) {
+    selected.push(...pickWeighted(excl(pool), 10 - selected.length));
+  }
 
   return shuffle(selected) as SelectedImage[];
 }
@@ -419,14 +434,7 @@ export async function selectTieredImages(
         ? selectStandardImages
         : selectHardcoreImages;
 
-  let result = tierFn(freshPool);
-  if (result.length === 10) return result;
-
-  // Lazy fallback: expand the pool with any remaining active images
-  const selectedIds = result.map((img) => img.id);
-  const fallbackRaw = await fetchRandom(vehicleIds, selectedIds, 500);
-  const expandedPool = [...freshPool, ...deriveMetrics(fallbackRaw)];
-  result = tierFn(expandedPool);
+  const result = tierFn(freshPool);
 
   if (result.length < 10) {
     throw new Error("Not enough images match this filter");

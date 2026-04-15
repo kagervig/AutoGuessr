@@ -239,6 +239,12 @@ describe("selectRookieImages", () => {
     expect(() => selectRookieImages(tinyPool)).not.toThrow();
     expect(selectRookieImages(tinyPool).length).toBeLessThanOrEqual(10);
   });
+
+  it("should fall back to pool images to reach 10 when slot criteria cannot be filled", () => {
+    // 15 plain images: none logo-visible, none rare, none cropped — slots A/B/C yield 0, slot D yields 3
+    const plainPool = Array.from({ length: 15 }, (_, i) => makeScored(i + 100));
+    expect(selectRookieImages(plainPool)).toHaveLength(10);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -282,6 +288,12 @@ describe("selectStandardImages", () => {
     const tinyPool = [makeScored(1), makeScored(2)];
     expect(() => selectStandardImages(tinyPool)).not.toThrow();
     expect(selectStandardImages(tinyPool).length).toBeLessThanOrEqual(10);
+  });
+
+  it("should fall back to pool images to reach 10 when slot criteria cannot be filled", () => {
+    // 15 plain images: none hardcore-eligible, none cropped, none rare, none logo-visible — slots A–D yield 0, slot E yields 3
+    const plainPool = Array.from({ length: 15 }, (_, i) => makeScored(i + 100));
+    expect(selectStandardImages(plainPool)).toHaveLength(10);
   });
 });
 
@@ -345,5 +357,12 @@ describe("selectHardcoreImages", () => {
     const tinyPool = [makeScored(1, { isCropped: true }), makeScored(2)];
     expect(() => selectHardcoreImages(tinyPool)).not.toThrow();
     expect(selectHardcoreImages(tinyPool).length).toBeLessThanOrEqual(10);
+  });
+
+  it("should fall back to pool images to reach 10 when slot criteria cannot be filled", () => {
+    // 15 plain images: none cropped, none hardcoreEligible, none rare, correctRatio default 1.0
+    // All pass hardcorePool (totalServes === 0); slot A–D yield 0, slot E yields 1
+    const plainPool = Array.from({ length: 15 }, (_, i) => makeScored(i + 100));
+    expect(selectHardcoreImages(plainPool)).toHaveLength(10);
   });
 });
