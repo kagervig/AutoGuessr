@@ -1,4 +1,5 @@
 .claude/
+.qwen/
 .env
 .env*.local
 .env.test
