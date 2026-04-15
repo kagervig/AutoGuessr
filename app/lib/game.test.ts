@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { GameMode } from "./constants";
 import {
   levenshtein,
   normalise,
@@ -240,7 +241,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: null,
-        mode: "easy",
+        mode: GameMode.Easy,
       });
       expect(result.makePoints).toBe(300);
       expect(result.modelPoints).toBe(400);
@@ -255,7 +256,7 @@ describe("scoreRound", () => {
         makeCorrect: false,
         modelCorrect: false,
         yearDelta: null,
-        mode: "easy",
+        mode: GameMode.Easy,
       });
       expect(result.makePoints).toBe(0);
       expect(result.modelPoints).toBe(0);
@@ -269,7 +270,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: null,
-        mode: "easy",
+        mode: GameMode.Easy,
       });
       expect(result.timeBonus).toBeLessThan(100);
       expect(result.timeBonus).toBeGreaterThan(0);
@@ -283,7 +284,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 0,
-        mode: "standard",
+        mode: GameMode.Standard,
       });
       expect(result.yearBonus).toBe(200);
       expect(result.modeMultiplier).toBe(1.7);
@@ -298,7 +299,7 @@ describe("scoreRound", () => {
         makeCorrect: false,
         modelCorrect: true,
         yearDelta: 0,
-        mode: "standard",
+        mode: GameMode.Standard,
       });
       expect(result.makePoints).toBe(0);
       expect(result.modelPoints).toBe(0);
@@ -310,7 +311,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 2,
-        mode: "standard",
+        mode: GameMode.Standard,
       });
       expect(result.yearBonus).toBe(120); // 200 * (1 - 2/5) = 120
     });
@@ -321,7 +322,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 5,
-        mode: "standard",
+        mode: GameMode.Standard,
       });
       expect(result.yearBonus).toBe(0);
     });
@@ -332,7 +333,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 10,
-        mode: "standard",
+        mode: GameMode.Standard,
       });
       expect(result.yearBonus).toBe(0);
     });
@@ -343,7 +344,7 @@ describe("scoreRound", () => {
         makeCorrect: false,
         modelCorrect: false,
         yearDelta: null,
-        mode: "standard",
+        mode: GameMode.Standard,
       });
       expect(result.timeBonus).toBe(0);
     });
@@ -356,7 +357,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: null,
-        mode: "time_attack",
+        mode: GameMode.TimeAttack,
       });
       expect(result.modeMultiplier).toBe(2.0);
     });
@@ -369,7 +370,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 0,
-        mode: "hardcore",
+        mode: GameMode.Hardcore,
         panelsRevealed: 1,
       });
       expect(result.modeMultiplier).toBeCloseTo(4.0, 5);
@@ -381,7 +382,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 0,
-        mode: "hardcore",
+        mode: GameMode.Hardcore,
         panelsRevealed: 9,
       });
       expect(result.modeMultiplier).toBeCloseTo(1.0, 5);
@@ -393,7 +394,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 0,
-        mode: "hardcore",
+        mode: GameMode.Hardcore,
         panelsRevealed: 0,
       });
       expect(result.modeMultiplier).toBeCloseTo(4.0, 5);
@@ -405,7 +406,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 0,
-        mode: "hardcore",
+        mode: GameMode.Hardcore,
         panelsRevealed: 12,
       });
       expect(result.modeMultiplier).toBeCloseTo(1.0, 5);
@@ -419,7 +420,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 0,
-        mode: "practice",
+        mode: GameMode.Practice,
       });
       expect(result.pointsEarned).toBe(0);
     });
@@ -430,7 +431,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: null,
-        mode: "practice",
+        mode: GameMode.Practice,
       });
       expect(result.timeBonus).toBe(0);
     });
@@ -443,7 +444,7 @@ describe("scoreRound", () => {
         makeCorrect: false,
         modelCorrect: true,
         yearDelta: null,
-        mode: "custom",
+        mode: GameMode.Custom,
       });
       expect(result.modelPoints).toBe(400);
     });
@@ -454,7 +455,7 @@ describe("scoreRound", () => {
         makeCorrect: true,
         modelCorrect: true,
         yearDelta: 0,
-        mode: "custom",
+        mode: GameMode.Custom,
       });
       expect(result.yearBonus).toBeNull();
     });
@@ -468,7 +469,7 @@ describe("scoreRound", () => {
         yearDelta: null,
         elapsedMs: 0,
         timeLimitMs: 60_000,
-        mode: "easy",
+        mode: GameMode.Easy,
       });
       expect(result.timeBonus).toBe(100);
     });
@@ -480,7 +481,7 @@ describe("scoreRound", () => {
         yearDelta: null,
         elapsedMs: 60_000,
         timeLimitMs: 60_000,
-        mode: "easy",
+        mode: GameMode.Easy,
       });
       expect(result.timeBonus).toBe(0);
     });
@@ -492,7 +493,7 @@ describe("scoreRound", () => {
         yearDelta: null,
         elapsedMs: 30_000,
         timeLimitMs: 60_000,
-        mode: "easy",
+        mode: GameMode.Easy,
       });
       expect(result.timeBonus).toBe(50);
     });

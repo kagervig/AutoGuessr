@@ -237,7 +237,7 @@ const BASE_ARGS = {
   yearDelta: 0,
   elapsedMs: 0,
   timeLimitMs: 60_000,
-  mode: "standard",
+  mode: GameMode.Standard,
 } as const;
 
 describe("scoreRound", () => {
@@ -267,7 +267,7 @@ describe("scoreRound", () => {
     it("should award model points independently of make in custom mode", () => {
       const { modelPoints } = scoreRound({
         ...BASE_ARGS,
-        mode: "custom",
+        mode: GameMode.Custom,
         makeCorrect: false,
         modelCorrect: true,
       });
@@ -292,22 +292,22 @@ describe("scoreRound", () => {
     });
 
     it("should return null for easy mode", () => {
-      const { yearBonus } = scoreRound({ ...BASE_ARGS, mode: "easy", yearDelta: 0 });
+      const { yearBonus } = scoreRound({ ...BASE_ARGS, mode: GameMode.Easy, yearDelta: 0 });
       expect(yearBonus).toBeNull();
     });
 
     it("should return null for custom mode", () => {
-      const { yearBonus } = scoreRound({ ...BASE_ARGS, mode: "custom", yearDelta: 0 });
+      const { yearBonus } = scoreRound({ ...BASE_ARGS, mode: GameMode.Custom, yearDelta: 0 });
       expect(yearBonus).toBeNull();
     });
 
     it("should apply year bonus in time_attack mode", () => {
-      const { yearBonus } = scoreRound({ ...BASE_ARGS, mode: "time_attack", yearDelta: 0 });
+      const { yearBonus } = scoreRound({ ...BASE_ARGS, mode: GameMode.TimeAttack, yearDelta: 0 });
       expect(yearBonus).toBe(200);
     });
 
     it("should apply year bonus in hardcore mode", () => {
-      const { yearBonus } = scoreRound({ ...BASE_ARGS, mode: "hardcore", yearDelta: 0, panelsRevealed: 5 });
+      const { yearBonus } = scoreRound({ ...BASE_ARGS, mode: GameMode.Hardcore, yearDelta: 0, panelsRevealed: 5 });
       expect(yearBonus).toBe(200);
     });
   });
@@ -329,14 +329,14 @@ describe("scoreRound", () => {
     });
 
     it("should award 0 time bonus in practice mode", () => {
-      const { timeBonus } = scoreRound({ ...BASE_ARGS, mode: "practice", elapsedMs: 0 });
+      const { timeBonus } = scoreRound({ ...BASE_ARGS, mode: GameMode.Practice, elapsedMs: 0 });
       expect(timeBonus).toBe(0);
     });
   });
 
   describe("modeMultiplier", () => {
     it("should use 1.0 for easy mode", () => {
-      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: "easy" });
+      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: GameMode.Easy });
       expect(modeMultiplier).toBe(1.0);
     });
 
@@ -346,28 +346,28 @@ describe("scoreRound", () => {
     });
 
     it("should use 2.0 for time_attack mode", () => {
-      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: "time_attack" });
+      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: GameMode.TimeAttack });
       expect(modeMultiplier).toBe(2.0);
     });
 
     it("should use 0 for practice mode", () => {
-      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: "practice" });
+      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: GameMode.Practice });
       expect(modeMultiplier).toBe(0);
     });
 
     it("should use 4.0 for hardcore with 1 panel revealed", () => {
-      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: "hardcore", panelsRevealed: 1 });
+      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: GameMode.Hardcore, panelsRevealed: 1 });
       expect(modeMultiplier).toBe(4.0);
     });
 
     it("should use 1.0 for hardcore with 9 panels revealed", () => {
-      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: "hardcore", panelsRevealed: 9 });
+      const { modeMultiplier } = scoreRound({ ...BASE_ARGS, mode: GameMode.Hardcore, panelsRevealed: 9 });
       expect(modeMultiplier).toBe(1.0);
     });
 
     it("should clamp hardcore multiplier for out-of-range panel counts", () => {
-      const { modeMultiplier: low } = scoreRound({ ...BASE_ARGS, mode: "hardcore", panelsRevealed: 0 });
-      const { modeMultiplier: high } = scoreRound({ ...BASE_ARGS, mode: "hardcore", panelsRevealed: 99 });
+      const { modeMultiplier: low } = scoreRound({ ...BASE_ARGS, mode: GameMode.Hardcore, panelsRevealed: 0 });
+      const { modeMultiplier: high } = scoreRound({ ...BASE_ARGS, mode: GameMode.Hardcore, panelsRevealed: 99 });
       expect(low).toBe(4.0);
       expect(high).toBe(1.0);
     });
@@ -375,12 +375,12 @@ describe("scoreRound", () => {
 
   describe("pointsEarned", () => {
     it("should return 0 for practice mode regardless of correct guesses", () => {
-      const { pointsEarned } = scoreRound({ ...BASE_ARGS, mode: "practice" });
+      const { pointsEarned } = scoreRound({ ...BASE_ARGS, mode: GameMode.Practice });
       expect(pointsEarned).toBe(0);
     });
 
     it("should floor the result to an integer", () => {
-      const { pointsEarned } = scoreRound({ ...BASE_ARGS, mode: "standard", elapsedMs: 30_000 });
+      const { pointsEarned } = scoreRound({ ...BASE_ARGS, mode: GameMode.Standard, elapsedMs: 30_000 });
       expect(Number.isInteger(pointsEarned)).toBe(true);
     });
 
