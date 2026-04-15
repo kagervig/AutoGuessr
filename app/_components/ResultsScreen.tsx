@@ -166,7 +166,7 @@ const approxMax = maxScore ?? 0;
                   className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
                 >
                   <Share2 className="w-4 h-4 shrink-0" />
-                  {copied ? "Copied!" : "Share"}
+                  {copied ? "Copied!" : "Share Results"}
                 </button>
                 <button
                   onClick={() => router.push("/")}
