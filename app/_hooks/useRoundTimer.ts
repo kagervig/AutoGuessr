@@ -59,7 +59,7 @@ export function useRoundTimer({
       }
       currentRoundIdRef.current = currentRound.roundId;
       currentRoundImageUrlRef.current = currentRound.imageUrl;
-      const limit = gameData.timeLimitMs ?? TIME_LIMITS[mode];
+      const limit = gameData.timeLimitMs ?? TIME_LIMITS[mode as GameMode];
       if (limit) {
         autoSubmitRef.current = setTimeout(() => onTimeout.current(), limit);
       }
