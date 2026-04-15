@@ -15,7 +15,6 @@ vi.mock("@/app/lib/prisma", () => ({
       create: vi.fn(),
     },
     $transaction: vi.fn(),
-    $executeRaw: vi.fn(),
   },
 }));
 

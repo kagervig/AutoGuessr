@@ -3,11 +3,11 @@ import type { NextRequest } from "next/server";
 import type { Prisma } from "../../../app/generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, type VehicleForDistractor } from "@/app/lib/game";
-import { ROUNDS_PER_GAME } from "@/app/lib/constants";
+import { ROUNDS_PER_GAME, GameMode } from "@/app/lib/constants";
 import { selectTieredImages } from "@/app/lib/image-selection";
 
-const VALID_MODES = ["easy", "custom", "standard", "hardcore", "time_attack", "practice"] as const;
-type Mode = (typeof VALID_MODES)[number];
+const VALID_MODES = Object.values(GameMode);
+type Mode = GameMode;
 
 interface FilterConfig {
   categorySlugs?: string[];
@@ -76,9 +76,9 @@ export async function GET(request: NextRequest) {
   let selected: SelectableImage[];
   let makes: string[] | undefined;
 
-  if (mode === "easy" || mode === "standard" || mode === "hardcore") {
+  if (mode === GameMode.Easy || mode === GameMode.Standard || mode === GameMode.Hardcore) {
     try {
-      if (mode === "easy") {
+      if (mode === GameMode.Easy) {
         selected = await selectTieredImages(mode, vehicleFilters);
       } else {
         [selected, makes] = await Promise.all([
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
 
     selected = shuffle(allImages).slice(0, ROUNDS_PER_GAME);
 
-    if (mode === "custom" || mode === "time_attack") {
+    if (mode === GameMode.Custom || mode === GameMode.TimeAttack) {
       const distinctMakes = await prisma.vehicle.findMany({
         select: { make: true },
         distinct: ["make"],
@@ -156,11 +156,11 @@ export async function GET(request: NextRequest) {
   });
 
   // Create rounds
-  const timeLimitMs = mode === "time_attack" ? TIME_LIMITS.time_attack : null;
+  const timeLimitMs = mode === GameMode.TimeAttack ? TIME_LIMITS[GameMode.TimeAttack] : null;
 
   // Easy mode: pre-compute distractor choices before the transaction to avoid per-round updates
   let precomputedChoices: { vehicleId: string; label: string }[][] | undefined;
-  if (mode === "easy") {
+  if (mode === GameMode.Easy) {
     const allVehicles = await prisma.vehicle.findMany({
       select: {
         id: true,
@@ -210,12 +210,12 @@ export async function GET(request: NextRequest) {
 
   // Easy mode: build easyChoices response from pre-computed choices
   let easyChoices: Record<string, { vehicleId: string; label: string }[]> | undefined;
-  if (mode === "easy" && precomputedChoices) {
+  if (mode === GameMode.Easy && precomputedChoices) {
     easyChoices = Object.fromEntries(rounds.map((round, i) => [round.id, precomputedChoices![i]]));
   }
 
   // Practice mode: generate and persist 4 choices per round
-  if (mode === "practice") {
+  if (mode === GameMode.Practice) {
     const allVehicles = await prisma.vehicle.findMany({
       select: {
         id: true,
@@ -256,7 +256,7 @@ export async function GET(request: NextRequest) {
     rounds: roundData,
     ...(easyChoices ? { easyChoices } : {}),
     ...(makes ? { makes } : {}),
-    ...(mode === "time_attack" ? { timeLimitMs: TIME_LIMITS.time_attack } : {}),
+    ...(mode === GameMode.TimeAttack ? { timeLimitMs: TIME_LIMITS[GameMode.TimeAttack] } : {}),
   });
   response.headers.set(
     "Set-Cookie",

@@ -4,16 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { GameData } from "./useGameLoader";
 import type { RevealInfo, PointsBreakdown } from "@/app/_components/RoundResult";
+import { GameMode } from "@/app/lib/constants";
 
-const HARD_MODES = ["standard", "hardcore", "time_attack"];
+const HARD_MODES = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
 
-const MAX_MULTIPLIERS: Record<string, number> = {
-  easy: 1.0,
-  custom: 1.3,
-  standard: 1.7,
-  hardcore: 2.2,
-  time_attack: 2.0,
-  practice: 1.0,
+const MAX_MULTIPLIERS: Record<GameMode, number> = {
+  [GameMode.Easy]: 1.0,
+  [GameMode.Custom]: 1.3,
+  [GameMode.Standard]: 1.7,
+  [GameMode.Hardcore]: 2.2,
+  [GameMode.TimeAttack]: 2.0,
+  [GameMode.Practice]: 1.0,
 };
 
 // A single retry absorbs transient network blips (mobile handoff, Wi-Fi reconnect).
@@ -162,7 +163,7 @@ export function useGameSession({
     const make = vehicle?.make ?? "";
     const model = vehicle?.model ?? "";
     const year = vehicle?.year ?? 0;
-    const correctLabel = HARD_MODES.includes(mode)
+    const correctLabel = HARD_MODES.includes(mode as GameMode)
       ? `${year} ${make} ${model}`.trim()
       : `${make} ${model}`.trim();
 
@@ -337,7 +338,7 @@ export function useGameSession({
         guessedModel: model,
         guessedYear: parseInt(year) || undefined,
         timeTakenMs: elapsedMs,
-        panelsRevealed: mode === "hardcore" ? panelIndexRef.current : undefined,
+        panelsRevealed: mode === GameMode.Hardcore ? panelIndexRef.current : undefined,
       },
       guessLabel,
       round.imageUrl,
@@ -380,7 +381,7 @@ export function useGameSession({
 
   async function handleNext() {
     if (isLastRound) {
-      if (mode === "practice") {
+      if (mode === GameMode.Practice) {
         await submitPracticeStats(completedRounds);
         setPracticeComplete(true);
         return;

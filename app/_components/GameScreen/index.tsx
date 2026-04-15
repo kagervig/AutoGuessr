@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import { MODES } from "@/app/lib/constants";
+import { MODES, GameMode } from "@/app/lib/constants";
 import {
   ScoringIntro,
   shouldShowIntro,
@@ -140,7 +140,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
 
   if (!gameData || !round) return null;
 
-  const isHardcore = mode === "hardcore";
+  const isHardcore = mode === GameMode.Hardcore;
   const modeLabel = MODE_LABELS[mode] || mode;
 
   // Practice complete screen

@@ -3,6 +3,7 @@
 import { Prisma } from "../generated/prisma/client";
 import { prisma } from "./prisma";
 import { shuffle } from "./game";
+import { GameMode } from "./constants";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -389,7 +390,7 @@ async function fetchRandom(
 // ---------------------------------------------------------------------------
 
 export async function selectTieredImages(
-  mode: "easy" | "standard" | "hardcore",
+  mode: GameMode.Easy | GameMode.Standard | GameMode.Hardcore,
   vehicleFilters: Prisma.VehicleWhereInput[]
 ): Promise<SelectedImage[]> {
   // Pre-fetch vehicle IDs when filters are present so the raw queries can filter by them
@@ -412,9 +413,9 @@ export async function selectTieredImages(
   const freshPool = deriveMetrics([...leastServed, ...random250]);
 
   const tierFn =
-    mode === "easy"
+    mode === GameMode.Easy
       ? selectRookieImages
-      : mode === "standard"
+      : mode === GameMode.Standard
         ? selectStandardImages
         : selectHardcoreImages;
 

@@ -4,17 +4,18 @@ import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/app/lib/utils";
 import CustomModeInput from "../CustomModeInput";
 import StandardModeInput from "../StandardModeInput";
+import { GameMode } from "@/app/lib/constants";
 
-const HARD_MODES = ["standard", "hardcore", "time_attack"];
-const CHOICE_MODES = ["easy", "practice", "custom"];
+const HARD_MODES = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
+const CHOICE_MODES = [GameMode.Easy, GameMode.Practice, GameMode.Custom];
 
-const PROMPT_LABELS: Record<string, string> = {
-  easy: "Choose the correct make & model",
-  custom: "Choose the correct make & model",
-  standard: "Type make, model & year exactly",
-  hardcore: "Type make, model & year exactly",
-  time_attack: "Identify before the image reveals!",
-  practice: "Choose the correct make & model",
+const PROMPT_LABELS: Record<GameMode, string> = {
+  [GameMode.Easy]: "Choose the correct make & model",
+  [GameMode.Custom]: "Choose the correct make & model",
+  [GameMode.Standard]: "Type make, model & year exactly",
+  [GameMode.Hardcore]: "Type make, model & year exactly",
+  [GameMode.TimeAttack]: "Identify before the image reveals!",
+  [GameMode.Practice]: "Choose the correct make & model",
 };
 
 interface Props {
@@ -60,7 +61,7 @@ export function AnswerSection({
             {PROMPT_LABELS[mode] ?? ""}
           </p>
 
-          {CHOICE_MODES.includes(mode) && (
+          {CHOICE_MODES.includes(mode as GameMode) && (
             <div className="grid grid-cols-2 gap-3">
               {choices.map((choice, i) => {
                 const isSelected = selectedEasyId === choice.vehicleId;
@@ -94,7 +95,7 @@ export function AnswerSection({
             </div>
           )}
 
-          {mode === "custom" && (
+          {mode === GameMode.Custom && (
             <CustomModeInput
               makes={makes}
               showYear={mediumYearGuessing}
@@ -103,7 +104,7 @@ export function AnswerSection({
             />
           )}
 
-          {HARD_MODES.includes(mode) && (
+          {HARD_MODES.includes(mode as GameMode) && (
             <StandardModeInput
               makes={makes}
               disabled={false}

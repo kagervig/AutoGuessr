@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import { GameMode } from "@/app/lib/constants";
 
 export const metadata: Metadata = { title: "Autoguessr — How Scoring Works" };
 
@@ -15,12 +16,12 @@ const YEAR_ROWS = [
 ];
 
 const MODE_ROWS = [
-  { id: "easy",        label: "Easy",        multiplier: "×1.0",              limit: "30s" },
-  { id: "custom",      label: "Custom",      multiplier: "×1.0",              limit: "45s" },
-  { id: "standard",    label: "Standard",    multiplier: "×1.7",              limit: "60s" },
-  { id: "time_attack", label: "Time Attack", multiplier: "×2.0",              limit: "30s" },
-  { id: "hardcore",    label: "Hardcore",    multiplier: "×1.0–×4.0",         limit: "90s" },
-  { id: "practice",    label: "Practice",    multiplier: "×0 (always 0 pts)", limit: "60s" },
+  { id: GameMode.Easy,        label: "Easy",        multiplier: "×1.0",              limit: "30s" },
+  { id: GameMode.Custom,      label: "Custom",      multiplier: "×1.0",              limit: "45s" },
+  { id: GameMode.Standard,    label: "Standard",    multiplier: "×1.7",              limit: "60s" },
+  { id: GameMode.TimeAttack,  label: "Time Attack", multiplier: "×2.0",              limit: "30s" },
+  { id: GameMode.Hardcore,    label: "Hardcore",    multiplier: "×1.0–×4.0",         limit: "90s" },
+  { id: GameMode.Practice,    label: "Practice",    multiplier: "×0 (always 0 pts)", limit: "60s" },
 ];
 
 interface SearchParams {
@@ -170,7 +171,7 @@ export default async function ScoringPage({
                     </td>
                     <td className={cn(
                       "py-2.5 text-center",
-                      row.id === "practice" ? "text-muted-foreground" : "text-green-400 font-bold"
+                      row.id === GameMode.Practice ? "text-muted-foreground" : "text-green-400 font-bold"
                     )}>
                       {row.multiplier}
                     </td>

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { GameMode } from "../../app/lib/constants";
 import {
   levenshtein,
   normalise,

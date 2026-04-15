@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { shuffle, TIME_LIMITS } from "@/app/lib/game";
 import type { GameData } from "./useGameLoader";
+import { GameMode } from "@/app/lib/constants";
 
 interface Params {
   mode: string;
@@ -64,7 +65,7 @@ export function useRoundTimer({
       }
     }
 
-    if (mode === "hardcore") {
+    if (mode === GameMode.Hardcore) {
       const order = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
       const initialPanels = Array(9).fill(true);
       initialPanels[order[0]] = false;

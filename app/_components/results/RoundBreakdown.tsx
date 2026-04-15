@@ -5,8 +5,9 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/app/lib/utils";
 import type { RoundData, GuessData } from "./types";
+import { GameMode } from "@/app/lib/constants";
 
-const HARD_MODES = ["standard", "hardcore", "time_attack"];
+const HARD_MODES = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
 
 function RoundRow({ round, mode }: { round: RoundData; mode: string }) {
   const v = round.image.vehicle;
@@ -39,7 +40,7 @@ function RoundRow({ round, mode }: { round: RoundData; mode: string }) {
         <span className="text-xs border border-white/20 rounded px-1.5 py-0.5 font-mono uppercase text-muted-foreground">
           {v.countryOfOrigin}
         </span>
-        {HARD_MODES.includes(mode) && (
+        {HARD_MODES.includes(mode as GameMode) && (
           <span className="text-xs border border-white/20 rounded px-1.5 py-0.5 font-mono text-muted-foreground">
             {v.year}
           </span>

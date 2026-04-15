@@ -131,6 +131,13 @@ export async function POST(request: NextRequest) {
 
   const imageId = round.image.id;
 
+  // Compute new correctRatio from known pre-guess counts so we can write it in a single upsert
+  const prevCorrect = existingStats?.correctGuesses ?? 0;
+  const prevIncorrect = existingStats?.incorrectGuesses ?? 0;
+  const newCorrect = prevCorrect + (isCorrect ? 1 : 0);
+  const newIncorrect = prevIncorrect + (isCorrect ? 0 : 1);
+  const newCorrectRatio = newCorrect + newIncorrect === 0 ? 1.0 : newCorrect / (newCorrect + newIncorrect);
+
   const [guess] = await prisma.$transaction([
     prisma.guess.create({
       data: {
@@ -154,8 +161,8 @@ export async function POST(request: NextRequest) {
     prisma.imageStats.upsert({
       where: { imageId },
       update: isCorrect
-        ? { correctGuesses: { increment: 1 }, totalServes: { increment: 1 } }
-        : { incorrectGuesses: { increment: 1 }, totalServes: { increment: 1 } },
+        ? { correctGuesses: { increment: 1 }, totalServes: { increment: 1 }, correctRatio: newCorrectRatio }
+        : { incorrectGuesses: { increment: 1 }, totalServes: { increment: 1 }, correctRatio: newCorrectRatio },
       create: {
         imageId,
         correctGuesses: isCorrect ? 1 : 0,
@@ -164,14 +171,6 @@ export async function POST(request: NextRequest) {
         correctRatio: isCorrect ? 1.0 : 0.0,
       },
     }),
-    prisma.$executeRaw`
-      UPDATE "ImageStats"
-      SET "correctRatio" = CASE
-        WHEN ("correctGuesses" + "incorrectGuesses") = 0 THEN 1.0
-        ELSE CAST("correctGuesses" AS FLOAT) / ("correctGuesses" + "incorrectGuesses")
-      END
-      WHERE "imageId" = ${imageId}
-    `,
   ]);
 
   return Response.json({

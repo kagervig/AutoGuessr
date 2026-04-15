@@ -15,20 +15,20 @@ import {
   Power,
   Users,
 } from "lucide-react";
-import { MODES, COUNTRIES, FALLBACK_CATEGORIES, FALLBACK_REGIONS } from "@/app/lib/constants";
+import { MODES, COUNTRIES, FALLBACK_CATEGORIES, FALLBACK_REGIONS, GameMode } from "@/app/lib/constants";
 import type { ModeId } from "@/app/lib/constants";
 import { Navbar } from "@/app/components/layout/Navbar";
 import { ModeCard } from "@/app/components/ui/ModeCard";
 import { FilterGroup } from "@/app/components/ui/FilterGroup";
 import { cn } from "@/app/lib/utils";
 
-const MODE_ICONS: Record<string, React.ReactNode> = {
-  easy: <ShieldCheck className="w-6 h-6" />,
-  custom: <Settings2 className="w-6 h-6" />,
-  standard: <Keyboard className="w-6 h-6" />,
-  hardcore: <EyeOff className="w-6 h-6" />,
-  time_attack: <Timer className="w-6 h-6" />,
-  practice: <Wrench className="w-6 h-6" />,
+const MODE_ICONS: Record<GameMode, React.ReactNode> = {
+  [GameMode.Easy]: <ShieldCheck className="w-6 h-6" />,
+  [GameMode.Custom]: <Settings2 className="w-6 h-6" />,
+  [GameMode.Standard]: <Keyboard className="w-6 h-6" />,
+  [GameMode.Hardcore]: <EyeOff className="w-6 h-6" />,
+  [GameMode.TimeAttack]: <Timer className="w-6 h-6" />,
+  [GameMode.Practice]: <Wrench className="w-6 h-6" />,
 };
 
 interface FilterOption {
@@ -77,7 +77,7 @@ export default function HomeScreen({ initialFilterError }: Props) {
     };
   }, []);
 
-  const isCustomMode = selectedMode === "custom" || selectedMode === "practice";
+  const isCustomMode = selectedMode === GameMode.Custom || selectedMode === GameMode.Practice;
   const hasFilter =
     selectedCategories.length > 0 ||
     selectedRegions.length > 0 ||

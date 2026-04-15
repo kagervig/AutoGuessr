@@ -1,39 +1,48 @@
 export const ROUNDS_PER_GAME = parseInt(process.env.ROUNDS_PER_GAME ?? "10", 10);
 
+export enum GameMode {
+  Easy = "easy",
+  Standard = "standard",
+  Hardcore = "hardcore",
+  TimeAttack = "time_attack",
+  Custom = "custom",
+  Practice = "practice",
+}
+
 export const MODES = [
   {
-    id: "easy",
+    id: GameMode.Easy,
     label: "Rookie",
     description: "4 multiple choice answers. Perfect for warming up.",
   },
   {
-    id: "standard",
+    id: GameMode.Standard,
     label: "Standard",
     description: "Type the exact make, model, and year.",
   },
   {
-    id: "hardcore",
+    id: GameMode.Hardcore,
     label: "Hardcore",
     description: "Standard rules, but images are heavily obscured.",
   },
   {
-    id: "time_attack",
+    id: GameMode.TimeAttack,
     label: "Time Attack",
     description: "Beat the clock as the image slowly reveals itself.",
   },
   {
-    id: "custom",
+    id: GameMode.Custom,
     label: "Custom",
     description: "Choose a category, region, or country — then identify cars from that collection.",
   },
   {
-    id: "practice",
+    id: GameMode.Practice,
     label: "Garage",
     description: "Drill specific categories or regions. No leaderboard.",
   },
 ] as const;
 
-export type ModeId = (typeof MODES)[number]["id"];
+export type ModeId = GameMode;
 
 export const COUNTRIES = [
   { code: "US", label: "USA" },

@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { GameMode } from "@/app/lib/constants";
 
 const INITIALS_RE = /^[A-Z]{1,3}$/;
 
@@ -33,7 +34,7 @@ export async function PATCH(request: NextRequest) {
     return Response.json({ error: "Initials already set" }, { status: 409 });
   }
 
-  if (session.mode === "practice") {
+  if (session.mode === GameMode.Practice) {
     return Response.json({ error: "Practice sessions are not on the leaderboard" }, { status: 400 });
   }
 
