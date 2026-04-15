@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { fuzzyMatch, proLevelBonus, scoreRound, TIME_LIMITS } from "@/app/lib/game";
+import { GameMode } from "@/app/lib/constants";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
   }
 
   const vehicle = round.image.vehicle;
-  const mode = round.session.mode;
+  const mode = round.session.mode as unknown as GameMode;
 
   let makeMatch: boolean;
   let modelMatch: boolean;
