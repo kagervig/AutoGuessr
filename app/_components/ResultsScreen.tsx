@@ -149,26 +149,38 @@ const approxMax = maxScore ?? 0;
               }}
               className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-5 py-3 rounded-full hover:brightness-110 transition-all text-xs sm:text-sm"
             >
-              <RotateCcw className="w-4 h-4 shrink-0" /> Play Again
+              <RotateCcw className="w-4 h-4 shrink-0" /> Play Game
             </button>
-            <button
-              onClick={() => handleShare(score, grade)}
-              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
-            >
-              <Share2 className="w-4 h-4 shrink-0" />
-              {copied ? "Copied!" : "Share"}
-            </button>
-            <button
-              onClick={() => router.push("/")}
-              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
-            >
-              <ArrowLeft className="w-4 h-4 shrink-0" /> Garage
-            </button>
+            {!hasToken && (
+              <button
+                onClick={() => router.push("/")}
+                className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
+              >
+                <ArrowLeft className="w-4 h-4 shrink-0" /> Different Game Mode
+              </button>
+            )}
+            {hasToken && (
+              <>
+                <button
+                  onClick={() => handleShare(score, grade)}
+                  className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
+                >
+                  <Share2 className="w-4 h-4 shrink-0" />
+                  {copied ? "Copied!" : "Share"}
+                </button>
+                <button
+                  onClick={() => router.push("/")}
+                  className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
+                >
+                  <ArrowLeft className="w-4 h-4 shrink-0" /> Garage
+                </button>
+              </>
+            )}
           </div>
         </motion.div>
 
         {/* Scoring nudge */}
-        <ScoringNudge mode={mode} score={score} />
+        {hasToken && <ScoringNudge mode={mode} score={score} />}
 
         <RoundBreakdown rounds={session.rounds} mode={mode} />
       </div>
