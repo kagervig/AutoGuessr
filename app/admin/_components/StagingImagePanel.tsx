@@ -185,7 +185,7 @@ function formFromImage(img: StagingImage): EditForm {
   };
 }
 
-export default function AdminPanel() {
+export default function StagingImagePanel() {
   const [activePage, setActivePage] = useState<AdminPage>("images");
   const [images, setImages] = useState<StagingImage[]>([]);
   const [counts, setCounts] = useState<Partial<Record<StagingStatus, number>>>({});
