@@ -33,9 +33,8 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
 
   async function handleShare(score: number, grade: string) {
     const url = window.location.href;
-    const text = `I scored ${score.toLocaleString()} pts (Grade ${grade}) on Autoguessr — can you beat it?`;
     if (navigator.share) {
-      await navigator.share({ title: "Autoguessr", text, url });
+      await navigator.share({ title: "Autoguessr", url });
     } else {
       await navigator.clipboard.writeText(url);
       setCopied(true);
