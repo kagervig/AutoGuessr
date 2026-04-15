@@ -119,7 +119,7 @@ export function useGameSession({
   const choices = round ? (gameData?.easyChoices?.[round.roundId] ?? []) : [];
   const isLastRound = gameData ? currentIndex === gameData.rounds.length - 1 : false;
   const maxTotalScore = gameData
-    ? gameData.rounds.length * Math.floor(1000 * (MAX_MULTIPLIERS[mode] ?? 1.0))
+    ? gameData.rounds.length * Math.floor(1000 * (MAX_MULTIPLIERS[mode as GameMode] ?? 1.0))
     : 0;
 
   // resolveAndReveal is used by both handleTimeout and submitGuess, so we
