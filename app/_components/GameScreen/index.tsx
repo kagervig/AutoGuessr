@@ -35,7 +35,7 @@ interface Props {
 export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const router = useRouter();
 
-  const { gameData, loading, error, mediumYearGuessing } = useGameLoader({ mode, username, filter, cfToken });
+  const { gameData, loading, error, mediumYearGuessing, retrying } = useGameLoader({ mode, username, filter, cfToken });
   const [introVisible, setIntroVisible] = useState(() => shouldShowIntro(mode));
 
   // currentIndex is declared here so it can be passed to both useRoundTimer and useGameSession.
@@ -104,6 +104,11 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
             Loading
           </p>
         </div>
+        {retrying && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 glass-panel rounded-xl px-5 py-3 text-sm text-white">
+            Error loading game, please wait.
+          </div>
+        )}
       </main>
     );
   }
