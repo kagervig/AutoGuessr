@@ -103,11 +103,11 @@ export function selectRookieImages(pool: ScoredImage[]): SelectedImage[] {
 
   const selected: SelectedImage[] = [];
 
-  // Slot A: 5× make/model-visible
+  // Slot A: 6× make/model-visible
   const slotAPool = rookieStandardPool.filter(
     (img) => img.isLogoVisible || img.isModelNameVisible
   );
-  selected.push(...pickWeighted(excluding(slotAPool, selected), 5));
+  selected.push(...pickWeighted(excluding(slotAPool, selected), 6));
 
   // Slot B: 1× rare or ultra-rare vehicle
   const slotBPool = rookieStandardPool.filter(
@@ -115,14 +115,15 @@ export function selectRookieImages(pool: ScoredImage[]): SelectedImage[] {
   );
   selected.push(...pickWeighted(excluding(slotBPool, selected), 1));
 
+  
   // Slot C: 1× cropped image with pointsBonus; falls back to make/model-visible if none available
-  const availableCropped = excluding(rookieCroppedPool, selected);
-  if (availableCropped.length > 0) {
-    const [cropped] = pickWeighted(availableCropped, 1);
-    selected.push({ ...cropped, pointsBonus: true });
-  } else {
-    selected.push(...pickWeighted(excluding(slotAPool, selected), 1));
-  }
+  // const availableCropped = excluding(rookieCroppedPool, selected);
+  // if (availableCropped.length > 0) {
+  //   const [cropped] = pickWeighted(availableCropped, 1);
+  //   selected.push({ ...cropped, pointsBonus: true });
+  // } else {
+  //   selected.push(...pickWeighted(excluding(slotAPool, selected), 1));
+  // }
 
   // Slot D: 3× weighted filler
   selected.push(...pickWeighted(excluding(rookieStandardPool, selected), 3));
