@@ -145,7 +145,7 @@ export function scoreRound({
     ? (modelCorrect ? 400 : 0)
     : (makeCorrect && modelCorrect ? 400 : 0);
 
-  const yearBonusApplies = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack].includes(mode);
+  const yearBonusApplies = ([GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack] as GameMode[]).includes(mode);
   const yearBonus =
     yearBonusApplies && yearDelta !== null
       ? Math.max(0, Math.round(200 * (1 - yearDelta / 5)))

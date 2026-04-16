@@ -7,7 +7,7 @@ import { cn } from "@/app/lib/utils";
 import type { RoundData, GuessData } from "./types";
 import { GameMode } from "@/app/lib/constants";
 
-const HARD_MODES = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
+const HARD_MODES: GameMode[] = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
 
 function RoundRow({ round, mode }: { round: RoundData; mode: string }) {
   const v = round.image.vehicle;

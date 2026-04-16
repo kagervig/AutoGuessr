@@ -6,8 +6,8 @@ import CustomModeInput from "../CustomModeInput";
 import StandardModeInput from "../StandardModeInput";
 import { GameMode } from "@/app/lib/constants";
 
-const HARD_MODES = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
-const CHOICE_MODES = [GameMode.Easy, GameMode.Practice, GameMode.Custom];
+const HARD_MODES: GameMode[] = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
+const CHOICE_MODES: GameMode[] = [GameMode.Easy, GameMode.Practice, GameMode.Custom];
 
 const PROMPT_LABELS: Record<GameMode, string> = {
   [GameMode.Easy]: "Choose the correct make & model",

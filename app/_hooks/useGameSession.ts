@@ -6,7 +6,7 @@ import type { GameData } from "./useGameLoader";
 import type { RevealInfo, PointsBreakdown } from "@/app/_components/RoundResult";
 import { GameMode } from "@/app/lib/constants";
 
-const HARD_MODES = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
+const HARD_MODES: GameMode[] = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
 
 const MAX_MULTIPLIERS: Record<GameMode, number> = {
   [GameMode.Easy]: 1.0,

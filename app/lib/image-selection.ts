@@ -406,7 +406,7 @@ async function fetchRandom(
 // ---------------------------------------------------------------------------
 
 export async function selectTieredImages(
-  mode: GameMode.Easy | GameMode.Standard | GameMode.Hardcore,
+  mode: typeof GameMode.Easy | typeof GameMode.Standard | typeof GameMode.Hardcore,
   vehicleFilters: Prisma.VehicleWhereInput[]
 ): Promise<SelectedImage[]> {
   // Pre-fetch vehicle IDs when filters are present so the raw queries can filter by them
