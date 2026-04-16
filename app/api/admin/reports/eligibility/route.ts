@@ -19,6 +19,8 @@ export async function GET() {
           i."isModelNameVisible",
           i."isHardcoreEligible",
           v.rarity,
+          v.make,
+          v.model,
           COALESCE(s."correctGuesses",   0) AS correct_guesses,
           COALESCE(s."incorrectGuesses", 0) AS incorrect_guesses,
           CASE
@@ -51,60 +53,60 @@ export async function GET() {
       ),
 
       counts AS (
-        SELECT 'rookie_pool'         AS slot, COUNT(*) AS count FROM rookie_base
+        SELECT 'rookie_pool'         AS slot, COUNT(*) AS count, COUNT(DISTINCT make || '|' || model) AS distinct_makes FROM rookie_base
         UNION ALL
-        SELECT 'rookie_standard_pool',         COUNT(*) FROM rookie_standard
+        SELECT 'rookie_standard_pool',         COUNT(*), COUNT(DISTINCT make || '|' || model) FROM rookie_standard
         UNION ALL
-        SELECT 'rookie_cropped_pool',          COUNT(*) FROM rookie_cropped
+        SELECT 'rookie_cropped_pool',          COUNT(*), COUNT(DISTINCT make || '|' || model) FROM rookie_cropped
         UNION ALL
-        SELECT 'rookie_slot_a', COUNT(*) FROM rookie_standard
+        SELECT 'rookie_slot_a', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM rookie_standard
           WHERE "isLogoVisible" OR "isModelNameVisible"
         UNION ALL
-        SELECT 'rookie_slot_b', COUNT(*) FROM rookie_standard
+        SELECT 'rookie_slot_b', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM rookie_standard
           WHERE rarity IN ('rare', 'ultra_rare')
         UNION ALL
-        SELECT 'rookie_slot_c', COUNT(*) FROM rookie_cropped
+        SELECT 'rookie_slot_c', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM rookie_cropped
         UNION ALL
-        SELECT 'rookie_slot_d', COUNT(*) FROM rookie_standard
+        SELECT 'rookie_slot_d', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM rookie_standard
 
         UNION ALL
-        SELECT 'standard_pool',       COUNT(*) FROM standard_pool
+        SELECT 'standard_pool',       COUNT(*), COUNT(DISTINCT make || '|' || model) FROM standard_pool
         UNION ALL
-        SELECT 'standard_slot_a', COUNT(*) FROM standard_pool WHERE "isHardcoreEligible"
+        SELECT 'standard_slot_a', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM standard_pool WHERE "isHardcoreEligible"
         UNION ALL
-        SELECT 'standard_slot_b', COUNT(*) FROM standard_pool WHERE "isCropped"
+        SELECT 'standard_slot_b', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM standard_pool WHERE "isCropped"
         UNION ALL
-        SELECT 'standard_slot_c', COUNT(*) FROM standard_pool
+        SELECT 'standard_slot_c', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM standard_pool
           WHERE rarity IN ('rare', 'ultra_rare')
         UNION ALL
-        SELECT 'standard_slot_d', COUNT(*) FROM standard_pool
+        SELECT 'standard_slot_d', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM standard_pool
           WHERE "isLogoVisible" OR "isModelNameVisible"
         UNION ALL
-        SELECT 'standard_slot_e', COUNT(*) FROM standard_pool
+        SELECT 'standard_slot_e', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM standard_pool
 
         UNION ALL
-        SELECT 'hardcore_pool',       COUNT(*) FROM hardcore_pool
+        SELECT 'hardcore_pool',       COUNT(*), COUNT(DISTINCT make || '|' || model) FROM hardcore_pool
         UNION ALL
-        SELECT 'hardcore_slot_a', COUNT(*) FROM hardcore_pool WHERE "isCropped"
+        SELECT 'hardcore_slot_a', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM hardcore_pool WHERE "isCropped"
         UNION ALL
-        SELECT 'hardcore_slot_a_with_model', COUNT(*) FROM hardcore_pool
+        SELECT 'hardcore_slot_a_with_model', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM hardcore_pool
           WHERE "isCropped" AND "isModelNameVisible"
         UNION ALL
-        SELECT 'hardcore_slot_a_no_model', COUNT(*) FROM hardcore_pool
+        SELECT 'hardcore_slot_a_no_model', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM hardcore_pool
           WHERE "isCropped" AND NOT "isModelNameVisible"
         UNION ALL
-        SELECT 'hardcore_slot_b', COUNT(*) FROM hardcore_pool
+        SELECT 'hardcore_slot_b', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM hardcore_pool
           WHERE correct_ratio < 0.40 OR "isHardcoreEligible"
         UNION ALL
-        SELECT 'hardcore_slot_c', COUNT(*) FROM hardcore_pool
+        SELECT 'hardcore_slot_c', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM hardcore_pool
           WHERE rarity IN ('rare', 'ultra_rare')
         UNION ALL
-        SELECT 'hardcore_slot_d', COUNT(*) FROM hardcore_pool WHERE "isHardcoreEligible"
+        SELECT 'hardcore_slot_d', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM hardcore_pool WHERE "isHardcoreEligible"
         UNION ALL
-        SELECT 'hardcore_slot_e', COUNT(*) FROM hardcore_pool
+        SELECT 'hardcore_slot_e', COUNT(*), COUNT(DISTINCT make || '|' || model) FROM hardcore_pool
       )
 
-      SELECT slot, count FROM counts ORDER BY slot
+      SELECT slot, count, distinct_makes FROM counts ORDER BY slot
     `,
     prisma.image.count({ where: { isActive: true } }),
   ]);

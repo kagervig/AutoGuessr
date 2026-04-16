@@ -68,11 +68,11 @@ describe("PUT /api/admin/staging/[id] — rejection", () => {
     const txImageUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
 
     vi.mocked(prisma.$transaction).mockImplementation(
-      async (callback: (tx: unknown) => Promise<unknown>) =>
+      (async (callback: (tx: unknown) => Promise<unknown>) =>
         callback({
           stagingImage: { update: txStagingUpdate },
           image: { updateMany: txImageUpdateMany },
-        })
+        })) as never
     );
 
     const res = await PUT(makeRequest({ status: "REJECTED" }) as never, makeIdParams(STAGING_ID));
@@ -89,11 +89,11 @@ describe("PUT /api/admin/staging/[id] — rejection", () => {
     const txImageUpdateMany = vi.fn();
 
     vi.mocked(prisma.$transaction).mockImplementation(
-      async (callback: (tx: unknown) => Promise<unknown>) =>
+      (async (callback: (tx: unknown) => Promise<unknown>) =>
         callback({
           stagingImage: { update: txStagingUpdate },
           image: { updateMany: txImageUpdateMany },
-        })
+        })) as never
     );
 
     await PUT(makeRequest({ status: "READY" }) as never, makeIdParams(STAGING_ID));

@@ -90,7 +90,7 @@ describe("GET /api/game", () => {
 
   it("should return 400 when all images are inactive", async () => {
     vi.mocked(prisma.image.findMany).mockResolvedValueOnce([]);
-    const res = await GET(makeRequest({ mode: "easy" }));
+    const res = await GET(makeRequest({ mode: "custom" }));
     expect(res.status).toBe(400);
   });
 

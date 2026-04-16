@@ -1,4 +1,5 @@
 import type { Vehicle } from "../generated/prisma/client";
+import { GameMode } from "./constants";
 
 export function levenshtein(a: string, b: string): number {
   const m = a.length;
@@ -128,7 +129,7 @@ export function scoreRound({
   yearDelta: number | null;
   elapsedMs: number;
   timeLimitMs: number;
-  mode: string;
+  mode: GameMode;
   panelsRevealed?: number;
 }): {
   makePoints: number;
@@ -140,11 +141,11 @@ export function scoreRound({
 } {
   const makePoints = makeCorrect ? 300 : 0;
   // Medium mode awards model points independently of make (partial credit for separate fields)
-  const modelPoints = mode === "custom"
+  const modelPoints = mode === GameMode.Custom
     ? (modelCorrect ? 400 : 0)
     : (makeCorrect && modelCorrect ? 400 : 0);
 
-  const yearBonusApplies = ["standard", "hardcore", "time_attack"].includes(mode);
+  const yearBonusApplies = ([GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack] as GameMode[]).includes(mode);
   const yearBonus =
     yearBonusApplies && yearDelta !== null
       ? Math.max(0, Math.round(200 * (1 - yearDelta / 5)))
@@ -152,20 +153,21 @@ export function scoreRound({
 
   // Time bonus only applies when at least the make is correct
   const timeBonus =
-    mode !== "practice" && makeCorrect
+    mode !== GameMode.Practice && makeCorrect
       ? Math.max(0, Math.round(100 * (1 - elapsedMs / timeLimitMs)))
       : 0;
 
-  const multipliers: Record<string, number> = {
-    easy: 1.0,
-    custom: 1.0,
-    standard: 1.7,
-    time_attack: 2.0,
-    practice: 0,
+  const multipliers: Record<GameMode, number> = {
+    [GameMode.Easy]: 1.0,
+    [GameMode.Custom]: 1.0,
+    [GameMode.Standard]: 1.7,
+    [GameMode.TimeAttack]: 2.0,
+    [GameMode.Practice]: 0,
+    [GameMode.Hardcore]: 1.0,
   };
 
   let modeMultiplier: number;
-  if (mode === "hardcore" && panelsRevealed !== undefined) {
+  if (mode === GameMode.Hardcore && panelsRevealed !== undefined) {
     // Scale from 4.0 (1 panel revealed) down to 1.0 (all 9 panels revealed)
     const clamped = Math.max(1, Math.min(9, panelsRevealed));
     modeMultiplier = 1.0 + 3.0 * (9 - clamped) / 8;
@@ -174,7 +176,7 @@ export function scoreRound({
   }
 
   const base = makePoints + modelPoints + (yearBonus ?? 0) + timeBonus;
-  const pointsEarned = mode === "practice" ? 0 : Math.floor(base * modeMultiplier);
+  const pointsEarned = mode === GameMode.Practice ? 0 : Math.floor(base * modeMultiplier);
 
   return { makePoints, modelPoints, yearBonus, timeBonus, modeMultiplier, pointsEarned };
 }
@@ -192,10 +194,11 @@ export function proLevelBonus(correctGuesses: number, incorrectGuesses: number):
   return 0;
 }
 
-export const TIME_LIMITS: Record<string, number> = {
-  easy: 30_000,
-  custom: 30_000,
-  standard: 30_000,
-  hardcore: 30_000,
-  time_attack: 15_000,
+export const TIME_LIMITS: Record<GameMode, number> = {
+  [GameMode.Easy]: 30_000,
+  [GameMode.Custom]: 30_000,
+  [GameMode.Standard]: 30_000,
+  [GameMode.Hardcore]: 30_000,
+  [GameMode.TimeAttack]: 15_000,
+  [GameMode.Practice]: 30_000,
 };

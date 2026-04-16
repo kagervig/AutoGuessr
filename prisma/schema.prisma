@@ -133,6 +133,9 @@ model ImageStats {
   imageId          String    @id
   correctGuesses   Int       @default(0)
   incorrectGuesses Int       @default(0)
+  totalServes      Int       @default(0)
+  // correctGuesses / (correctGuesses + incorrectGuesses); 1.0 when never shown
+  correctRatio     Float     @default(1.0)
   skipCount        Int       @default(0)
   avgGuessTimeMs   Int?
   difficultyScore  Float?
@@ -141,6 +144,8 @@ model ImageStats {
   thumbsDown       Int       @default(0)
   reportCount      Int       @default(0)
   image            Image     @relation(fields: [imageId], references: [id])
+
+  @@index([totalServes])
 }
 
 model Player {

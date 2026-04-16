@@ -4,10 +4,14 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useGameLoader } from "./useGameLoader";
 
-const { mockReplace } = vi.hoisted(() => ({ mockReplace: vi.fn() }));
+// router must be a stable reference — a new object per render would cause the effect to re-run
+const { mockReplace, mockRouter } = vi.hoisted(() => {
+  const mockReplace = vi.fn();
+  return { mockReplace, mockRouter: { replace: mockReplace, push: vi.fn() } };
+});
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: mockReplace, push: vi.fn() }),
+  useRouter: () => mockRouter,
 }));
 
 const GAME_DATA = {
@@ -69,13 +73,37 @@ describe("useGameLoader", () => {
     expect(result.current.mediumYearGuessing).toBe(true);
   });
 
-  it("sets error when the game response contains a non-filter error", async () => {
+  it("retries automatically on first error and loads game when retry succeeds", async () => {
+    let callCount = 0;
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.startsWith("/api/game")) {
+        callCount++;
+        const response = callCount === 1 ? { error: "Server error" } : GAME_DATA;
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(response) } as Response);
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
+    });
+    const { result } = renderHook(() =>
+      useGameLoader({ mode: "easy", username: "test", filter: "" }),
+    );
+    await waitFor(() => expect(result.current.gameData).toEqual(GAME_DATA));
+    expect(result.current.retrying).toBe(false);
+    expect(result.current.error).toBeNull();
+    // Verify a second /api/game request was made for the retry
+    const gameFetchCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
+      ([url]: string[]) => url.startsWith("/api/game"),
+    );
+    expect(gameFetchCalls).toHaveLength(2);
+  });
+
+  it("sets error after retry also fails", async () => {
     mockFetch({ error: "Something went wrong" });
     const { result } = renderHook(() =>
       useGameLoader({ mode: "easy", username: "test", filter: "" }),
     );
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBe("Something went wrong");
+    expect(result.current.retrying).toBe(false);
     expect(result.current.gameData).toBeNull();
   });
 
@@ -91,13 +119,14 @@ describe("useGameLoader", () => {
     );
   });
 
-  it("sets a generic error when the fetch rejects", async () => {
+  it("sets a generic error when both the fetch and its retry reject", async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error("Network failure"));
     const { result } = renderHook(() =>
       useGameLoader({ mode: "easy", username: "test", filter: "" }),
     );
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBe("Failed to load game. Please try again.");
+    expect(result.current.retrying).toBe(false);
   });
 
   it("includes cf_token in the game request when provided", async () => {
@@ -107,8 +136,8 @@ describe("useGameLoader", () => {
     );
     await waitFor(() => expect(result.current.loading).toBe(false));
     const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([url]: [string]) => url.startsWith("/api/game"),
+      ([url]: string[]) => url.startsWith("/api/game"),
     );
-    expect(fetchCall[0]).toContain("cf_token=abc123");
+    expect(fetchCall![0]).toContain("cf_token=abc123");
   });
 });

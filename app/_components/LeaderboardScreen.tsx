@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Trophy } from "lucide-react";
-import { MODES } from "@/app/lib/constants";
+import { MODES, GameMode } from "@/app/lib/constants";
 import { cn } from "@/app/lib/utils";
 
 const PERIODS = [
@@ -15,7 +15,7 @@ const PERIODS = [
 type PeriodId = (typeof PERIODS)[number]["id"];
 
 // Leaderboard excludes practice mode
-const LEADERBOARD_MODES = MODES.filter((m) => m.id !== "practice");
+const LEADERBOARD_MODES = MODES.filter((m) => m.id !== GameMode.Practice);
 
 const RANK_COLORS: Record<number, string> = {
   1: "text-yellow-400",

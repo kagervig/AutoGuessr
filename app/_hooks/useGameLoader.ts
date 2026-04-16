@@ -35,6 +35,7 @@ interface Result {
   loading: boolean;
   error: string | null;
   mediumYearGuessing: boolean;
+  retrying: boolean;
 }
 
 export function useGameLoader({ mode, username, filter, cfToken }: Params): Result {
@@ -43,6 +44,8 @@ export function useGameLoader({ mode, username, filter, cfToken }: Params): Resu
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [mediumYearGuessing, setMediumYearGuessing] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -64,26 +67,39 @@ export function useGameLoader({ mode, username, filter, cfToken }: Params): Resu
             game.error.toLowerCase().includes("not enough")
           ) {
             router.replace(`/?filterError=${encodeURIComponent(game.error)}`);
+          } else if (attempt === 0) {
+            setRetrying(true);
+            setAttempt(1);
           } else {
+            setRetrying(false);
             setError(game.error);
+            setLoading(false);
           }
         } else {
+          setRetrying(false);
           setGameData(game);
           setMediumYearGuessing(flags?.medium_year_guessing === true);
+          setLoading(false);
         }
       })
       .catch((err) => {
         if (err.name !== "AbortError") {
           console.error("[GameScreen] Failed to load game:", err);
-          setError("Failed to load game. Please try again.");
+          if (attempt === 0) {
+            setRetrying(true);
+            setAttempt(1);
+          } else {
+            setRetrying(false);
+            setError("Failed to load game. Please try again.");
+            setLoading(false);
+          }
         }
-      })
-      .finally(() => setLoading(false));
+      });
 
     return () => controller.abort();
     // NOTE: cfToken intentionally omitted — adding it would re-fetch and restart the game
     // after Turnstile verification. It is only needed on the initial load.
-  }, [mode, username, filter, router]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, username, filter, router, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { gameData, loading, error, mediumYearGuessing };
+  return { gameData, loading, error, mediumYearGuessing, retrying };
 }

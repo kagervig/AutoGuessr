@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle, Share2 } from "lucide-react";
-import { MODES } from "@/app/lib/constants";
+import { MODES, GameMode } from "@/app/lib/constants";
 import { ScoringNudge } from "@/app/components/ui/ScoringNudge";
 import { calcGrade } from "@/app/lib/grade";
 import { InitialsEntry } from "./results/InitialsEntry";
@@ -82,7 +82,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
 const approxMax = maxScore ?? 0;
   const { grade, color: gradeColor } = calcGrade(approxMax > 0 ? score / approxMax : 0);
   const modeLabel = MODE_LABELS[mode] || mode;
-  const showLeaderboard = mode !== "practice" && score > 0;
+  const showLeaderboard = mode !== GameMode.Practice && score > 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">

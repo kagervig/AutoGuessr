@@ -1,11 +1,13 @@
+// API route for starting a new game session.
 import type { NextRequest } from "next/server";
 import type { Prisma } from "../../../app/generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, type VehicleForDistractor } from "@/app/lib/game";
-import { ROUNDS_PER_GAME } from "@/app/lib/constants";
+import { ROUNDS_PER_GAME, GameMode } from "@/app/lib/constants";
+import { selectTieredImages } from "@/app/lib/image-selection";
 
-const VALID_MODES = ["easy", "custom", "standard", "hardcore", "time_attack", "practice"] as const;
-type Mode = (typeof VALID_MODES)[number];
+const VALID_MODES = Object.values(GameMode);
+type Mode = GameMode;
 
 interface FilterConfig {
   categorySlugs?: string[];
@@ -62,56 +64,71 @@ export async function GET(request: NextRequest) {
     vehicleFilters.push({ countryOfOrigin: { in: filterConfig.countries } });
   }
 
-  // For hardcore: eligible images OR images players rarely get right.
-  // Minimum 5 plays required before a low-ratio image qualifies.
-  const LOW_SUCCESS_RATIO = 0.40;
-  const MIN_PLAYS = 5;
-  let hardcoreImageIds: string[] | undefined;
-  if (mode === "hardcore") {
-    const allStats = await prisma.imageStats.findMany({
-      select: { imageId: true, correctGuesses: true, incorrectGuesses: true },
-    });
-    hardcoreImageIds = allStats
-      .filter((s) => {
-        const total = s.correctGuesses + s.incorrectGuesses;
-        return total >= MIN_PLAYS && s.correctGuesses / total < LOW_SUCCESS_RATIO;
-      })
-      .map((s) => s.imageId);
-  }
-
-  const imageWhere: Prisma.ImageWhereInput = {
-    isActive: true,
-    ...(mode === "hardcore"
-      ? {
-          OR: [
-            { isHardcoreEligible: true },
-            { id: { in: hardcoreImageIds } },
-          ],
-        }
-      : {}),
-    ...(vehicleFilters.length
-      ? { vehicle: { AND: vehicleFilters } }
-      : {}),
+  // Minimal image shape shared by both the tiered and non-tiered selection paths
+  type SelectableImage = {
+    id: string;
+    filename: string;
+    vehicleId: string;
+    vehicle: { id: string; make: string; model: string; year: number; era: string };
+    pointsBonus?: true;
   };
 
-  const allImages = await prisma.image.findMany({
-    where: imageWhere,
-    include: {
-      vehicle: {
-        select: { id: true, make: true, model: true, year: true, era: true },
+  let selected: SelectableImage[];
+  let makes: string[] | undefined;
+
+  if (mode === GameMode.Easy || mode === GameMode.Standard || mode === GameMode.Hardcore) {
+    try {
+      if (mode === GameMode.Easy) {
+        selected = await selectTieredImages(mode, vehicleFilters);
+      } else {
+        [selected, makes] = await Promise.all([
+          selectTieredImages(mode, vehicleFilters),
+          prisma.vehicle
+            .findMany({ select: { make: true }, distinct: ["make"], orderBy: { make: "asc" } })
+            .then((rows) => rows.map((v) => v.make)),
+        ]);
+      }
+    } catch {
+      return Response.json(
+        { error: "Not enough cars match this filter. Try broadening your selection." },
+        { status: 400 }
+      );
+    }
+  } else {
+    // custom, practice, time_attack: existing shuffle-and-slice path
+    const imageWhere: Prisma.ImageWhereInput = {
+      isActive: true,
+      ...(vehicleFilters.length ? { vehicle: { AND: vehicleFilters } } : {}),
+    };
+
+    const allImages = await prisma.image.findMany({
+      where: imageWhere,
+      include: {
+        vehicle: {
+          select: { id: true, make: true, model: true, year: true, era: true },
+        },
       },
-    },
-    orderBy: { uploadedAt: "desc" },
-  });
+      orderBy: { uploadedAt: "desc" },
+    });
 
-  if (allImages.length < 4) {
-    return Response.json(
-      { error: "Not enough cars match this filter. Try broadening your selection." },
-      { status: 400 }
-    );
+    if (allImages.length < 4) {
+      return Response.json(
+        { error: "Not enough cars match this filter. Try broadening your selection." },
+        { status: 400 }
+      );
+    }
+
+    selected = shuffle(allImages).slice(0, ROUNDS_PER_GAME);
+
+    if (mode === GameMode.Custom || mode === GameMode.TimeAttack) {
+      const distinctMakes = await prisma.vehicle.findMany({
+        select: { make: true },
+        distinct: ["make"],
+        orderBy: { make: "asc" },
+      });
+      makes = distinctMakes.map((v) => v.make);
+    }
   }
-
-  const selected = shuffle(allImages).slice(0, ROUNDS_PER_GAME);
 
   // Upsert player if username provided
   let playerId: string | null = null;
@@ -139,7 +156,34 @@ export async function GET(request: NextRequest) {
   });
 
   // Create rounds
-  const timeLimitMs = mode === "time_attack" ? TIME_LIMITS.time_attack : null;
+  const timeLimitMs = mode === GameMode.TimeAttack ? TIME_LIMITS[GameMode.TimeAttack] : null;
+
+  // Easy mode: pre-compute distractor choices before the transaction to avoid per-round updates
+  let precomputedChoices: { vehicleId: string; label: string }[][] | undefined;
+  if (mode === GameMode.Easy) {
+    const allVehicles = await prisma.vehicle.findMany({
+      select: {
+        id: true,
+        make: true,
+        model: true,
+        era: true,
+        categories: { select: { category: { select: { slug: true } } } },
+      },
+    });
+    const vehiclePool: VehicleForDistractor[] = allVehicles.map((v) => ({
+      ...v,
+      categorySlugs: v.categories.map((c) => c.category.slug),
+    }));
+    const vehicleMap = new Map(vehiclePool.map((v) => [v.id, v]));
+    precomputedChoices = selected.map((image) => {
+      const correct = vehicleMap.get(image.vehicle.id) ?? { ...image.vehicle, categorySlugs: [] } as VehicleForDistractor;
+      const distractors = selectDistractors(correct, vehiclePool);
+      return shuffle([
+        { vehicleId: correct.id, label: vehicleLabel(correct) },
+        ...distractors.map((d) => ({ vehicleId: d.id, label: vehicleLabel(d) })),
+      ]);
+    });
+  }
 
   const rounds = await prisma.$transaction(
     selected.map((image, i) =>
@@ -148,7 +192,7 @@ export async function GET(request: NextRequest) {
           gameId: session.id,
           imageId: image.id,
           sequenceNumber: i + 1,
-          easyChoices: [],
+          easyChoices: precomputedChoices ? precomputedChoices[i].map((c) => c.vehicleId) : [],
           timeLimitMs,
         },
       })
@@ -161,11 +205,17 @@ export async function GET(request: NextRequest) {
     sequenceNumber: i + 1,
     imageId: image.id,
     imageUrl: imageUrl(image.filename, image.vehicleId),
+    ...(image.pointsBonus ? { pointsBonus: true } : {}),
   }));
 
-  // Easy and practice modes: generate 4 choices per round
+  // Easy mode: build easyChoices response from pre-computed choices
   let easyChoices: Record<string, { vehicleId: string; label: string }[]> | undefined;
-  if (mode === "easy" || mode === "practice") {
+  if (mode === GameMode.Easy && precomputedChoices) {
+    easyChoices = Object.fromEntries(rounds.map((round, i) => [round.id, precomputedChoices![i]]));
+  }
+
+  // Practice mode: generate and persist 4 choices per round
+  if (mode === GameMode.Practice) {
     const allVehicles = await prisma.vehicle.findMany({
       select: {
         id: true,
@@ -183,7 +233,7 @@ export async function GET(request: NextRequest) {
 
     easyChoices = {};
     for (let i = 0; i < selected.length; i++) {
-      const correct = vehicleMap.get(selected[i].vehicle.id) ?? { ...selected[i].vehicle, categorySlugs: [] };
+      const correct = vehicleMap.get(selected[i].vehicle.id) ?? { ...selected[i].vehicle, categorySlugs: [] } as VehicleForDistractor;
       const distractors = selectDistractors(correct, vehiclePool);
       const choices = shuffle([
         { vehicleId: correct.id, label: vehicleLabel(correct) },
@@ -200,24 +250,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Custom/standard/hardcore/time_attack: return distinct makes
-  let makes: string[] | undefined;
-  if (["custom", "standard", "hardcore", "time_attack"].includes(mode)) {
-    const distinctMakes = await prisma.vehicle.findMany({
-      select: { make: true },
-      distinct: ["make"],
-      orderBy: { make: "asc" },
-    });
-    makes = distinctMakes.map((v) => v.make);
-  }
-
   const isProduction = process.env.NODE_ENV === "production";
   const response = Response.json({
     gameId: session.id,
     rounds: roundData,
     ...(easyChoices ? { easyChoices } : {}),
     ...(makes ? { makes } : {}),
-    ...(mode === "time_attack" ? { timeLimitMs: TIME_LIMITS.time_attack } : {}),
+    ...(mode === GameMode.TimeAttack ? { timeLimitMs: TIME_LIMITS[GameMode.TimeAttack] } : {}),
   });
   response.headers.set(
     "Set-Cookie",
