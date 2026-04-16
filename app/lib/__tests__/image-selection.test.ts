@@ -210,11 +210,10 @@ describe("selectRookieImages", () => {
     expect(selectRookieImages(makeRookiePool())).toHaveLength(10);
   });
 
-  it("should mark exactly one image with pointsBonus (the cropped pick)", () => {
+  it("should not mark any image with pointsBonus (slot C is disabled)", () => {
     const result = selectRookieImages(makeRookiePool());
     const bonusImages = result.filter((img) => img.pointsBonus === true);
-    expect(bonusImages).toHaveLength(1);
-    expect(bonusImages[0].isCropped).toBe(true);
+    expect(bonusImages).toHaveLength(0);
   });
 
   it("should include at least 40% make/model-visible images", () => {
