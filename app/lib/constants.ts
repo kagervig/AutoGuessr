@@ -9,6 +9,16 @@ export const ERAS = ["classic", "retro", "modern", "contemporary"] as const;
 
 export const RARITIES = ["common", "uncommon", "rare", "ultra_rare"] as const;
 
+export const GameMode = {
+  Easy: "easy",
+  Standard: "standard",
+  Hardcore: "hardcore",
+  TimeAttack: "time_attack",
+  Custom: "custom",
+  Practice: "practice",
+} as const;
+export type GameMode = (typeof GameMode)[keyof typeof GameMode];
+
 export const MODES = [
   {
     id: GameMode.Easy,
