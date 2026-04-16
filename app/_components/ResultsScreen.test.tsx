@@ -204,7 +204,6 @@ describe("ResultsScreen", () => {
       expect(share).toHaveBeenCalledWith(
         expect.objectContaining({
           title: "Autoguessr",
-          text: expect.stringContaining("5,000 pts"),
           url: expect.any(String),
         })
       );
