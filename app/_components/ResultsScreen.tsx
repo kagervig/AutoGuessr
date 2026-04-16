@@ -33,9 +33,8 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
 
   async function handleShare(score: number, grade: string) {
     const url = window.location.href;
-    const text = `I scored ${score.toLocaleString()} pts (Grade ${grade}) on Autoguessr — can you beat it?`;
     if (navigator.share) {
-      await navigator.share({ title: "Autoguessr", text, url });
+      await navigator.share({ title: "Autoguessr", url });
     } else {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -149,26 +148,38 @@ const approxMax = maxScore ?? 0;
               }}
               className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-5 py-3 rounded-full hover:brightness-110 transition-all text-xs sm:text-sm"
             >
-              <RotateCcw className="w-4 h-4 shrink-0" /> Play Again
+              <RotateCcw className="w-4 h-4 shrink-0" /> {hasToken ? "Play Again" : "Play Game"}
             </button>
-            <button
-              onClick={() => handleShare(score, grade)}
-              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
-            >
-              <Share2 className="w-4 h-4 shrink-0" />
-              {copied ? "Copied!" : "Share"}
-            </button>
-            <button
-              onClick={() => router.push("/")}
-              className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
-            >
-              <ArrowLeft className="w-4 h-4 shrink-0" /> Garage
-            </button>
+            {!hasToken && (
+              <button
+                onClick={() => router.push("/")}
+                className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
+              >
+                <ArrowLeft className="w-4 h-4 shrink-0" /> Different Game Mode
+              </button>
+            )}
+            {hasToken && (
+              <>
+                <button
+                  onClick={() => handleShare(score, grade)}
+                  className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
+                >
+                  <Share2 className="w-4 h-4 shrink-0" />
+                  {copied ? "Copied!" : "Share Results"}
+                </button>
+                <button
+                  onClick={() => router.push("/")}
+                  className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
+                >
+                  <ArrowLeft className="w-4 h-4 shrink-0" /> Garage
+                </button>
+              </>
+            )}
           </div>
         </motion.div>
 
         {/* Scoring nudge */}
-        <ScoringNudge mode={mode} score={score} />
+        {hasToken && <ScoringNudge mode={mode} score={score} />}
 
         <RoundBreakdown rounds={session.rounds} mode={mode} />
       </div>

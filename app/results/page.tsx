@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import ResultsScreen from "@/app/_components/ResultsScreen";
 import { prisma } from "@/app/lib/prisma";
-import { calcGrade } from "@/app/lib/grade";
 import { MODES } from "@/app/lib/constants";
 
 interface SearchParams {
@@ -14,7 +13,7 @@ interface SearchParams {
 }
 
 const MODE_LABELS: Record<string, string> = Object.fromEntries(
-  MODES.map((m) => [m.id, m.label])
+  MODES.map((m) => [m.id, m.label]),
 );
 
 export async function generateMetadata({
@@ -22,7 +21,12 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<SearchParams>;
 }): Promise<Metadata> {
-  const { gameId, mode, username, maxScore: maxScoreParam } = await searchParams;
+  const {
+    gameId,
+    mode,
+    username,
+    maxScore: maxScoreParam,
+  } = await searchParams;
 
   if (!gameId) return { title: "Autoguessr — Results" };
 
@@ -35,7 +39,7 @@ export async function generateMetadata({
 
   const score = session.finalScore ?? 0;
   const maxScore = maxScoreParam ? parseInt(maxScoreParam) : 0;
-  const { grade } = calcGrade(maxScore > 0 ? score / maxScore : 0);
+  const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
   const modeLabel = MODE_LABELS[mode ?? ""] ?? mode ?? "";
 
   const headersList = await headers();
@@ -45,27 +49,27 @@ export async function generateMetadata({
 
   const ogParams = new URLSearchParams({
     score: String(score),
-    grade,
+    percentage: String(percentage),
     mode: modeLabel,
   });
 
   const ogImageUrl = `${baseUrl}/api/og?${ogParams.toString()}`;
-  const title = `Autoguessr — ${grade} · ${score.toLocaleString()} pts`;
-  const description = `${username ? `${username} scored ` : ""}${score.toLocaleString()} pts in ${modeLabel} mode. Can you beat it?`;
+  const title = `Can you beat my score? I got ${percentage}%`;
 
   return {
     title,
     openGraph: {
       title,
-      description,
+      url: `${baseUrl}/results?gameId=${gameId}&mode=${mode}`,
+      siteName: "Autoguessr",
       images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: "summary_large_image",
       title,
-      description,
       images: [ogImageUrl],
     },
+    metadataBase: new URL(baseUrl),
   };
 }
 
@@ -80,5 +84,13 @@ export default async function ResultsPage({
   const cookieStore = await cookies();
   const hasToken = cookieStore.has(`st_${gameId}`);
 
-  return <ResultsScreen gameId={gameId} hasToken={hasToken} mode={mode} username={username ?? ""} maxScore={maxScore ? parseInt(maxScore) : undefined} />;
+  return (
+    <ResultsScreen
+      gameId={gameId}
+      hasToken={hasToken}
+      mode={mode}
+      username={username ?? ""}
+      maxScore={maxScore ? parseInt(maxScore) : undefined}
+    />
+  );
 }

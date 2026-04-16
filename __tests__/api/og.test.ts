@@ -12,6 +12,12 @@ vi.mock("next/og", () => ({
   },
 }));
 
+// Prevent real network calls from loadOutfitFont
+vi.stubGlobal(
+  "fetch",
+  vi.fn().mockResolvedValue({ text: async () => "", arrayBuffer: async () => new ArrayBuffer(0) }),
+);
+
 const { GET } = await import("@/app/api/og/route");
 
 function makeRequest(params: Record<string, string> = {}) {
@@ -30,8 +36,8 @@ describe("GET /api/og", () => {
     expect(res.status).toBe(400);
   });
 
-  it("should return 400 when only score is provided", async () => {
-    const res = await GET(makeRequest({ score: "12500" }));
+  it("should return 400 when score is missing but other params are present", async () => {
+    const res = await GET(makeRequest({ percentage: "75", mode: "Standard" }));
     expect(res.status).toBe(400);
   });
 
