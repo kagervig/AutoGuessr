@@ -15,11 +15,15 @@ trap cleanup EXIT
 
 echo "Dumping prod subset (limit=${LIMIT})..."
 
+psql_prod() {
+  docker run --rm postgres:16 psql "$DB" -t -A -F',' "$@"
+}
+
 dump_table() {
   local label="$1"
   local query="$2"
   local file="${TMPDIR_HOST}/${label}.csv"
-  docker run --rm postgres:16 psql "$DB" -t -A -F',' -c "COPY ($query) TO STDOUT WITH CSV HEADER" > "$file"
+  psql_prod -c "COPY ($query) TO STDOUT WITH CSV HEADER" > "$file"
   echo "  ✓ ${label}"
 }
 
@@ -29,56 +33,29 @@ dump_table "FeatureFlag" 'SELECT * FROM "FeatureFlag"'
 dump_table "KnownMake"   'SELECT * FROM "KnownMake"'
 dump_table "KnownModel"  'SELECT * FROM "KnownModel"'
 
-dump_table "Vehicle" "
-  WITH selected AS (
+# Resolve selected vehicle IDs once to avoid re-running the expensive join for every table
+echo "  Resolving vehicle IDs..."
+VEHICLE_IDS=$(psql_prod -c "
+  SELECT string_agg(quote_literal(id), ',') FROM (
     SELECT v.id FROM \"Vehicle\" v
     JOIN \"Image\" i ON i.\"vehicleId\" = v.id
     WHERE i.\"isActive\" = true
     GROUP BY v.id
     ORDER BY COUNT(i.id) DESC
     LIMIT ${LIMIT}
-  )
-  SELECT v.* FROM \"Vehicle\" v WHERE v.id IN (SELECT id FROM selected)"
+  ) ids
+")
 
-dump_table "VehicleAlias" "
-  WITH selected AS (
-    SELECT v.id FROM \"Vehicle\" v
-    JOIN \"Image\" i ON i.\"vehicleId\" = v.id
-    WHERE i.\"isActive\" = true
-    GROUP BY v.id ORDER BY COUNT(i.id) DESC LIMIT ${LIMIT}
-  )
-  SELECT va.* FROM \"VehicleAlias\" va WHERE va.\"vehicleId\" IN (SELECT id FROM selected)"
+if [[ -z "$VEHICLE_IDS" ]]; then
+  echo "Error: no vehicles found in prod" >&2
+  exit 1
+fi
 
-dump_table "VehicleCategory" "
-  WITH selected AS (
-    SELECT v.id FROM \"Vehicle\" v
-    JOIN \"Image\" i ON i.\"vehicleId\" = v.id
-    WHERE i.\"isActive\" = true
-    GROUP BY v.id ORDER BY COUNT(i.id) DESC LIMIT ${LIMIT}
-  )
-  SELECT vc.* FROM \"VehicleCategory\" vc WHERE vc.\"vehicleId\" IN (SELECT id FROM selected)"
-
-dump_table "Image" "
-  WITH selected AS (
-    SELECT v.id FROM \"Vehicle\" v
-    JOIN \"Image\" i ON i.\"vehicleId\" = v.id
-    WHERE i.\"isActive\" = true
-    GROUP BY v.id ORDER BY COUNT(i.id) DESC LIMIT ${LIMIT}
-  )
-  SELECT i.* FROM \"Image\" i
-  WHERE i.\"vehicleId\" IN (SELECT id FROM selected)
-  AND i.\"isActive\" = true"
-
-dump_table "ImageStats" "
-  WITH selected AS (
-    SELECT v.id FROM \"Vehicle\" v
-    JOIN \"Image\" i ON i.\"vehicleId\" = v.id
-    WHERE i.\"isActive\" = true
-    GROUP BY v.id ORDER BY COUNT(i.id) DESC LIMIT ${LIMIT}
-  )
-  SELECT s.* FROM \"ImageStats\" s
-  JOIN \"Image\" i ON i.id = s.\"imageId\"
-  WHERE i.\"vehicleId\" IN (SELECT id FROM selected)"
+dump_table "Vehicle"         "SELECT * FROM \"Vehicle\" WHERE id IN (${VEHICLE_IDS})"
+dump_table "VehicleAlias"    "SELECT * FROM \"VehicleAlias\" WHERE \"vehicleId\" IN (${VEHICLE_IDS})"
+dump_table "VehicleCategory" "SELECT * FROM \"VehicleCategory\" WHERE \"vehicleId\" IN (${VEHICLE_IDS})"
+dump_table "Image"           "SELECT * FROM \"Image\" WHERE \"vehicleId\" IN (${VEHICLE_IDS}) AND \"isActive\" = true"
+dump_table "ImageStats"      "SELECT s.* FROM \"ImageStats\" s JOIN \"Image\" i ON i.id = s.\"imageId\" WHERE i.\"vehicleId\" IN (${VEHICLE_IDS})"
 
 echo "Loading into local DB (container: ${CONTAINER})..."
 
