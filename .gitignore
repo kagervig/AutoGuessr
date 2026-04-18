@@ -31,6 +31,8 @@ dist/
 
 # Data
 /Data/
+images_to_process.csv
+images_to_process-backup.csv
 
 # Gemini key rotation state
 .gemini-key-state.json
