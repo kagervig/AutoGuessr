@@ -66,6 +66,26 @@ export default function StagingImagePanel() {
   const [error, setError] = useState<string | null>(null);
   const [repairing, setRepairing] = useState(false);
   const [repairResult, setRepairResult] = useState<string | null>(null);
+  const [autoUpdating, setAutoUpdating] = useState(false);
+  const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
+
+  async function autoUpdate() {
+    setAutoUpdating(true);
+    setAutoUpdateResult(null);
+    const res = await fetch("/api/admin/staging/auto-update", { method: "POST" });
+    setAutoUpdating(false);
+    if (res.ok) {
+      const { updated, skipped } = await res.json();
+      setAutoUpdateResult(
+        updated === 0
+          ? "Nothing to update."
+          : `Updated ${updated} image${updated !== 1 ? "s" : ""}${skipped > 0 ? `, ${skipped} skipped (unknown make)` : ""}.`
+      );
+      if (updated > 0) fetchImages();
+    } else {
+      setAutoUpdateResult("Auto update failed.");
+    }
+  }
 
   async function repairStatuses() {
     setRepairing(true);
@@ -349,7 +369,17 @@ export default function StagingImagePanel() {
             </button>
           ))}
         </nav>
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-3 ml-auto">
+          {autoUpdateResult && (
+            <span className="text-xs text-gray-500">{autoUpdateResult}</span>
+          )}
+          <button
+            onClick={autoUpdate}
+            disabled={autoUpdating}
+            className="text-xs px-2.5 py-1.5 border border-gray-200 rounded text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50"
+          >
+            {autoUpdating ? "Updating…" : "Auto update"}
+          </button>
           {repairResult && (
             <span className="text-xs text-gray-500">{repairResult}</span>
           )}
