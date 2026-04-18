@@ -41,7 +41,7 @@ jobs:
       - name: Build summary
         run: |
           TOTAL=$(grep -c "Tagged image" output.log || echo 0)
-          KEYS=$(grep -o "GEMINI_API_KEY_[0-9]\+" output.log | sort -u | tr '\n' ',')
+          KEYS=$(grep -o "GEMINI_API_KEY_[0-9]\+" output.log | sort -u | tr '\n' ',' || echo "")
 
           echo "Images tagged: $TOTAL" > summary.txt
           echo "Keys used: $KEYS" >> summary.txt
