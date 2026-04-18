@@ -37,6 +37,7 @@ export async function generateMetadata({
 
   if (!session) return { title: "Autoguessr — Results" };
 
+  const { username } = await searchParams;
   const score = session.finalScore ?? 0;
   const maxScore = maxScoreParam ? parseInt(maxScoreParam) : 0;
   const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
