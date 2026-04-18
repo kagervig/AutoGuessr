@@ -64,6 +64,42 @@ export default function StagingImagePanel() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [repairing, setRepairing] = useState(false);
+  const [repairResult, setRepairResult] = useState<string | null>(null);
+  const [autoUpdating, setAutoUpdating] = useState(false);
+  const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
+
+  async function autoUpdate() {
+    setAutoUpdating(true);
+    setAutoUpdateResult(null);
+    const res = await fetch("/api/admin/staging/auto-update", { method: "POST" });
+    setAutoUpdating(false);
+    if (res.ok) {
+      const { updated, skipped } = await res.json();
+      setAutoUpdateResult(
+        updated === 0
+          ? "Nothing to update."
+          : `Updated ${updated} image${updated !== 1 ? "s" : ""}${skipped > 0 ? `, ${skipped} skipped (unknown make)` : ""}.`
+      );
+      if (updated > 0) fetchImages();
+    } else {
+      setAutoUpdateResult("Auto update failed.");
+    }
+  }
+
+  async function repairStatuses() {
+    setRepairing(true);
+    setRepairResult(null);
+    const res = await fetch("/api/admin/staging/repair", { method: "POST" });
+    setRepairing(false);
+    if (res.ok) {
+      const { fixed } = await res.json();
+      setRepairResult(fixed === 0 ? "No issues found." : `Fixed ${fixed} image${fixed !== 1 ? "s" : ""}.`);
+      if (fixed > 0) fetchImages();
+    } else {
+      setRepairResult("Repair failed.");
+    }
+  }
 
   const autocomplete = useStagingAutocomplete(editForm, setEditForm);
 
@@ -310,7 +346,7 @@ export default function StagingImagePanel() {
       {activePage === "staging" && (
       <>
       {/* Status filter tabs */}
-      <div className="border-b border-gray-200 bg-white px-6">
+      <div className="border-b border-gray-200 bg-white px-6 flex items-center justify-between">
         <nav className="flex gap-1 -mb-px">
           {(
             ["ALL", "PENDING_REVIEW", "COMMUNITY_REVIEW", "READY", "PUBLISHED", "REJECTED"] as const
@@ -333,6 +369,28 @@ export default function StagingImagePanel() {
             </button>
           ))}
         </nav>
+        <div className="flex items-center gap-3 ml-auto">
+          {autoUpdateResult && (
+            <span className="text-xs text-gray-500">{autoUpdateResult}</span>
+          )}
+          <button
+            onClick={autoUpdate}
+            disabled={autoUpdating}
+            className="text-xs px-2.5 py-1.5 border border-gray-200 rounded text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50"
+          >
+            {autoUpdating ? "Updating…" : "Auto update"}
+          </button>
+          {repairResult && (
+            <span className="text-xs text-gray-500">{repairResult}</span>
+          )}
+          <button
+            onClick={repairStatuses}
+            disabled={repairing}
+            className="text-xs px-2.5 py-1.5 border border-gray-200 rounded text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50"
+          >
+            {repairing ? "Checking…" : "Repair statuses"}
+          </button>
+        </div>
       </div>
 
       <div className="flex h-[calc(100vh-96px)]">

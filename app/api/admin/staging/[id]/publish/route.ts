@@ -66,63 +66,71 @@ export async function POST(_request: NextRequest, { params }: Params) {
     ? await prisma.category.findMany({ where: { slug: { in: categorySlugs } } })
     : [];
 
-  const vehicle = await prisma.vehicle.create({
-    data: {
-      make,
-      model,
-      year,
-      trim,
-      countryOfOrigin,
-      regionId: region.id,
-      bodyStyle,
-      era,
-      rarity,
-    },
-  });
+  try {
+    const { vehicle, image } = await prisma.$transaction(async (tx) => {
+      const vehicle = await tx.vehicle.create({
+        data: { make, model, year, trim, countryOfOrigin, regionId: region.id, bodyStyle, era, rarity },
+      });
 
-  if (categories.length > 0) {
-    await prisma.vehicleCategory.createMany({
-      data: categories.map((c) => ({ vehicleId: vehicle.id, categoryId: c.id })),
+      if (categories.length > 0) {
+        await tx.vehicleCategory.createMany({
+          data: categories.map((c) => ({ vehicleId: vehicle.id, categoryId: c.id })),
+        });
+      }
+
+      const image = await tx.image.create({
+        data: {
+          vehicleId: vehicle.id,
+          filename: staging.cloudinaryPublicId,
+          sourceUrl: staging.sourceUrl,
+          attribution: staging.attribution,
+          copyrightHolder: staging.adminCopyrightHolder ?? null,
+          isCropped: staging.adminIsCropped ?? false,
+          isLogoVisible: staging.adminIsLogoVisible ?? false,
+          isModelNameVisible: staging.adminIsModelNameVisible ?? false,
+          hasMultipleVehicles: staging.adminHasMultipleVehicles ?? false,
+          isFaceVisible: staging.adminIsFaceVisible ?? false,
+          isVehicleUnmodified: staging.adminIsVehicleUnmodified ?? true,
+          isActive: true,
+          isHardcoreEligible,
+        },
+      });
+
+      await tx.imageStats.create({ data: { imageId: image.id } });
+
+      await tx.stagingImage.update({
+        where: { id },
+        data: { status: "PUBLISHED", reviewedAt: new Date() },
+      });
+
+      return { vehicle, image };
     });
+
+    await prisma.knownMake.upsert({
+      where: { name: make },
+      create: { name: make },
+      update: {},
+    });
+    await prisma.knownModel.upsert({
+      where: { make_name: { make, name: model } },
+      create: { make, name: model },
+      update: {},
+    });
+
+    return Response.json({ vehicleId: vehicle.id, imageId: image.id });
+  } catch (err: unknown) {
+    console.error("[publish]", err);
+    if (
+      err instanceof Error &&
+      "code" in err &&
+      (err as { code: string }).code === "P2002"
+    ) {
+      return Response.json(
+        { error: "An image with this Cloudinary ID already exists. It may have been published already." },
+        { status: 409 }
+      );
+    }
+    const message = err instanceof Error ? err.message : String(err);
+    return Response.json({ error: message }, { status: 500 });
   }
-
-  const image = await prisma.image.create({
-    data: {
-      vehicleId: vehicle.id,
-      filename: staging.cloudinaryPublicId,
-      sourceUrl: staging.sourceUrl,
-      attribution: staging.attribution,
-      copyrightHolder: staging.adminCopyrightHolder ?? null,
-      isCropped: staging.adminIsCropped ?? false,
-      isLogoVisible: staging.adminIsLogoVisible ?? false,
-      isModelNameVisible: staging.adminIsModelNameVisible ?? false,
-      hasMultipleVehicles: staging.adminHasMultipleVehicles ?? false,
-      isFaceVisible: staging.adminIsFaceVisible ?? false,
-      isVehicleUnmodified: staging.adminIsVehicleUnmodified ?? true,
-      isActive: true,
-      isHardcoreEligible,
-    },
-  });
-
-  await prisma.imageStats.create({
-    data: { imageId: image.id },
-  });
-
-  await prisma.stagingImage.update({
-    where: { id },
-    data: { status: "PUBLISHED", reviewedAt: new Date() },
-  });
-
-  await prisma.knownMake.upsert({
-    where: { name: make },
-    create: { name: make },
-    update: {},
-  });
-  await prisma.knownModel.upsert({
-    where: { make_name: { make, name: model } },
-    create: { make, name: model },
-    update: {},
-  });
-
-  return Response.json({ vehicleId: vehicle.id, imageId: image.id });
 }
