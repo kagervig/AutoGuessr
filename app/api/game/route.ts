@@ -28,7 +28,6 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const mode = searchParams.get("mode") as Mode | null;
-  const username = searchParams.get("username") ?? null;
   const filterRaw = searchParams.get("filter");
   const cfToken = searchParams.get("cf_token");
 
@@ -130,25 +129,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Upsert player if username provided
-  let playerId: string | null = null;
-  if (username) {
-    const player = await prisma.player.upsert({
-      where: { username },
-      update: { lastSeenAt: new Date() },
-      create: {
-        username,
-        stats: { create: {} },
-      },
-    });
-    playerId = player.id;
-  }
-
   // Create session
   const sessionToken = crypto.randomUUID();
   const session = await prisma.gameSession.create({
     data: {
-      playerId,
       mode,
       filterConfig: filterConfig as object,
       sessionToken,
