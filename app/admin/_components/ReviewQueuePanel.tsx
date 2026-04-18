@@ -283,10 +283,29 @@ export default function ReviewQueuePanel() {
               />
               {/* AI suggestion — overlay bottom-left of image */}
               {(card.ai.make || card.ai.model) && (
-                <div className="absolute bottom-2 left-2 text-xs bg-black/60 text-white rounded px-2 py-1">
-                  {[card.ai.year, card.ai.make, card.ai.model].filter(Boolean).join(" ")}
+                <div className="absolute bottom-2 left-2 text-xs bg-black/60 text-white rounded px-2 py-1 flex items-center gap-1">
+                  {card.ai.make && card.ai.model ? (
+                    <a
+                      href={`https://www.google.com/search?q=${encodeURIComponent([card.ai.year, card.ai.make, card.ai.model].filter(Boolean).join(" "))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-blue-300"
+                    >
+                      {[card.ai.year, card.ai.make, card.ai.model].filter(Boolean).join(" ")}
+                    </a>
+                  ) : (
+                    <span>{[card.ai.year, card.ai.make, card.ai.model].filter(Boolean).join(" ")}</span>
+                  )}
                   {card.ai.confidence != null && (
-                    <span className="ml-1 opacity-70">({Math.round(card.ai.confidence * 100)}%)</span>
+                    <span className={`ml-1 ${
+                      card.ai.confidence >= 0.9
+                        ? "text-green-400"
+                        : card.ai.confidence >= 0.8
+                          ? "text-yellow-400"
+                          : "opacity-70"
+                    }`}>
+                      ({Math.round(card.ai.confidence * 100)}%)
+                    </span>
                   )}
                 </div>
               )}
