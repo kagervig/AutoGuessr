@@ -31,18 +31,6 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
   const [initialsSubmitted, setInitialsSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  async function handleShare(score: number, grade: string) {
-    const url = window.location.href;
-    const text = `I scored ${score.toLocaleString()} pts (Grade ${grade}) on Autoguessr — can you beat it?`;
-    if (navigator.share) {
-      await navigator.share({ title: "Autoguessr", text, url });
-    } else {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  }
-
   useEffect(() => {
     fetch(`/api/session?gameId=${gameId}`)
       .then((r) => r.json())
@@ -79,10 +67,22 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
   }
 
   const score = session.finalScore ?? 0;
-const approxMax = maxScore ?? 0;
+  const approxMax = maxScore ?? 0;
   const { grade, color: gradeColor } = calcGrade(approxMax > 0 ? score / approxMax : 0);
   const modeLabel = MODE_LABELS[mode] || mode;
   const showLeaderboard = mode !== GameMode.Practice && score > 0;
+
+  async function handleShare() {
+    const url = window.location.href;
+    const text = `I scored ${score.toLocaleString()} pts (Grade ${grade}) on Autoguessr — can you beat it?`;
+    if (navigator.share) {
+      await navigator.share({ title: "Autoguessr", text, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -152,7 +152,7 @@ const approxMax = maxScore ?? 0;
               <RotateCcw className="w-4 h-4 shrink-0" /> Play Again
             </button>
             <button
-              onClick={() => handleShare(score, grade)}
+              onClick={handleShare}
               className="flex-1 inline-flex items-center justify-center gap-2 border border-white/20 text-white font-bold tracking-widest uppercase px-5 py-3 rounded-full hover:bg-white/10 transition-all text-xs sm:text-sm"
             >
               <Share2 className="w-4 h-4 shrink-0" />

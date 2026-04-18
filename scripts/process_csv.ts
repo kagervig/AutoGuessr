@@ -5,7 +5,6 @@ import { GoogleGenAI } from "@google/genai";
 import { lookupMakeOrigin } from "./lib/make-origins";
 
 const CSV_PATH = "/Users/kristianallin/Downloads/images_to_process.csv";
-const BATCH_SIZE = 50;
 const LIMIT = 2;
 const RATE_LIMIT_MS = 4500;
 
@@ -84,8 +83,9 @@ async function tagImage(imageUrl: string): Promise<GeminiTag | null> {
     });
 
     return JSON.parse(result.text || "{}") as GeminiTag;
-  } catch (err: any) {
-    if (err.message?.includes("429") || err.message?.includes("quota")) {
+  } catch (err) {
+    const error = err as Error;
+    if (error.message?.includes("429") || error.message?.includes("quota")) {
       keyIndex++;
       if (keyIndex < keys.length) {
         console.log(`Switching to key ${keyIndex + 1}`);
@@ -93,7 +93,7 @@ async function tagImage(imageUrl: string): Promise<GeminiTag | null> {
         return tagImage(imageUrl);
       }
     }
-    console.error(`Error tagging image: ${err.message}`);
+    console.error(`Error tagging image: ${error.message}`);
     return null;
   }
 }

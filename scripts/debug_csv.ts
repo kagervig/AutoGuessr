@@ -7,7 +7,7 @@ const content = fs.readFileSync(CSV_PATH, "utf-8");
 const lines = content.split("\n");
 
 let current = "";
-let expectedCount = 39;
+const expectedCount = 39;
 for (let i = 0; i < lines.length; i++) {
   current += lines[i];
   try {

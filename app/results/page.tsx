@@ -22,7 +22,7 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<SearchParams>;
 }): Promise<Metadata> {
-  const { gameId, mode, username, maxScore: maxScoreParam } = await searchParams;
+  const { gameId, mode, maxScore: maxScoreParam } = await searchParams;
 
   if (!gameId) return { title: "Autoguessr — Results" };
 
@@ -33,6 +33,7 @@ export async function generateMetadata({
 
   if (!session) return { title: "Autoguessr — Results" };
 
+  const { username } = await searchParams;
   const score = session.finalScore ?? 0;
   const maxScore = maxScoreParam ? parseInt(maxScoreParam) : 0;
   const { grade } = calcGrade(maxScore > 0 ? score / maxScore : 0);

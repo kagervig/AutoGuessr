@@ -54,10 +54,14 @@ export default function ReviewQueuePanel() {
 
   const fetchQueue = useCallback(async (status: StagingStatus) => {
     setLoading(true);
-    setIndex(0);
     const res = await fetch(`/api/admin/staging?status=${status}`);
     const data = await res.json();
-    setQueue(data.items ?? []);
+    const items = data.items ?? [];
+    setQueue(items);
+    setIndex(0);
+    if (items.length > 0) {
+      setEditForm(formFromImage(items[0]));
+    }
     setLoading(false);
   }, []);
 
@@ -65,7 +69,7 @@ export default function ReviewQueuePanel() {
     fetchQueue(statusFilter);
   }, [fetchQueue, statusFilter]);
 
-  // Sync edit form when index or queue changes
+  // Sync edit form when index or queue changes (safety net for other index changes)
   useEffect(() => {
     const card = queue[index];
     if (card) setEditForm(formFromImage(card));
@@ -152,7 +156,10 @@ export default function ReviewQueuePanel() {
   }
 
   function handleSkip() {
-    setIndex((i) => i + 1);
+    const nextIndex = index + 1;
+    setIndex(nextIndex);
+    const nextCard = queue[nextIndex];
+    if (nextCard) setEditForm(formFromImage(nextCard));
     setFieldErrors({});
   }
 
@@ -167,8 +174,13 @@ export default function ReviewQueuePanel() {
     setFieldErrors({});
     const capturedForm = { ...editForm };
     const capturedId = card.id;
+
     // Optimistic advance — next card paints immediately
-    setIndex((i) => i + 1);
+    const nextIndex = index + 1;
+    setIndex(nextIndex);
+    const nextCard = queue[nextIndex];
+    if (nextCard) setEditForm(formFromImage(nextCard));
+
     doPublish(capturedId, capturedForm);
   }
 
@@ -283,6 +295,7 @@ export default function ReviewQueuePanel() {
             {/* Form — bottom half */}
             <div className="flex-shrink-0 border-t border-gray-200 bg-white px-4 py-3">
               <StagingEditFields
+                key={card.id}
                 form={editForm}
                 setForm={setEditForm}
                 makeOptions={autocomplete.makeOptions}

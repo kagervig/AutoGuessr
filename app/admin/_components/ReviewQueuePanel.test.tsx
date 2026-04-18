@@ -148,6 +148,8 @@ describe("ReviewQueuePanel", () => {
   it("→ calls PUT and POST then advances to the next card", async () => {
     render(<ReviewQueuePanel />);
     await waitFor(() => expect(screen.getByAltText("cars/img1")).toBeInTheDocument());
+    // Wait for form to sync (avoiding race condition where Publish is clicked before form is populated)
+    await waitFor(() => expect(screen.getByDisplayValue("Toyota")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: /Publish & Next/i }));
 
