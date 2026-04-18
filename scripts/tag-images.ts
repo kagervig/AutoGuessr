@@ -27,6 +27,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../app/generated/prisma/client";
+import { lookupMakeOrigin } from "./lib/make-origins";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -155,133 +156,6 @@ interface GeminiTag {
   is_face_visible: boolean;
   is_vehicle_unmodified: boolean;
   notes: string;
-}
-
-// ── Make → origin lookup ──────────────────────────────────────────────────────
-
-interface MakeOrigin {
-  countryOfOrigin: string;
-  regionSlug: string;
-}
-
-const MAKE_ORIGIN_MAP: Record<string, MakeOrigin> = {
-  // United States
-  "Ford":         { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Chevrolet":    { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Dodge":        { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Jeep":         { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Chrysler":     { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Buick":        { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Cadillac":     { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Lincoln":      { countryOfOrigin: "US", regionSlug: "north_america" },
-  "GMC":          { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Pontiac":      { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Oldsmobile":   { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Mercury":      { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Plymouth":     { countryOfOrigin: "US", regionSlug: "north_america" },
-  "AMC":          { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Shelby":       { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Tesla":        { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Rivian":       { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Lucid":        { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Hummer":       { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Saturn":       { countryOfOrigin: "US", regionSlug: "north_america" },
-  "SSC":          { countryOfOrigin: "US", regionSlug: "north_america" },
-  "Saleen":       { countryOfOrigin: "US", regionSlug: "north_america" },
-  // Germany
-  "BMW":          { countryOfOrigin: "DE", regionSlug: "europe" },
-  "Mercedes-Benz":{ countryOfOrigin: "DE", regionSlug: "europe" },
-  "Mercedes":     { countryOfOrigin: "DE", regionSlug: "europe" },
-  "Audi":         { countryOfOrigin: "DE", regionSlug: "europe" },
-  "Volkswagen":   { countryOfOrigin: "DE", regionSlug: "europe" },
-  "VW":           { countryOfOrigin: "DE", regionSlug: "europe" },
-  "Porsche":      { countryOfOrigin: "DE", regionSlug: "europe" },
-  "Opel":         { countryOfOrigin: "DE", regionSlug: "europe" },
-  "Maybach":      { countryOfOrigin: "DE", regionSlug: "europe" },
-  // Italy
-  "Ferrari":      { countryOfOrigin: "IT", regionSlug: "europe" },
-  "Lamborghini":  { countryOfOrigin: "IT", regionSlug: "europe" },
-  "Maserati":     { countryOfOrigin: "IT", regionSlug: "europe" },
-  "Alfa Romeo":   { countryOfOrigin: "IT", regionSlug: "europe" },
-  "Fiat":         { countryOfOrigin: "IT", regionSlug: "europe" },
-  "Lancia":       { countryOfOrigin: "IT", regionSlug: "europe" },
-  "Pagani":       { countryOfOrigin: "IT", regionSlug: "europe" },
-  "De Tomaso":    { countryOfOrigin: "IT", regionSlug: "europe" },
-  // France
-  "Bugatti":      { countryOfOrigin: "FR", regionSlug: "europe" },
-  "Renault":      { countryOfOrigin: "FR", regionSlug: "europe" },
-  "Peugeot":      { countryOfOrigin: "FR", regionSlug: "europe" },
-  "Citroën":      { countryOfOrigin: "FR", regionSlug: "europe" },
-  "Citroen":      { countryOfOrigin: "FR", regionSlug: "europe" },
-  "DS":           { countryOfOrigin: "FR", regionSlug: "europe" },
-  "Alpine":       { countryOfOrigin: "FR", regionSlug: "europe" },
-  // Sweden
-  "Volvo":        { countryOfOrigin: "SE", regionSlug: "europe" },
-  "Saab":         { countryOfOrigin: "SE", regionSlug: "europe" },
-  "Koenigsegg":   { countryOfOrigin: "SE", regionSlug: "europe" },
-  // Czech Republic
-  "Skoda":        { countryOfOrigin: "CZ", regionSlug: "europe" },
-  "Škoda":        { countryOfOrigin: "CZ", regionSlug: "europe" },
-  // Romania
-  "Dacia":        { countryOfOrigin: "RO", regionSlug: "europe" },
-  // Spain
-  "SEAT":         { countryOfOrigin: "ES", regionSlug: "europe" },
-  // Netherlands
-  "Spyker":       { countryOfOrigin: "NL", regionSlug: "europe" },
-  // United Kingdom
-  "McLaren":      { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Aston Martin": { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Jaguar":       { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Land Rover":   { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Bentley":      { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Rolls-Royce":  { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Mini":         { countryOfOrigin: "GB", regionSlug: "uk" },
-  "MINI":         { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Lotus":        { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Morgan":       { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Noble":        { countryOfOrigin: "GB", regionSlug: "uk" },
-  "TVR":          { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Caterham":     { countryOfOrigin: "GB", regionSlug: "uk" },
-  "Ariel":        { countryOfOrigin: "GB", regionSlug: "uk" },
-  // Japan (JDM)
-  "Toyota":       { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Nissan":       { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Honda":        { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Mazda":        { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Mitsubishi":   { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Subaru":       { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Suzuki":       { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Daihatsu":     { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Isuzu":        { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Lexus":        { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Infiniti":     { countryOfOrigin: "JP", regionSlug: "jdm" },
-  "Acura":        { countryOfOrigin: "JP", regionSlug: "jdm" },
-  // South Korea
-  "Hyundai":      { countryOfOrigin: "KR", regionSlug: "east_asia" },
-  "Kia":          { countryOfOrigin: "KR", regionSlug: "east_asia" },
-  "Genesis":      { countryOfOrigin: "KR", regionSlug: "east_asia" },
-  // China
-  "BYD":          { countryOfOrigin: "CN", regionSlug: "east_asia" },
-  "Nio":          { countryOfOrigin: "CN", regionSlug: "east_asia" },
-  "NIO":          { countryOfOrigin: "CN", regionSlug: "east_asia" },
-  "Xpeng":        { countryOfOrigin: "CN", regionSlug: "east_asia" },
-  "Geely":        { countryOfOrigin: "CN", regionSlug: "east_asia" },
-  "Great Wall":   { countryOfOrigin: "CN", regionSlug: "east_asia" },
-  "Haval":        { countryOfOrigin: "CN", regionSlug: "east_asia" },
-  "Chery":        { countryOfOrigin: "CN", regionSlug: "east_asia" },
-  // Australia
-  "Holden":       { countryOfOrigin: "AU", regionSlug: "australia" },
-  "HSV":          { countryOfOrigin: "AU", regionSlug: "australia" },
-};
-
-function lookupMakeOrigin(make: string): MakeOrigin | null {
-  // Try exact match first, then case-insensitive
-  if (MAKE_ORIGIN_MAP[make]) return MAKE_ORIGIN_MAP[make];
-  const lower = make.toLowerCase();
-  for (const [key, value] of Object.entries(MAKE_ORIGIN_MAP)) {
-    if (key.toLowerCase() === lower) return value;
-  }
-  return null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
