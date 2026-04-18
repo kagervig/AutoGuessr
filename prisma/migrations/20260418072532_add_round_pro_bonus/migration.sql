@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Round" ADD COLUMN     "proBonus" INTEGER NOT NULL DEFAULT 0;

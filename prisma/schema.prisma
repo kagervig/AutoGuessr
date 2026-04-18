@@ -202,6 +202,7 @@ model Round {
   imageId        String
   sequenceNumber Int
   easyChoices    String[]
+  proBonus       Int         @default(0)
   timeLimitMs    Int?
   presentedAt    DateTime    @default(now())
   session        GameSession @relation(fields: [gameId], references: [id])

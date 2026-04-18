@@ -1,6 +1,7 @@
+import { after } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { fuzzyMatch, proLevelBonus, scoreRound, TIME_LIMITS } from "@/app/lib/game";
+import { fuzzyMatch, scoreRound, TIME_LIMITS } from "@/app/lib/game";
 import { GameMode } from "@/app/lib/constants";
 
 export async function POST(request: NextRequest) {
@@ -117,62 +118,55 @@ export async function POST(request: NextRequest) {
 
   const isCorrect = makeMatch && modelMatch;
 
-  // Fetch current stats before recording to compute the pro bonus on historical data only
-  const existingStats = await prisma.imageStats.findUnique({
-    where: { imageId: round.image.id },
-    select: { correctGuesses: true, incorrectGuesses: true },
-  });
-
-  const proBonus =
-    isCorrect && existingStats
-      ? proLevelBonus(existingStats.correctGuesses, existingStats.incorrectGuesses)
-      : 0;
-
+  const proBonus = isCorrect ? round.proBonus : 0;
   const totalPointsEarned = scoring.pointsEarned + proBonus;
-
   const imageId = round.image.id;
 
-  // Compute new correctRatio from known pre-guess counts so we can write it in a single upsert
-  const prevCorrect = existingStats?.correctGuesses ?? 0;
-  const prevIncorrect = existingStats?.incorrectGuesses ?? 0;
-  const newCorrect = prevCorrect + (isCorrect ? 1 : 0);
-  const newIncorrect = prevIncorrect + (isCorrect ? 0 : 1);
-  const newCorrectRatio = newCorrect + newIncorrect === 0 ? 1.0 : newCorrect / (newCorrect + newIncorrect);
+  const guess = await prisma.guess.create({
+    data: {
+      roundId,
+      rawInput: rawInput ?? "",
+      guessedVehicleId: guessedVehicleId ?? null,
+      isCorrect,
+      partialCredit,
+      yearDelta,
+      timeTakenMs: timeTakenMs ?? null,
+      zoomLevelAtGuess: zoomLevelAtGuess ?? null,
+      makePoints: scoring.makePoints,
+      modelPoints: scoring.modelPoints,
+      yearBonus: scoring.yearBonus,
+      timeBonus: scoring.timeBonus,
+      proBonus,
+      modeMultiplier: scoring.modeMultiplier,
+      pointsEarned: totalPointsEarned,
+    },
+  });
 
-  const [guess] = await prisma.$transaction([
-    prisma.guess.create({
-      data: {
-        roundId,
-        rawInput: rawInput ?? "",
-        guessedVehicleId: guessedVehicleId ?? null,
-        isCorrect,
-        partialCredit,
-        yearDelta,
-        timeTakenMs: timeTakenMs ?? null,
-        zoomLevelAtGuess: zoomLevelAtGuess ?? null,
-        makePoints: scoring.makePoints,
-        modelPoints: scoring.modelPoints,
-        yearBonus: scoring.yearBonus,
-        timeBonus: scoring.timeBonus,
-        proBonus,
-        modeMultiplier: scoring.modeMultiplier,
-        pointsEarned: totalPointsEarned,
-      },
-    }),
-    prisma.imageStats.upsert({
+  after(() => {
+    prisma.imageStats.findUnique({
       where: { imageId },
-      update: isCorrect
-        ? { correctGuesses: { increment: 1 }, totalServes: { increment: 1 }, correctRatio: newCorrectRatio }
-        : { incorrectGuesses: { increment: 1 }, totalServes: { increment: 1 }, correctRatio: newCorrectRatio },
-      create: {
-        imageId,
-        correctGuesses: isCorrect ? 1 : 0,
-        incorrectGuesses: isCorrect ? 0 : 1,
-        totalServes: 1,
-        correctRatio: isCorrect ? 1.0 : 0.0,
-      },
-    }),
-  ]);
+      select: { correctGuesses: true, incorrectGuesses: true },
+    }).then((existing) => {
+      const prevCorrect = existing?.correctGuesses ?? 0;
+      const prevIncorrect = existing?.incorrectGuesses ?? 0;
+      const newCorrect = prevCorrect + (isCorrect ? 1 : 0);
+      const newIncorrect = prevIncorrect + (isCorrect ? 0 : 1);
+      const newCorrectRatio = newCorrect + newIncorrect === 0 ? 1.0 : newCorrect / (newCorrect + newIncorrect);
+      prisma.imageStats.upsert({
+        where: { imageId },
+        update: isCorrect
+          ? { correctGuesses: { increment: 1 }, totalServes: { increment: 1 }, correctRatio: newCorrectRatio }
+          : { incorrectGuesses: { increment: 1 }, totalServes: { increment: 1 }, correctRatio: newCorrectRatio },
+        create: {
+          imageId,
+          correctGuesses: isCorrect ? 1 : 0,
+          incorrectGuesses: isCorrect ? 0 : 1,
+          totalServes: 1,
+          correctRatio: isCorrect ? 1.0 : 0.0,
+        },
+      });
+    });
+  });
 
   return Response.json({
     guessId: guess.id,
