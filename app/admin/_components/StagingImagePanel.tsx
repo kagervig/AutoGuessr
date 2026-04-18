@@ -2,10 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import Combobox from "@/app/_components/Combobox";
-import { eraFromYear, BODY_STYLES, ERAS, RARITIES } from "@/app/lib/constants";
 import ImagesPanel from "./ImagesPanel";
-import CheckboxField from "./CheckboxField";
 import MakesModelsPanel from "./MakesModelsPanel";
 import CategoriesPanel from "./CategoriesPanel";
 import RegionsPanel from "./RegionsPanel";
@@ -14,100 +11,17 @@ import DuplicatesPanel from "./DuplicatesPanel";
 import ReportsPanel from "./ReportsPanel";
 import FlagsPanel from "./FlagsPanel";
 import CoveragePanel from "./CoveragePanel";
-
-type AdminPage = "images" | "staging" | "makes-models" | "categories" | "regions" | "stats" | "duplicates" | "flags" | "coverage" | "reports";
-
-type StagingStatus = "PENDING_REVIEW" | "COMMUNITY_REVIEW" | "READY" | "PUBLISHED" | "REJECTED";
-
-interface Agreements {
-  make: { value: string | null; count: number; confirmed: boolean };
-  model: { value: string | null; count: number; confirmed: boolean };
-  year: { value: number | null; count: number; confirmed: boolean };
-  trim: { value: string | null; count: number; confirmed: boolean };
-}
-
-interface StagingImage {
-  id: string;
-  imageUrl: string;
-  filename: string;
-  status: StagingStatus;
-  createdAt: string;
-  ai: {
-    make: string | null;
-    model: string | null;
-    year: number | null;
-    bodyStyle: string | null;
-    confidence: number | null;
-  };
-  admin: {
-    make: string | null;
-    model: string | null;
-    year: number | null;
-    trim: string | null;
-    bodyStyle: string | null;
-    rarity: string | null;
-    era: string | null;
-    regionSlug: string | null;
-    countryOfOrigin: string | null;
-    categories: string[];
-    isHardcoreEligible: boolean | null;
-    notes: string | null;
-    copyrightHolder: string | null;
-    isCropped: boolean | null;
-    isLogoVisible: boolean | null;
-    isModelNameVisible: boolean | null;
-    hasMultipleVehicles: boolean | null;
-    isFaceVisible: boolean | null;
-    isVehicleUnmodified: boolean | null;
-  };
-  confirmed: {
-    make: string | null;
-    model: string | null;
-    year: number | null;
-    trim: string | null;
-  };
-  agreements: Agreements;
-  suggestionCount: number;
-}
-
-const STATUS_LABELS: Record<StagingStatus, string> = {
-  PENDING_REVIEW: "Pending",
-  COMMUNITY_REVIEW: "Community",
-  READY: "Ready",
-  PUBLISHED: "Published",
-  REJECTED: "Rejected",
-};
-
-const STATUS_COLOURS: Record<StagingStatus, string> = {
-  PENDING_REVIEW: "bg-yellow-100 text-yellow-800",
-  COMMUNITY_REVIEW: "bg-blue-100 text-blue-800",
-  READY: "bg-green-100 text-green-800",
-  PUBLISHED: "bg-gray-100 text-gray-600",
-  REJECTED: "bg-red-100 text-red-700",
-};
-
-
-interface EditForm {
-  make: string;
-  model: string;
-  year: string;
-  trim: string;
-  bodyStyle: string;
-  rarity: string;
-  era: string;
-  regionSlug: string;
-  countryOfOrigin: string;
-  categories: string[];
-  isHardcoreEligible: boolean;
-  notes: string;
-  copyrightHolder: string;
-  isCropped: boolean;
-  isLogoVisible: boolean;
-  isModelNameVisible: boolean;
-  hasMultipleVehicles: boolean;
-  isFaceVisible: boolean;
-  isVehicleUnmodified: boolean;
-}
+import StagingEditFields from "./StagingEditFields";
+import ReviewQueuePanel from "./ReviewQueuePanel";
+import { useStagingAutocomplete } from "./useStagingAutocomplete";
+import {
+  emptyForm,
+  formFromImage,
+  formToPayload,
+  STATUS_LABELS,
+  STATUS_COLOURS,
+} from "./staging-types";
+import type { AdminPage, StagingImage, StagingStatus, EditForm } from "./staging-types";
 
 function AgreementBar({
   label,
@@ -137,54 +51,6 @@ function AgreementBar({
   );
 }
 
-function emptyForm(): EditForm {
-  return {
-    make: "",
-    model: "",
-    year: "",
-    trim: "",
-    bodyStyle: "",
-    rarity: "",
-    era: "",
-    regionSlug: "",
-    countryOfOrigin: "",
-    categories: [],
-    isHardcoreEligible: false,
-    notes: "",
-    copyrightHolder: "",
-    isCropped: false,
-    isLogoVisible: false,
-    isModelNameVisible: false,
-    hasMultipleVehicles: false,
-    isFaceVisible: false,
-    isVehicleUnmodified: true,
-  };
-}
-
-function formFromImage(img: StagingImage): EditForm {
-  return {
-    make: img.admin.make ?? img.confirmed.make ?? img.ai.make ?? "",
-    model: img.admin.model ?? img.confirmed.model ?? img.ai.model ?? "",
-    year: String(img.admin.year ?? img.confirmed.year ?? img.ai.year ?? ""),
-    trim: img.admin.trim ?? img.confirmed.trim ?? "",
-    bodyStyle: img.admin.bodyStyle ?? img.ai.bodyStyle ?? "",
-    rarity: img.admin.rarity ?? "",
-    era: img.admin.era ?? "",
-    regionSlug: img.admin.regionSlug ?? "",
-    countryOfOrigin: img.admin.countryOfOrigin ?? "",
-    categories: img.admin.categories ?? [],
-    isHardcoreEligible: img.admin.isHardcoreEligible ?? false,
-    notes: img.admin.notes ?? "",
-    copyrightHolder: img.admin.copyrightHolder ?? "",
-    isCropped: img.admin.isCropped ?? false,
-    isLogoVisible: img.admin.isLogoVisible ?? false,
-    isModelNameVisible: img.admin.isModelNameVisible ?? false,
-    hasMultipleVehicles: img.admin.hasMultipleVehicles ?? false,
-    isFaceVisible: img.admin.isFaceVisible ?? false,
-    isVehicleUnmodified: img.admin.isVehicleUnmodified ?? true,
-  };
-}
-
 export default function StagingImagePanel() {
   const [activePage, setActivePage] = useState<AdminPage>("images");
   const [images, setImages] = useState<StagingImage[]>([]);
@@ -198,14 +64,7 @@ export default function StagingImagePanel() {
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [makeOptions, setMakeOptions] = useState<string[]>([]);
-  const [modelOptions, setModelOptions] = useState<string[]>([]);
-  const [trimOptions, setTrimOptions] = useState<string[]>([]);
-  const [countryOptions, setCountryOptions] = useState<string[]>([]);
-  const [regionOptions, setRegionOptions] = useState<string[]>([]);
-  const [copyrightHolderOptions, setCopyrightHolderOptions] = useState<string[]>([]);
-  const [categoryOptions, setCategoryOptions] = useState<{ slug: string; label: string }[]>([]);
-  const [makeDefaults, setMakeDefaults] = useState<Record<string, { country: string; regionSlug: string }>>({});
+  const autocomplete = useStagingAutocomplete(editForm, setEditForm);
 
   const fetchImages = useCallback(async () => {
     setLoading(true);
@@ -220,67 +79,6 @@ export default function StagingImagePanel() {
   useEffect(() => {
     fetchImages();
   }, [fetchImages]);
-
-  // Load static autocomplete options once on mount
-  useEffect(() => {
-    const safeJson = (r: Response) => r.json().catch(() => null);
-    fetch("/api/admin/autocomplete?field=make")
-      .then(safeJson).then((d) => d && setMakeOptions(d));
-    fetch("/api/admin/autocomplete?field=country")
-      .then(safeJson).then((d) => d && setCountryOptions(d));
-    fetch("/api/admin/autocomplete?field=make_defaults")
-      .then(safeJson).then((d) => d && setMakeDefaults(d));
-    fetch("/api/admin/autocomplete?field=copyright_holder")
-      .then(safeJson).then((d) => d && setCopyrightHolderOptions(d));
-    fetch("/api/filters")
-      .then(safeJson).then((d) => d && setRegionOptions((d.regions ?? []).map((r: { slug: string }) => r.slug)));
-  }, []);
-
-  useEffect(() => {
-    if (activePage !== "staging") return;
-    fetch("/api/admin/categories")
-      .then((r) => r.json().catch(() => null))
-      .then((d) => d && setCategoryOptions(d.map((c: { slug: string; label: string }) => ({ slug: c.slug, label: c.label }))));
-  }, [activePage]);
-
-  // Reload model options when make changes
-  useEffect(() => {
-    const qs = editForm.make ? `&make=${encodeURIComponent(editForm.make)}` : "";
-    fetch(`/api/admin/autocomplete?field=model${qs}`)
-      .then((r) => r.json().catch(() => null))
-      .then((d) => d && setModelOptions(d));
-  }, [editForm.make]);
-
-  // Auto-fill country and region when make is set and those fields are empty
-  useEffect(() => {
-    if (!editForm.make) return;
-    const defaults = makeDefaults[editForm.make];
-    if (!defaults) return;
-    setEditForm((f) => ({
-      ...f,
-      countryOfOrigin: f.countryOfOrigin || defaults.country,
-      regionSlug: f.regionSlug || defaults.regionSlug,
-    }));
-  }, [editForm.make, makeDefaults]);
-
-  // Auto-fill era from year when era is empty
-  useEffect(() => {
-    const year = parseInt(editForm.year, 10);
-    if (!editForm.year || isNaN(year)) return;
-    setEditForm((f) => ({
-      ...f,
-      era: f.era || eraFromYear(year),
-    }));
-  }, [editForm.year]);
-
-  // Reload trim options when make or model changes
-  useEffect(() => {
-    const make = editForm.make ? `&make=${encodeURIComponent(editForm.make)}` : "";
-    const model = editForm.model ? `&model=${encodeURIComponent(editForm.model)}` : "";
-    fetch(`/api/admin/autocomplete?field=trim${make}${model}`)
-      .then((r) => r.json().catch(() => null))
-      .then((d) => d && setTrimOptions(d));
-  }, [editForm.make, editForm.model]);
 
   function handleImageClick(img: StagingImage, shiftKey: boolean) {
     const idx = images.findIndex((i) => i.id === img.id);
@@ -316,15 +114,6 @@ export default function StagingImagePanel() {
     setError(null);
   }
 
-  function toggleCategory(slug: string) {
-    setEditForm((f) => ({
-      ...f,
-      categories: f.categories.includes(slug)
-        ? f.categories.filter((c) => c !== slug)
-        : [...f.categories, slug],
-    }));
-  }
-
   function patchImage(updated: Partial<StagingImage> & { id: string }) {
     setImages((imgs) => imgs.map((img) => (img.id === updated.id ? { ...img, ...updated } : img)));
   }
@@ -343,35 +132,13 @@ export default function StagingImagePanel() {
     });
   }
 
-  const editPayload = {
-    make: editForm.make || null,
-    model: editForm.model || null,
-    year: editForm.year || null,
-    trim: editForm.trim || null,
-    bodyStyle: editForm.bodyStyle || null,
-    rarity: editForm.rarity || null,
-    era: editForm.era || null,
-    regionSlug: editForm.regionSlug || null,
-    countryOfOrigin: editForm.countryOfOrigin || null,
-    categories: editForm.categories,
-    isHardcoreEligible: editForm.isHardcoreEligible,
-    notes: editForm.notes || null,
-    copyrightHolder: editForm.copyrightHolder || null,
-    isCropped: editForm.isCropped,
-    isLogoVisible: editForm.isLogoVisible,
-    isModelNameVisible: editForm.isModelNameVisible,
-    hasMultipleVehicles: editForm.hasMultipleVehicles,
-    isFaceVisible: editForm.isFaceVisible,
-    isVehicleUnmodified: editForm.isVehicleUnmodified,
-  };
-
   async function saveEdit(id: string) {
     setSaving(true);
     setError(null);
     const res = await fetch(`/api/admin/staging/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editPayload),
+      body: JSON.stringify(formToPayload(editForm)),
     });
     setSaving(false);
     if (res.ok) {
@@ -461,7 +228,7 @@ export default function StagingImagePanel() {
     const saveRes = await fetch(`/api/admin/staging/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editPayload),
+      body: JSON.stringify(formToPayload(editForm)),
     });
     setSaving(false);
 
@@ -498,6 +265,7 @@ export default function StagingImagePanel() {
               [
                 ["images", "Images"],
                 ["staging", "Staging"],
+                ["review", "Review"],
                 ["makes-models", "Makes & Models"],
                 ["categories", "Categories"],
                 ["regions", "Regions"],
@@ -528,6 +296,7 @@ export default function StagingImagePanel() {
       </header>
 
       {activePage === "images" && <ImagesPanel />}
+      {activePage === "review" && <ReviewQueuePanel />}
       {activePage === "makes-models" && <MakesModelsPanel />}
       {activePage === "categories" && <CategoriesPanel />}
       {activePage === "regions" && <RegionsPanel />}
@@ -744,187 +513,26 @@ export default function StagingImagePanel() {
                 </p>
               )}
 
-              {/* Edit form */}
-              <div className={`space-y-2 ${isPublished ? "opacity-50 pointer-events-none" : ""}`}>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Vehicle details
-                </p>
+              <StagingEditFields
+                form={editForm}
+                setForm={setEditForm}
+                makeOptions={autocomplete.makeOptions}
+                modelOptions={autocomplete.modelOptions}
+                trimOptions={autocomplete.trimOptions}
+                countryOptions={autocomplete.countryOptions}
+                regionOptions={autocomplete.regionOptions}
+                copyrightHolderOptions={autocomplete.copyrightHolderOptions}
+                categoryOptions={autocomplete.categoryOptions}
+                disabled={isPublished}
+              />
 
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5 capitalize">Make</label>
-                  <Combobox
-                    variant="admin"
-                    value={editForm.make}
-                    onChange={(v) => setEditForm((f) => ({ ...f, make: v }))}
-                    options={makeOptions}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5 capitalize">Model</label>
-                  <Combobox
-                    variant="admin"
-                    value={editForm.model}
-                    onChange={(v) => setEditForm((f) => ({ ...f, model: v }))}
-                    options={modelOptions}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5 capitalize">Trim</label>
-                  <Combobox
-                    variant="admin"
-                    value={editForm.trim}
-                    onChange={(v) => setEditForm((f) => ({ ...f, trim: v }))}
-                    options={trimOptions}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Year</label>
-                  <input
-                    type="number"
-                    value={editForm.year}
-                    onChange={(e) => setEditForm((f) => ({ ...f, year: e.target.value }))}
-                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
-                    placeholder="e.g. 1994"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-0.5">Body style</label>
-                    <select
-                      value={editForm.bodyStyle}
-                      onChange={(e) => setEditForm((f) => ({ ...f, bodyStyle: e.target.value }))}
-                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
-                    >
-                      <option value="">— select —</option>
-                      {BODY_STYLES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-0.5">Era</label>
-                    <select
-                      value={editForm.era}
-                      onChange={(e) => setEditForm((f) => ({ ...f, era: e.target.value }))}
-                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
-                    >
-                      <option value="">— select —</option>
-                      {ERAS.map((e) => (
-                        <option key={e} value={e}>
-                          {e}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-0.5">Rarity</label>
-                    <select
-                      value={editForm.rarity}
-                      onChange={(e) => setEditForm((f) => ({ ...f, rarity: e.target.value }))}
-                      className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 bg-white"
-                    >
-                      <option value="">— select —</option>
-                      {RARITIES.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-0.5">Region slug</label>
-                    <Combobox
-                      variant="admin"
-                      value={editForm.regionSlug}
-                      onChange={(v) => setEditForm((f) => ({ ...f, regionSlug: v }))}
-                      options={regionOptions}
-                      placeholder="e.g. japan"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Country of origin</label>
-                  <Combobox
-                    variant="admin"
-                    value={editForm.countryOfOrigin}
-                    onChange={(v) => setEditForm((f) => ({ ...f, countryOfOrigin: v }))}
-                    options={countryOptions}
-                    placeholder="e.g. Japan"
-                  />
-                </div>
-
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Categories</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {categoryOptions.map(({ slug, label }) => (
-                      <button
-                        key={slug}
-                        type="button"
-                        onClick={() => toggleCategory(slug)}
-                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
-                          editForm.categories.includes(slug)
-                            ? "bg-gray-900 text-white border-gray-900"
-                            : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <CheckboxField label="Hardcore eligible" checked={editForm.isHardcoreEligible} onChange={(v) => setEditForm((f) => ({ ...f, isHardcoreEligible: v }))} />
-
-                <div>
-                  <label className="block text-xs text-gray-500 mb-0.5">Notes</label>
-                  <textarea
-                    value={editForm.notes}
-                    onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
-                    rows={2}
-                    className="w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 resize-none"
-                  />
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    Image metadata
-                  </p>
-                  <div className="space-y-2">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-0.5">Copyright holder</label>
-                      <Combobox
-                        variant="admin"
-                        value={editForm.copyrightHolder}
-                        onChange={(v) => setEditForm((f) => ({ ...f, copyrightHolder: v }))}
-                        options={copyrightHolderOptions}
-                        placeholder="e.g. Wikimedia Commons"
-                      />
-                    </div>
-                    <CheckboxField label="Cropped (partial view)" checked={editForm.isCropped} onChange={(v) => setEditForm((f) => ({ ...f, isCropped: v }))} />
-                    <CheckboxField label="Logo visible" checked={editForm.isLogoVisible} onChange={(v) => setEditForm((f) => ({ ...f, isLogoVisible: v }))} />
-                    <CheckboxField label="Model name visible" checked={editForm.isModelNameVisible} onChange={(v) => setEditForm((f) => ({ ...f, isModelNameVisible: v }))} />
-                    <CheckboxField label="Multiple vehicles in image" checked={editForm.hasMultipleVehicles} onChange={(v) => setEditForm((f) => ({ ...f, hasMultipleVehicles: v }))} />
-                    <CheckboxField label="Face visible" checked={editForm.isFaceVisible} onChange={(v) => setEditForm((f) => ({ ...f, isFaceVisible: v }))} />
-                    <CheckboxField label="Vehicle unmodified" checked={editForm.isVehicleUnmodified} onChange={(v) => setEditForm((f) => ({ ...f, isVehicleUnmodified: v }))} />
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => isMultiSelect ? saveMultiple() : saveEdit(selected!.id)}
-                  disabled={saving || publishing}
-                  className="w-full text-sm bg-gray-900 text-white rounded px-3 py-2 hover:bg-gray-700 disabled:opacity-50"
-                >
-                  {saving ? "Saving…" : isMultiSelect ? `Apply to ${selectedIds.length} images` : "Save changes"}
-                </button>
-              </div>
+              <button
+                onClick={() => isMultiSelect ? saveMultiple() : saveEdit(selected!.id)}
+                disabled={saving || publishing}
+                className="w-full text-sm bg-gray-900 text-white rounded px-3 py-2 hover:bg-gray-700 disabled:opacity-50"
+              >
+                {saving ? "Saving…" : isMultiSelect ? `Apply to ${selectedIds.length} images` : "Save changes"}
+              </button>
 
               {/* Actions — single select only */}
               {selected && (
