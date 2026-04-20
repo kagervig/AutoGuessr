@@ -51,11 +51,15 @@ export default function StagingEditFields({
   }
 
   const inputClass =
-    "w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400";
+    "w-full text-sm text-black border rounded px-2 py-1.5 focus:outline-none focus:border-gray-400";
   const selectClass = `${inputClass} bg-white`;
   const compactInputClass =
-    "w-full text-xs text-black border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-gray-400";
+    "w-full text-xs text-black border rounded px-2 py-1 focus:outline-none focus:border-gray-400";
   const compactSelectClass = `${compactInputClass} bg-white`;
+
+  function emptyBorder(value: string) {
+    return value ? "border-gray-200" : "border-amber-400 bg-amber-50";
+  }
 
   if (compact) {
     return (
@@ -63,15 +67,15 @@ export default function StagingEditFields({
         {/* Row 1: Make / Model / Year / Trim */}
         <div className="col-span-3">
           <label className="block text-xs text-gray-500 mb-0.5">Make{fieldErrors.make && <span className="text-red-500 ml-1">*</span>}</label>
-          <Combobox variant="admin" value={form.make} onChange={(v) => setForm((f) => ({ ...f, make: v }))} options={makeOptions} />
+          <Combobox variant="admin" value={form.make} onChange={(v) => setForm((f) => ({ ...f, make: v }))} options={makeOptions} highlight={!form.make} />
         </div>
         <div className="col-span-3">
           <label className="block text-xs text-gray-500 mb-0.5">Model{fieldErrors.model && <span className="text-red-500 ml-1">*</span>}</label>
-          <Combobox variant="admin" value={form.model} onChange={(v) => setForm((f) => ({ ...f, model: v }))} options={modelOptions} />
+          <Combobox variant="admin" value={form.model} onChange={(v) => setForm((f) => ({ ...f, model: v }))} options={modelOptions} highlight={!form.model} />
         </div>
         <div className="col-span-2">
           <label className="block text-xs text-gray-500 mb-0.5">Year{fieldErrors.year && <span className="text-red-500 ml-1">*</span>}</label>
-          <input type="number" value={form.year} onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))} className={compactInputClass} placeholder="1994" />
+          <input type="number" value={form.year} onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))} className={`${compactInputClass} ${emptyBorder(form.year)}`} placeholder="1994" />
         </div>
         <div className="col-span-4">
           <label className="block text-xs text-gray-500 mb-0.5">Trim</label>
@@ -102,11 +106,11 @@ export default function StagingEditFields({
         </div>
         <div className="col-span-3">
           <label className="block text-xs text-gray-500 mb-0.5">Region{fieldErrors.regionSlug && <span className="text-red-500 ml-1">*</span>}</label>
-          <Combobox variant="admin" value={form.regionSlug} onChange={(v) => setForm((f) => ({ ...f, regionSlug: v }))} options={regionOptions} placeholder="e.g. japan" />
+          <Combobox variant="admin" value={form.regionSlug} onChange={(v) => setForm((f) => ({ ...f, regionSlug: v }))} options={regionOptions} placeholder="e.g. japan" highlight={!form.regionSlug} />
         </div>
         <div className="col-span-3">
           <label className="block text-xs text-gray-500 mb-0.5">Country{fieldErrors.countryOfOrigin && <span className="text-red-500 ml-1">*</span>}</label>
-          <Combobox variant="admin" value={form.countryOfOrigin} onChange={(v) => setForm((f) => ({ ...f, countryOfOrigin: v }))} options={countryOptions} placeholder="e.g. Japan" />
+          <Combobox variant="admin" value={form.countryOfOrigin} onChange={(v) => setForm((f) => ({ ...f, countryOfOrigin: v }))} options={countryOptions} placeholder="e.g. Japan" highlight={!form.countryOfOrigin} />
         </div>
 
         {/* Row 3: Categories */}
@@ -168,6 +172,7 @@ export default function StagingEditFields({
           value={form.make}
           onChange={(v) => setForm((f) => ({ ...f, make: v }))}
           options={makeOptions}
+          highlight={!form.make}
         />
         {fieldErrors.make && <p className="text-xs text-red-500 mt-0.5">{fieldErrors.make}</p>}
       </div>
@@ -179,6 +184,7 @@ export default function StagingEditFields({
           value={form.model}
           onChange={(v) => setForm((f) => ({ ...f, model: v }))}
           options={modelOptions}
+          highlight={!form.model}
         />
         {fieldErrors.model && <p className="text-xs text-red-500 mt-0.5">{fieldErrors.model}</p>}
       </div>
@@ -199,7 +205,7 @@ export default function StagingEditFields({
           type="number"
           value={form.year}
           onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
-          className={inputClass}
+          className={`${inputClass} ${emptyBorder(form.year)}`}
           placeholder="e.g. 1994"
         />
         {fieldErrors.year && <p className="text-xs text-red-500 mt-0.5">{fieldErrors.year}</p>}
@@ -256,6 +262,7 @@ export default function StagingEditFields({
             onChange={(v) => setForm((f) => ({ ...f, regionSlug: v }))}
             options={regionOptions}
             placeholder="e.g. japan"
+            highlight={!form.regionSlug}
           />
           {fieldErrors.regionSlug && <p className="text-xs text-red-500 mt-0.5">{fieldErrors.regionSlug}</p>}
         </div>
@@ -269,6 +276,7 @@ export default function StagingEditFields({
           onChange={(v) => setForm((f) => ({ ...f, countryOfOrigin: v }))}
           options={countryOptions}
           placeholder="e.g. Japan"
+          highlight={!form.countryOfOrigin}
         />
         {fieldErrors.countryOfOrigin && (
           <p className="text-xs text-red-500 mt-0.5">{fieldErrors.countryOfOrigin}</p>
