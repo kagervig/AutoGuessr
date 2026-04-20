@@ -106,6 +106,8 @@ model VehicleAlias {
   alias     String
   aliasType AliasType
   vehicle   Vehicle   @relation(fields: [vehicleId], references: [id])
+
+  @@index([vehicleId])
 }
 
 model Image {
@@ -127,6 +129,8 @@ model Image {
   vehicle              Vehicle     @relation(fields: [vehicleId], references: [id])
   stats                ImageStats?
   rounds               Round[]
+
+  @@index([vehicleId])
 }
 
 model ImageStats {
@@ -202,11 +206,14 @@ model Round {
   imageId        String
   sequenceNumber Int
   easyChoices    String[]
+  proBonus       Int         @default(0)
   timeLimitMs    Int?
   presentedAt    DateTime    @default(now())
   session        GameSession @relation(fields: [gameId], references: [id])
   image          Image       @relation(fields: [imageId], references: [id])
   guess          Guess?
+
+  @@index([gameId])
 }
 
 model Guess {

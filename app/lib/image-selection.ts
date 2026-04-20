@@ -3,7 +3,7 @@
 import { Prisma } from "../generated/prisma/client";
 import { prisma } from "./prisma";
 import { shuffle } from "./game";
-import { GameMode } from "./constants";
+import { GameMode, ROUNDS_PER_GAME } from "./constants";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -426,9 +426,9 @@ export async function selectTieredImages(
 
   const result = tierFn(freshPool);
 
-  if (result.length < 10) {
+  if (result.length < ROUNDS_PER_GAME) {
     throw new Error("Not enough images match this filter");
   }
 
-  return result;
+  return result.slice(0, ROUNDS_PER_GAME);
 }

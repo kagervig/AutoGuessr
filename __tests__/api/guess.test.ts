@@ -4,19 +4,16 @@ import { POST } from "@/app/api/guess/route";
 
 vi.mock("@/app/lib/prisma", () => ({
   prisma: {
-    round: {
-      findUnique: vi.fn(),
-    },
-    imageStats: {
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
-    },
-    guess: {
-      create: vi.fn(),
-    },
-    $transaction: vi.fn(),
+    round: { findUnique: vi.fn() },
+    guess: { create: vi.fn() },
+    imageStats: { findUnique: vi.fn(), upsert: vi.fn() },
   },
 }));
+
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return { ...actual, after: (fn: () => void) => void fn() };
+});
 
 const { prisma } = await import("@/app/lib/prisma");
 
@@ -41,6 +38,7 @@ function mockRound(overrides: object = {}) {
     gameId: GAME_ID,
     guess: null,
     timeLimitMs: null,
+    proBonus: 0,
     session: {
       mode: "standard",
       sessionToken: TOKEN,
@@ -102,9 +100,9 @@ describe("POST /api/guess", () => {
 
   it("should proceed past auth with a valid cookie", async () => {
     mockRound();
+    vi.mocked(prisma.guess.create).mockResolvedValue({ id: "guess-1" } as never);
     vi.mocked(prisma.imageStats.findUnique).mockResolvedValue(null);
-    const guessRecord = { id: "guess-1" };
-    vi.mocked(prisma.$transaction).mockResolvedValue([guessRecord, {}] as never);
+    vi.mocked(prisma.imageStats.upsert).mockResolvedValue({} as never);
 
     const res = await POST(
       makeRequest(

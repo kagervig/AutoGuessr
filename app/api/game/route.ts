@@ -2,7 +2,7 @@
 import type { NextRequest } from "next/server";
 import type { Prisma } from "../../../app/generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
-import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, type VehicleForDistractor } from "@/app/lib/game";
+import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, proLevelBonus, type VehicleForDistractor } from "@/app/lib/game";
 import { ROUNDS_PER_GAME, GameMode } from "@/app/lib/constants";
 import { selectTieredImages } from "@/app/lib/image-selection";
 
@@ -28,7 +28,6 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const mode = searchParams.get("mode") as Mode | null;
-  const username = searchParams.get("username") ?? null;
   const filterRaw = searchParams.get("filter");
   const cfToken = searchParams.get("cf_token");
 
@@ -130,25 +129,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Upsert player if username provided
-  let playerId: string | null = null;
-  if (username) {
-    const player = await prisma.player.upsert({
-      where: { username },
-      update: { lastSeenAt: new Date() },
-      create: {
-        username,
-        stats: { create: {} },
-      },
-    });
-    playerId = player.id;
-  }
-
   // Create session
   const sessionToken = crypto.randomUUID();
   const session = await prisma.gameSession.create({
     data: {
-      playerId,
       mode,
       filterConfig: filterConfig as object,
       sessionToken,
@@ -185,18 +169,28 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  const selectedImageIds = selected.map((img) => img.id);
+  const imageStatsList = await prisma.imageStats.findMany({
+    where: { imageId: { in: selectedImageIds } },
+    select: { imageId: true, correctGuesses: true, incorrectGuesses: true },
+  });
+  const imageStatsMap = new Map(imageStatsList.map((s) => [s.imageId, s]));
+
   const rounds = await prisma.$transaction(
-    selected.map((image, i) =>
-      prisma.round.create({
+    selected.map((image, i) => {
+      const stats = imageStatsMap.get(image.id);
+      const roundProBonus = stats ? proLevelBonus(stats.correctGuesses, stats.incorrectGuesses) : 0;
+      return prisma.round.create({
         data: {
           gameId: session.id,
           imageId: image.id,
           sequenceNumber: i + 1,
           easyChoices: precomputedChoices ? precomputedChoices[i].map((c) => c.vehicleId) : [],
           timeLimitMs,
+          proBonus: roundProBonus,
         },
-      })
-    )
+      });
+    })
   );
 
   // Build response rounds — vehicle identity is intentionally omitted to prevent client-side cheating

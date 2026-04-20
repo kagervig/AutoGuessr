@@ -70,6 +70,8 @@ beforeEach(() => {
     Array.from({ length: 10 }, (_, i) => ({ ...FAKE_ROUND, id: `round-${i}` })) as never
   );
 
+  vi.mocked(prisma.imageStats.findMany).mockResolvedValue([]);
+
   // makes list for custom mode
   vi.mocked(prisma.vehicle.findMany).mockResolvedValue([
     { make: "Toyota" },
