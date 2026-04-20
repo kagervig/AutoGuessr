@@ -10,9 +10,10 @@ interface Props {
   placeholder?: string;
   disabled?: boolean;
   variant?: "game" | "admin";
+  highlight?: boolean;
 }
 
-export default function Combobox({ value, onChange, options, placeholder, disabled, variant = "game" }: Props) {
+export default function Combobox({ value, onChange, options, placeholder, disabled, variant = "game", highlight = false }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
@@ -54,7 +55,7 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
         aria-expanded={open}
         aria-controls={listboxId}
         className={variant === "admin"
-          ? "w-full text-sm text-black border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400"
+          ? `w-full text-sm text-black border rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 ${highlight ? "border-amber-400 bg-amber-50" : "border-gray-200"}`
           : cn(
             "w-full bg-white/5 border-2 border-white/10 rounded-xl px-4 py-3",
             "text-white font-bold placeholder:text-white/25",
