@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Script from "next/script";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck,
   Settings2,
@@ -274,7 +274,13 @@ export default function HomeScreen({ initialFilterError }: Props) {
       </section>
 
       {/* Sticky Bottom CTA */}
-      <div className="fixed bottom-0 inset-x-0 z-50 pt-6 px-6 glass-panel border-t border-white/10 flex flex-col items-center gap-3" style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}>
+      <AnimatePresence>
+      {selectedMode && <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="fixed bottom-0 inset-x-0 z-50 pt-6 px-6 glass-panel border-t border-white/10 flex flex-col items-center gap-3" style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}>
         {isProd && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
           <div className={cn("transition-opacity duration-300", turnstileToken ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
             <div
@@ -302,7 +308,8 @@ export default function HomeScreen({ initialFilterError }: Props) {
           <Power className={cn("w-6 h-6", selectedMode && (!isCustomMode || hasFilter) && (!isProd || !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || turnstileToken) && "animate-pulse")} />
           <span>Start Engine</span>
         </button>
-      </div>
+      </motion.div>}
+      </AnimatePresence>
 
       <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" />
     </div>
