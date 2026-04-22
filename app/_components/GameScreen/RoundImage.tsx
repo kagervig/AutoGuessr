@@ -37,7 +37,7 @@ export function RoundImage({ imageUrl, currentIndex, isHardcore, roundState, vis
 
         {/* Hardcore grid overlay — panels are removed every 5 seconds */}
         {isHardcore && roundState === "answering" && (
-          <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+          <div className="absolute -inset-px grid grid-cols-3 grid-rows-3 pointer-events-none">
             {visiblePanels.map((visible, i) => (
               <div
                 key={i}
