@@ -104,6 +104,8 @@ export default function ImagesPanel() {
   const [activeFilter, setActiveFilter] = useState<
     "ALL" | "active" | "inactive"
   >("ALL");
+  const [makeFilter, setMakeFilter] = useState("");
+  const [modelFilter, setModelFilter] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -263,9 +265,19 @@ export default function ImagesPanel() {
     ? (images.find((img) => img.id === selectedId) ?? null)
     : null;
 
+  const uniqueMakes = [...new Set(images.map((img) => img.vehicle.make).filter(Boolean))].sort();
+  const uniqueModels = [...new Set(
+    images
+      .filter((img) => !makeFilter || img.vehicle.make === makeFilter)
+      .map((img) => img.vehicle.model)
+      .filter(Boolean),
+  )].sort();
+
   const filteredImages = images.filter((img) => {
-    if (activeFilter === "active") return img.isActive;
-    if (activeFilter === "inactive") return !img.isActive;
+    if (activeFilter === "active" && !img.isActive) return false;
+    if (activeFilter === "inactive" && img.isActive) return false;
+    if (makeFilter && img.vehicle.make !== makeFilter) return false;
+    if (modelFilter && img.vehicle.model !== modelFilter) return false;
     return true;
   });
 
@@ -275,7 +287,7 @@ export default function ImagesPanel() {
   return (
     <div className="flex flex-col h-[calc(100vh-48px)]">
       {/* Filter tabs */}
-      <div className="border-b border-gray-200 bg-white px-6 flex-shrink-0">
+      <div className="border-b border-gray-200 bg-white px-6 flex items-center justify-between flex-shrink-0">
         <nav className="flex gap-1 -mb-px">
           {(
             [
@@ -300,6 +312,33 @@ export default function ImagesPanel() {
             </button>
           ))}
         </nav>
+        <div className="flex items-center gap-2 py-2">
+          <select
+            value={makeFilter}
+            onChange={(e) => {
+              setMakeFilter(e.target.value);
+              setModelFilter("");
+              setSelectedId(null);
+            }}
+            className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400"
+          >
+            <option value="">All makes</option>
+            {uniqueMakes.map((make) => (
+              <option key={make} value={make}>{make}</option>
+            ))}
+          </select>
+          <select
+            value={modelFilter}
+            onChange={(e) => { setModelFilter(e.target.value); setSelectedId(null); }}
+            disabled={!makeFilter}
+            className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400 disabled:opacity-40"
+          >
+            <option value="">All models</option>
+            {uniqueModels.map((model) => (
+              <option key={model} value={model}>{model}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="flex flex-1 min-h-0">

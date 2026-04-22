@@ -68,6 +68,10 @@ export default function StagingImagePanel() {
   const [repairResult, setRepairResult] = useState<string | null>(null);
   const [autoUpdating, setAutoUpdating] = useState(false);
   const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
+  const [makeFilter, setMakeFilter] = useState("");
+  const [modelFilter, setModelFilter] = useState("");
+  const [filterAiTagged, setFilterAiTagged] = useState(false);
+  const [filterIncomplete, setFilterIncomplete] = useState(false);
 
   async function autoUpdate() {
     setAutoUpdating(true);
@@ -292,6 +296,42 @@ export default function StagingImagePanel() {
   const selected = selectedIds.length === 1 ? (images.find((img) => img.id === selectedIds[0]) ?? null) : null;
   const isPublished = selected?.status === "PUBLISHED";
 
+  const stagingMake = (img: StagingImage) => img.admin.make ?? img.confirmed.make ?? img.ai.make ?? "";
+  const stagingModel = (img: StagingImage) => img.admin.model ?? img.confirmed.model ?? img.ai.model ?? "";
+
+  function isAiTagged(img: StagingImage) {
+    return img.ai.make !== null;
+  }
+
+  function isIncomplete(img: StagingImage) {
+    const hasSomeData = !!(
+      img.ai.make || img.ai.model || img.ai.year ||
+      img.admin.make || img.admin.model || img.admin.year ||
+      img.confirmed.make || img.confirmed.model || img.confirmed.year
+    );
+    const make = img.admin.make ?? img.confirmed.make;
+    const model = img.admin.model ?? img.confirmed.model;
+    const year = img.admin.year ?? img.confirmed.year;
+    const missingRequired = !make || !model || !year || !img.admin.regionSlug || !img.admin.countryOfOrigin;
+    return hasSomeData && missingRequired;
+  }
+
+  const uniqueMakes = [...new Set(images.map(stagingMake).filter(Boolean))].sort();
+  const uniqueModels = [...new Set(
+    images
+      .filter((img) => !makeFilter || stagingMake(img) === makeFilter)
+      .map(stagingModel)
+      .filter(Boolean),
+  )].sort();
+
+  const displayedImages = images.filter((img) => {
+    if (makeFilter && stagingMake(img) !== makeFilter) return false;
+    if (modelFilter && stagingModel(img) !== modelFilter) return false;
+    if (filterAiTagged && !isAiTagged(img)) return false;
+    if (filterIncomplete && !isIncomplete(img)) return false;
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]">
       <header className="border-b border-gray-200 bg-white px-6 py-3 flex items-center justify-between">
@@ -370,6 +410,51 @@ export default function StagingImagePanel() {
           ))}
         </nav>
         <div className="flex items-center gap-3 ml-auto">
+          <button
+            onClick={() => { setFilterAiTagged((v) => !v); setSelectedIds([]); }}
+            className={`text-xs px-2.5 py-1.5 border rounded transition-colors ${
+              filterAiTagged
+                ? "bg-purple-100 border-purple-300 text-purple-700"
+                : "border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-400"
+            }`}
+          >
+            AI tagged
+          </button>
+          <button
+            onClick={() => { setFilterIncomplete((v) => !v); setSelectedIds([]); }}
+            className={`text-xs px-2.5 py-1.5 border rounded transition-colors ${
+              filterIncomplete
+                ? "bg-amber-100 border-amber-300 text-amber-700"
+                : "border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-400"
+            }`}
+          >
+            Incomplete
+          </button>
+          <select
+            value={makeFilter}
+            onChange={(e) => {
+              setMakeFilter(e.target.value);
+              setModelFilter("");
+              setSelectedIds([]);
+            }}
+            className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400"
+          >
+            <option value="">All makes</option>
+            {uniqueMakes.map((make) => (
+              <option key={make} value={make}>{make}</option>
+            ))}
+          </select>
+          <select
+            value={modelFilter}
+            onChange={(e) => { setModelFilter(e.target.value); setSelectedIds([]); }}
+            disabled={!makeFilter}
+            className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400 disabled:opacity-40"
+          >
+            <option value="">All models</option>
+            {uniqueModels.map((model) => (
+              <option key={model} value={model}>{model}</option>
+            ))}
+          </select>
           {autoUpdateResult && (
             <span className="text-xs text-gray-500">{autoUpdateResult}</span>
           )}
@@ -398,11 +483,11 @@ export default function StagingImagePanel() {
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <p className="text-sm text-gray-400 p-4">Loading…</p>
-          ) : images.length === 0 ? (
+          ) : displayedImages.length === 0 ? (
             <p className="text-sm text-gray-400 p-4">No images.</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {images.map((img) => (
+              {displayedImages.map((img) => (
                 <div
                   key={img.id}
                   className={`group relative rounded-lg overflow-hidden border-2 text-left transition-all cursor-pointer ${
