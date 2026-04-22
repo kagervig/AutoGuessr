@@ -38,6 +38,10 @@ export default function Combobox({ value, onChange, options, placeholder, disabl
       onChange(filtered[0]);
       setOpen(false);
     }
+    if (e.key === "Tab" && open && filtered.length > 0) {
+      onChange(filtered[0]);
+      setOpen(false);
+    }
   }
 
   return (

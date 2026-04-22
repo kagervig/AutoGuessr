@@ -2,9 +2,10 @@ import { prisma } from "@/app/lib/prisma";
 import { COUNTRIES, FALLBACK_CATEGORIES, FALLBACK_REGIONS } from "@/app/lib/constants";
 
 const MIN_VEHICLES = 20;
+const MIN_ACTIVE_VEHICLES_FOR_MAKE = 6;
 
 export async function GET() {
-  const [allCategories, allRegions, vehicleCountsByCountry] = await Promise.all([
+  const [allCategories, allRegions, vehicleCountsByCountry, vehicleCountsByMake] = await Promise.all([
     prisma.category.findMany({
       orderBy: { label: "asc" },
       include: {
@@ -32,6 +33,11 @@ export async function GET() {
       where: { images: { some: { isActive: true } } },
       _count: { id: true },
     }),
+    prisma.vehicle.groupBy({
+      by: ["make"],
+      where: { images: { some: { isActive: true } } },
+      _count: { id: true },
+    }),
   ]);
 
   const categories =
@@ -55,5 +61,10 @@ export async function GET() {
   );
   const countries = COUNTRIES.filter((c) => qualifiedCountryCodes.has(c.code));
 
-  return Response.json({ categories, regions, countries });
+  const makes = vehicleCountsByMake
+    .filter((row) => row._count.id >= MIN_ACTIVE_VEHICLES_FOR_MAKE)
+    .map((row) => row.make)
+    .sort();
+
+  return Response.json({ categories, regions, countries, makes });
 }

@@ -48,9 +48,11 @@ export default function HomeScreen({ initialFilterError }: Props) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedMakes, setSelectedMakes] = useState<string[]>([]);
   const [categories, setCategories] = useState<FilterOption[]>(FALLBACK_CATEGORIES);
   const [regions, setRegions] = useState<FilterOption[]>(FALLBACK_REGIONS);
   const [countries, setCountries] = useState<{ code: string; label: string }[]>([...COUNTRIES]);
+  const [makes, setMakes] = useState<string[]>([]);
   const filterError = initialFilterError ?? null;
 
   useEffect(() => {
@@ -60,6 +62,7 @@ export default function HomeScreen({ initialFilterError }: Props) {
         if (data.categories?.length) setCategories(data.categories);
         if (data.regions?.length) setRegions(data.regions);
         if (data.countries?.length) setCountries(data.countries);
+        if (data.makes?.length) setMakes(data.makes);
       })
       .catch(() => {
         // Fallback data already set as initial state
@@ -81,7 +84,8 @@ export default function HomeScreen({ initialFilterError }: Props) {
   const hasFilter =
     selectedCategories.length > 0 ||
     selectedRegions.length > 0 ||
-    selectedCountries.length > 0;
+    selectedCountries.length > 0 ||
+    selectedMakes.length > 0;
 
   useEffect(() => {
     if (isCustomMode) {
@@ -97,6 +101,7 @@ export default function HomeScreen({ initialFilterError }: Props) {
       categorySlugs: selectedCategories,
       regionSlugs: selectedRegions,
       countries: selectedCountries,
+      makes: selectedMakes,
     };
 
     const params = new URLSearchParams({ mode: selectedMode });
@@ -238,6 +243,14 @@ export default function HomeScreen({ initialFilterError }: Props) {
               selectedValues={selectedCountries}
               onChange={setSelectedCountries}
             />
+            {makes.length > 0 && (
+              <FilterGroup
+                title="MANUFACTURER"
+                options={makes.map((m) => ({ label: m, value: m }))}
+                selectedValues={selectedMakes}
+                onChange={setSelectedMakes}
+              />
+            )}
           </div>
         </motion.div>
 

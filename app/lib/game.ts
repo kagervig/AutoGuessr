@@ -53,7 +53,10 @@ export function shuffle<T>(arr: T[]): T[] {
 
 // Pick `count` distractor vehicles for a given correct vehicle.
 //
-// Priority order:
+// When makeConstraint is provided (manufacturer filter mode), all distractors are
+// sourced exclusively from those makes — the normal priority ladder is bypassed.
+//
+// Default priority order (no constraint):
 //   1. At most 1 same-make vehicle (brand confusion is plausible)
 //   2. Same-category, different make (e.g. other supercars, other muscle cars)
 //   3. Same-era, different make
@@ -63,8 +66,36 @@ export function shuffle<T>(arr: T[]): T[] {
 export function selectDistractors(
   correct: VehicleForDistractor,
   pool: VehicleForDistractor[],
-  count = 3
+  count = 3,
+  makeConstraint?: string[]
 ): VehicleForDistractor[] {
+  if (makeConstraint?.length) {
+    const constrained = shuffle(
+      pool.filter(
+        (v) =>
+          makeConstraint.includes(v.make) &&
+          v.id !== correct.id &&
+          !(v.make === correct.make && v.model === correct.model)
+      )
+    );
+    const seen = new Set<string>();
+    const result: VehicleForDistractor[] = [];
+    for (const v of constrained) {
+      if (result.length >= count) break;
+      const key = `${v.make}|${v.model}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(v);
+      }
+    }
+    if (result.length < count) {
+      console.warn(
+        `selectDistractors: only ${result.length}/${count} distractors available within makes [${makeConstraint.join(", ")}]`
+      );
+    }
+    return result;
+  }
+
   const others = pool.filter(
     (v) => v.id !== correct.id && !(v.make === correct.make && v.model === correct.model)
   );
