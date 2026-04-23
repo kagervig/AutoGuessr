@@ -26,6 +26,7 @@ export interface PointsBreakdown {
   timeBonus: number;
   modeMultiplier: number;
   proBonus: number;
+  dailyDiscoveryBonus?: number;
 }
 
 export interface RevealInfo {
@@ -194,6 +195,24 @@ export function RoundResult({
                     +{reveal.breakdown.proBonus}
                   </span>
                 </div>
+              )}
+              {(reveal.breakdown.dailyDiscoveryBonus ?? 0) > 0 && (
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3, type: "spring" }}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-orange-400/30 bg-orange-400/10 px-4 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <Trophy className="w-5 h-5 shrink-0 text-orange-400" />
+                    <span className="text-sm text-orange-300 font-bold">
+                      Daily Discovery
+                    </span>
+                  </div>
+                  <span className="text-sm font-black text-orange-400">
+                    +{reveal.breakdown.dailyDiscoveryBonus!.toLocaleString()}
+                  </span>
+                </motion.div>
               )}
               <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
                 <span className="text-sm font-black text-primary uppercase tracking-widest">

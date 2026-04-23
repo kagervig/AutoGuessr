@@ -5,6 +5,7 @@ import { prisma } from "@/app/lib/prisma";
 import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, proLevelBonus, type VehicleForDistractor } from "@/app/lib/game";
 import { ROUNDS_PER_GAME, GameMode } from "@/app/lib/constants";
 import { selectTieredImages } from "@/app/lib/image-selection";
+import { getOrCreateTodaysFeatured } from "@/app/lib/car-of-the-day";
 
 const VALID_MODES = Object.values(GameMode);
 type Mode = GameMode;
@@ -133,6 +134,15 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Snapshot the current Car of the Day so mid-midnight sessions can't farm two bonuses
+  let featuredVehicleIdAtStart: string | null = null;
+  try {
+    const featured = await getOrCreateTodaysFeatured();
+    featuredVehicleIdAtStart = featured.vehicleId;
+  } catch {
+    // No eligible featured vehicle — bonus simply won't fire this session
+  }
+
   // Create session
   const sessionToken = crypto.randomUUID();
   const session = await prisma.gameSession.create({
@@ -140,6 +150,7 @@ export async function GET(request: NextRequest) {
       mode,
       filterConfig: filterConfig as object,
       sessionToken,
+      featuredVehicleIdAtStart,
     },
   });
 

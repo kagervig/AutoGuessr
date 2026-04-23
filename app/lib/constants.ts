@@ -1,5 +1,7 @@
 export const ROUNDS_PER_GAME = parseInt(process.env.ROUNDS_PER_GAME ?? "10", 10);
 
+export const DAILY_DISCOVERY_BONUS = 1000;
+
 export const BODY_STYLES = [
   "coupe", "sedan", "convertible", "hatchback", "wagon",
   "suv", "truck", "pickup", "van", "roadster", "targa", "compact", "special_purpose",
