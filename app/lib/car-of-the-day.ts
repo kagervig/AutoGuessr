@@ -107,9 +107,14 @@ export async function selectAndInsertFeatured(date: Date): Promise<FeaturedWithR
   return featured as FeaturedWithRelations;
 }
 
+const COTD_COOLDOWN_DAYS = 365;
+
 export async function getEligiblePool(additionalExclusions: string[] = []) {
+  const cutoff = new Date();
+  cutoff.setUTCDate(cutoff.getUTCDate() - COTD_COOLDOWN_DAYS);
+
   const allFeaturedIds = await prisma.featuredVehicleOfDay
-    .findMany({ select: { vehicleId: true } })
+    .findMany({ where: { date: { gte: cutoff } }, select: { vehicleId: true } })
     .then((rows) => rows.map((r) => r.vehicleId));
 
   const excludeIds = [...new Set([...allFeaturedIds, ...additionalExclusions])];
