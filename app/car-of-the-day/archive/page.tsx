@@ -28,9 +28,8 @@ export default async function ArchivePage() {
     orderBy: { date: "desc" },
     take: 60,
     include: {
-      vehicle: { select: { id: true, make: true, model: true } },
+      vehicle: { select: { id: true, make: true, model: true, trivia: { select: { displayModel: true } } } },
       image: { select: { id: true, filename: true } },
-      trivia: { select: { displayModel: true } },
     },
   });
 
@@ -67,7 +66,7 @@ export default async function ArchivePage() {
             {entries.map((entry) => {
               const dateStr = entry.date.toISOString().slice(0, 10);
               const isFound = foundDates.has(dateStr);
-              const displayModel = entry.trivia?.displayModel ?? entry.vehicle.model;
+              const displayModel = entry.vehicle.trivia?.displayModel ?? entry.vehicle.model;
               const url = imageUrl(entry.image.filename, entry.vehicle.id);
 
               return (
