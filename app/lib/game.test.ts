@@ -222,6 +222,74 @@ describe("selectDistractors", () => {
     expect(result.length).toBeLessThanOrEqual(3);
     expect(result.length).toBe(1);
   });
+
+  describe("with makeConstraint", () => {
+    it("should return only distractors from the constrained makes", () => {
+      const correct = makeVehicle({ id: "c1", make: "Toyota", model: "Supra" });
+      const pool = [
+        correct,
+        makeVehicle({ id: "t1", make: "Toyota", model: "Celica" }),
+        makeVehicle({ id: "t2", make: "Toyota", model: "AE86" }),
+        makeVehicle({ id: "t3", make: "Toyota", model: "MR2" }),
+        makeVehicle({ id: "f1", make: "Ford", model: "Mustang" }),
+        makeVehicle({ id: "f2", make: "Ford", model: "Falcon" }),
+      ];
+      const result = selectDistractors(correct, pool, 3, ["Toyota"]);
+      expect(result).toHaveLength(3);
+      expect(result.every((v) => v.make === "Toyota")).toBe(true);
+    });
+
+    it("should not include the correct vehicle when constrained", () => {
+      const correct = makeVehicle({ id: "c1", make: "Toyota", model: "Supra" });
+      const pool = [
+        correct,
+        makeVehicle({ id: "t1", make: "Toyota", model: "Celica" }),
+        makeVehicle({ id: "t2", make: "Toyota", model: "AE86" }),
+        makeVehicle({ id: "t3", make: "Toyota", model: "MR2" }),
+      ];
+      const result = selectDistractors(correct, pool, 3, ["Toyota"]);
+      expect(result.find((v) => v.id === "c1")).toBeUndefined();
+    });
+
+    it("should deduplicate by make+model when constrained", () => {
+      const correct = makeVehicle({ id: "c1", make: "Toyota", model: "Supra" });
+      const pool = [
+        correct,
+        makeVehicle({ id: "t1a", make: "Toyota", model: "Celica" }),
+        makeVehicle({ id: "t1b", make: "Toyota", model: "Celica" }), // duplicate label
+        makeVehicle({ id: "t2", make: "Toyota", model: "AE86" }),
+        makeVehicle({ id: "t3", make: "Toyota", model: "MR2" }),
+      ];
+      const result = selectDistractors(correct, pool, 3, ["Toyota"]);
+      const keys = result.map((v) => `${v.make}|${v.model}`);
+      expect(new Set(keys).size).toBe(keys.length);
+    });
+
+    it("should return fewer than requested when constrained pool is small", () => {
+      const correct = makeVehicle({ id: "c1", make: "Toyota", model: "Supra" });
+      const pool = [
+        correct,
+        makeVehicle({ id: "t1", make: "Toyota", model: "Celica" }),
+        makeVehicle({ id: "f1", make: "Ford", model: "Mustang" }),
+      ];
+      const result = selectDistractors(correct, pool, 3, ["Toyota"]);
+      expect(result.length).toBe(1);
+    });
+
+    it("should support multiple constrained makes", () => {
+      const correct = makeVehicle({ id: "c1", make: "Toyota", model: "Supra" });
+      const pool = [
+        correct,
+        makeVehicle({ id: "t1", make: "Toyota", model: "Celica" }),
+        makeVehicle({ id: "h1", make: "Honda", model: "NSX" }),
+        makeVehicle({ id: "h2", make: "Honda", model: "Civic" }),
+        makeVehicle({ id: "f1", make: "Ford", model: "Mustang" }),
+      ];
+      const result = selectDistractors(correct, pool, 3, ["Toyota", "Honda"]);
+      expect(result).toHaveLength(3);
+      expect(result.every((v) => ["Toyota", "Honda"].includes(v.make))).toBe(true);
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@ interface FilterConfig {
   categorySlugs?: string[];
   regionSlugs?: string[];
   countries?: string[];
+  makes?: string[];
 }
 
 async function verifyTurnstile(token: string): Promise<boolean> {
@@ -61,6 +62,9 @@ export async function GET(request: NextRequest) {
   }
   if (filterConfig.countries?.length) {
     vehicleFilters.push({ countryOfOrigin: { in: filterConfig.countries } });
+  }
+  if (filterConfig.makes?.length) {
+    vehicleFilters.push({ make: { in: filterConfig.makes } });
   }
 
   // Minimal image shape shared by both the tiered and non-tiered selection paths
@@ -161,7 +165,7 @@ export async function GET(request: NextRequest) {
     const vehicleMap = new Map(vehiclePool.map((v) => [v.id, v]));
     precomputedChoices = selected.map((image) => {
       const correct = vehicleMap.get(image.vehicle.id) ?? { ...image.vehicle, categorySlugs: [] } as VehicleForDistractor;
-      const distractors = selectDistractors(correct, vehiclePool);
+      const distractors = selectDistractors(correct, vehiclePool, 3, filterConfig.makes);
       return shuffle([
         { vehicleId: correct.id, label: vehicleLabel(correct) },
         ...distractors.map((d) => ({ vehicleId: d.id, label: vehicleLabel(d) })),
@@ -228,7 +232,7 @@ export async function GET(request: NextRequest) {
     easyChoices = {};
     for (let i = 0; i < selected.length; i++) {
       const correct = vehicleMap.get(selected[i].vehicle.id) ?? { ...selected[i].vehicle, categorySlugs: [] } as VehicleForDistractor;
-      const distractors = selectDistractors(correct, vehiclePool);
+      const distractors = selectDistractors(correct, vehiclePool, 3, filterConfig.makes);
       const choices = shuffle([
         { vehicleId: correct.id, label: vehicleLabel(correct) },
         ...distractors.map((d) => ({ vehicleId: d.id, label: vehicleLabel(d) })),

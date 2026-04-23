@@ -82,6 +82,29 @@ describe("StandardModeInput", () => {
     });
   });
 
+  it("pressing Tab on the make input accepts the first autocomplete suggestion", async () => {
+    render(<StandardModeInput makes={MAKES} disabled={false} onSubmit={vi.fn()} />);
+
+    const makeInput = screen.getByPlaceholderText("Make (e.g. Ferrari)");
+    await userEvent.click(makeInput);
+    await userEvent.type(makeInput, "Toy");
+    await userEvent.tab();
+
+    expect(makeInput).toHaveValue("Toyota");
+  });
+
+  it("pressing Enter on the year input submits the answer", async () => {
+    const onSubmit = vi.fn();
+    render(<StandardModeInput makes={MAKES} disabled={false} onSubmit={onSubmit} />);
+
+    await selectMake("Toyota");
+    await selectModel("Supra");
+    await userEvent.type(screen.getByPlaceholderText("Year (e.g. 1969)"), "1994");
+    await userEvent.keyboard("{Enter}");
+
+    expect(onSubmit).toHaveBeenCalledWith("Toyota", "Supra", "1994");
+  });
+
   it("keeps the submit button disabled until make, model, and year are all filled", async () => {
     render(<StandardModeInput makes={MAKES} disabled={false} onSubmit={vi.fn()} />);
 

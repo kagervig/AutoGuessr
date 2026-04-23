@@ -50,6 +50,7 @@ export default function CustomModeInput({ makes, showYear, disabled, onSubmit }:
           type="number"
           value={year}
           onChange={(e) => setYear(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && canSubmit) onSubmit(make, model, year); }}
           placeholder="Year (e.g. 1969)"
           min={1885}
           max={new Date().getFullYear() + 1}

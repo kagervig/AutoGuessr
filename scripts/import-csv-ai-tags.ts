@@ -35,6 +35,9 @@ if (inputArg === -1 || !args[inputArg + 1]) {
 const inputFile = args[inputArg + 1];
 const isDryRun = args.includes("--dry-run");
 
+const limitArg = args.indexOf("--limit");
+const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : Infinity;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface CsvRow {
@@ -47,6 +50,19 @@ interface CsvRow {
   aiConfidence: string;
   aiTaggedAt: string;
   status: string;
+  adminMake: string;
+  adminModel: string;
+  adminYear: string;
+  adminTrim: string;
+  adminBodyStyle: string;
+  adminNotes: string;
+  adminCategories: string;
+  adminEra: string;
+  adminIsHardcoreEligible: string;
+  adminRarity: string;
+  adminRegionSlug: string;
+  adminCountryOfOrigin: string;
+  adminCopyrightHolder: string;
   adminIsCropped: string;
   adminIsLogoVisible: string;
   adminIsModelNameVisible: string;
@@ -62,6 +78,12 @@ function parseBool(value: string): boolean | null {
   if (value === "t" || value === "true") return true;
   if (value === "f" || value === "false") return false;
   return null;
+}
+
+// Postgres array exports as "{val1,val2}".
+function parsePostgresArray(value: string): string[] {
+  if (!value || value === "{}") return [];
+  return value.replace(/^\{|\}$/g, "").split(",").filter(Boolean);
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -89,7 +111,7 @@ async function main() {
   let skipped = 0;
   let notFound = 0;
 
-  for (const row of rows) {
+  for (const row of rows.slice(0, limit)) {
     if (row.status !== "PENDING_REVIEW") {
       skipped++;
       continue;
@@ -118,32 +140,68 @@ async function main() {
       console.warn(`[${row.id}] Unknown make, skipping region/country: ${row.aiMake}`);
     }
 
+    const categories = parsePostgresArray(row.adminCategories);
+
     console.log(
       `[${row.id}] ${row.aiMake} ${row.aiModel} ${row.aiYear ?? "?"}` +
         (confidence !== null ? ` (confidence: ${confidence})` : "") +
-        (origin ? ` [${origin.countryOfOrigin}/${origin.regionSlug}]` : "")
+        (origin ? ` [${origin.countryOfOrigin}/${origin.regionSlug}]` : "") +
+        ` bodyStyle=${JSON.stringify(row.aiBodyStyle)} adminBodyStyle=${JSON.stringify(row.adminBodyStyle)}`
     );
 
+    if (isDryRun) {
+      const adminFields: Record<string, unknown> = {};
+      if (row.adminMake)            adminFields.adminMake = row.adminMake;
+      if (row.adminModel)           adminFields.adminModel = row.adminModel;
+      if (row.adminYear)            adminFields.adminYear = parseInt(row.adminYear, 10);
+      if (row.adminTrim)            adminFields.adminTrim = row.adminTrim;
+      if (row.adminBodyStyle || row.aiBodyStyle) adminFields.adminBodyStyle = (row.adminBodyStyle || row.aiBodyStyle).toLowerCase().replace(/ /g, "_");
+      if (row.adminNotes)           adminFields.adminNotes = row.adminNotes;
+      if (categories.length)        adminFields.adminCategories = categories;
+      if (row.adminEra)             adminFields.adminEra = row.adminEra.toLowerCase();
+      if (row.adminRarity)          adminFields.adminRarity = row.adminRarity.toLowerCase().replace(/ /g, "_");
+      if (row.adminRegionSlug)      adminFields.adminRegionSlug = row.adminRegionSlug;
+      else if (origin)              adminFields.adminRegionSlug = origin.regionSlug;
+      if (row.adminCountryOfOrigin) adminFields.adminCountryOfOrigin = row.adminCountryOfOrigin;
+      else if (origin)              adminFields.adminCountryOfOrigin = origin.countryOfOrigin;
+      if (row.adminCopyrightHolder) adminFields.adminCopyrightHolder = row.adminCopyrightHolder;
+      const hc = parseBool(row.adminIsHardcoreEligible);
+      if (hc !== null)              adminFields.adminIsHardcoreEligible = hc;
+      console.log("  Would write:", JSON.stringify(adminFields, null, 2));
+    }
+
     if (!isDryRun) {
-      await db.stagingImage.update({
+      const result = await db.stagingImage.update({
         where: { id: record.id },
         data: {
-          aiMake: row.aiMake || null,
-          aiModel: row.aiModel || null,
-          aiYear: year,
-          aiBodyStyle: row.aiBodyStyle || null,
+          aiMake:       row.aiMake || null,
+          aiModel:      row.aiModel || null,
+          aiYear:       year,
+          aiBodyStyle:  row.aiBodyStyle || null,
           aiConfidence: confidence,
-          aiTaggedAt: taggedAt,
-          adminCopyrightHolder: "Pexels",
-          ...(origin ? { adminRegionSlug: origin.regionSlug, adminCountryOfOrigin: origin.countryOfOrigin } : {}),
-          ...(parseBool(row.adminIsCropped) !== null ? { adminIsCropped: parseBool(row.adminIsCropped) } : {}),
-          ...(parseBool(row.adminIsLogoVisible) !== null ? { adminIsLogoVisible: parseBool(row.adminIsLogoVisible) } : {}),
-          ...(parseBool(row.adminIsModelNameVisible) !== null ? { adminIsModelNameVisible: parseBool(row.adminIsModelNameVisible) } : {}),
+          aiTaggedAt:   taggedAt,
+          ...(row.adminMake              ? { adminMake: row.adminMake }                       : {}),
+          ...(row.adminModel             ? { adminModel: row.adminModel }                     : {}),
+          ...(row.adminYear              ? { adminYear: parseInt(row.adminYear, 10) }         : {}),
+          ...(row.adminTrim              ? { adminTrim: row.adminTrim }                       : {}),
+          ...(row.adminBodyStyle || row.aiBodyStyle ? { adminBodyStyle: (row.adminBodyStyle || row.aiBodyStyle).toLowerCase().replace(/ /g, "_") } : {}),
+          ...(row.adminNotes             ? { adminNotes: row.adminNotes }                     : {}),
+          ...(categories.length          ? { adminCategories: categories }                   : {}),
+          ...(row.adminEra               ? { adminEra: row.adminEra.toLowerCase() }                         : {}),
+          ...(row.adminRarity            ? { adminRarity: row.adminRarity.toLowerCase().replace(/ /g, "_") } : {}),
+          ...(row.adminRegionSlug        ? { adminRegionSlug: row.adminRegionSlug }           : origin ? { adminRegionSlug: origin.regionSlug } : {}),
+          ...(row.adminCountryOfOrigin   ? { adminCountryOfOrigin: row.adminCountryOfOrigin } : origin ? { adminCountryOfOrigin: origin.countryOfOrigin } : {}),
+          ...(row.adminCopyrightHolder   ? { adminCopyrightHolder: row.adminCopyrightHolder } : {}),
+          ...(parseBool(row.adminIsHardcoreEligible) !== null ? { adminIsHardcoreEligible: parseBool(row.adminIsHardcoreEligible) } : {}),
+          ...(parseBool(row.adminIsCropped)           !== null ? { adminIsCropped: parseBool(row.adminIsCropped) }                 : {}),
+          ...(parseBool(row.adminIsLogoVisible)       !== null ? { adminIsLogoVisible: parseBool(row.adminIsLogoVisible) }         : {}),
+          ...(parseBool(row.adminIsModelNameVisible)  !== null ? { adminIsModelNameVisible: parseBool(row.adminIsModelNameVisible) } : {}),
           ...(parseBool(row.adminHasMultipleVehicles) !== null ? { adminHasMultipleVehicles: parseBool(row.adminHasMultipleVehicles) } : {}),
-          ...(parseBool(row.adminIsFaceVisible) !== null ? { adminIsFaceVisible: parseBool(row.adminIsFaceVisible) } : {}),
+          ...(parseBool(row.adminIsFaceVisible)       !== null ? { adminIsFaceVisible: parseBool(row.adminIsFaceVisible) }         : {}),
           ...(parseBool(row.adminIsVehicleUnmodified) !== null ? { adminIsVehicleUnmodified: parseBool(row.adminIsVehicleUnmodified) } : {}),
         },
       });
+      console.log(`  → DB adminBodyStyle: ${JSON.stringify(result.adminBodyStyle)}, aiBodyStyle: ${JSON.stringify(result.aiBodyStyle)}`);
       updated++;
     } else {
       updated++;
