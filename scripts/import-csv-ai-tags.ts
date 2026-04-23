@@ -145,7 +145,8 @@ async function main() {
     console.log(
       `[${row.id}] ${row.aiMake} ${row.aiModel} ${row.aiYear ?? "?"}` +
         (confidence !== null ? ` (confidence: ${confidence})` : "") +
-        (origin ? ` [${origin.countryOfOrigin}/${origin.regionSlug}]` : "")
+        (origin ? ` [${origin.countryOfOrigin}/${origin.regionSlug}]` : "") +
+        ` bodyStyle=${JSON.stringify(row.aiBodyStyle)} adminBodyStyle=${JSON.stringify(row.adminBodyStyle)}`
     );
 
     if (isDryRun) {
@@ -154,11 +155,11 @@ async function main() {
       if (row.adminModel)           adminFields.adminModel = row.adminModel;
       if (row.adminYear)            adminFields.adminYear = parseInt(row.adminYear, 10);
       if (row.adminTrim)            adminFields.adminTrim = row.adminTrim;
-      if (row.adminBodyStyle || row.aiBodyStyle) adminFields.adminBodyStyle = row.adminBodyStyle || row.aiBodyStyle;
+      if (row.adminBodyStyle || row.aiBodyStyle) adminFields.adminBodyStyle = (row.adminBodyStyle || row.aiBodyStyle).toLowerCase().replace(/ /g, "_");
       if (row.adminNotes)           adminFields.adminNotes = row.adminNotes;
       if (categories.length)        adminFields.adminCategories = categories;
-      if (row.adminEra)             adminFields.adminEra = row.adminEra;
-      if (row.adminRarity)          adminFields.adminRarity = row.adminRarity;
+      if (row.adminEra)             adminFields.adminEra = row.adminEra.toLowerCase();
+      if (row.adminRarity)          adminFields.adminRarity = row.adminRarity.toLowerCase().replace(/ /g, "_");
       if (row.adminRegionSlug)      adminFields.adminRegionSlug = row.adminRegionSlug;
       else if (origin)              adminFields.adminRegionSlug = origin.regionSlug;
       if (row.adminCountryOfOrigin) adminFields.adminCountryOfOrigin = row.adminCountryOfOrigin;
@@ -170,7 +171,7 @@ async function main() {
     }
 
     if (!isDryRun) {
-      await db.stagingImage.update({
+      const result = await db.stagingImage.update({
         where: { id: record.id },
         data: {
           aiMake:       row.aiMake || null,
@@ -183,11 +184,11 @@ async function main() {
           ...(row.adminModel             ? { adminModel: row.adminModel }                     : {}),
           ...(row.adminYear              ? { adminYear: parseInt(row.adminYear, 10) }         : {}),
           ...(row.adminTrim              ? { adminTrim: row.adminTrim }                       : {}),
-          ...(row.adminBodyStyle || row.aiBodyStyle ? { adminBodyStyle: row.adminBodyStyle || row.aiBodyStyle } : {}),
+          ...(row.adminBodyStyle || row.aiBodyStyle ? { adminBodyStyle: (row.adminBodyStyle || row.aiBodyStyle).toLowerCase().replace(/ /g, "_") } : {}),
           ...(row.adminNotes             ? { adminNotes: row.adminNotes }                     : {}),
           ...(categories.length          ? { adminCategories: categories }                   : {}),
-          ...(row.adminEra               ? { adminEra: row.adminEra }                         : {}),
-          ...(row.adminRarity            ? { adminRarity: row.adminRarity }                   : {}),
+          ...(row.adminEra               ? { adminEra: row.adminEra.toLowerCase() }                         : {}),
+          ...(row.adminRarity            ? { adminRarity: row.adminRarity.toLowerCase().replace(/ /g, "_") } : {}),
           ...(row.adminRegionSlug        ? { adminRegionSlug: row.adminRegionSlug }           : origin ? { adminRegionSlug: origin.regionSlug } : {}),
           ...(row.adminCountryOfOrigin   ? { adminCountryOfOrigin: row.adminCountryOfOrigin } : origin ? { adminCountryOfOrigin: origin.countryOfOrigin } : {}),
           ...(row.adminCopyrightHolder   ? { adminCopyrightHolder: row.adminCopyrightHolder } : {}),
@@ -200,6 +201,7 @@ async function main() {
           ...(parseBool(row.adminIsVehicleUnmodified) !== null ? { adminIsVehicleUnmodified: parseBool(row.adminIsVehicleUnmodified) } : {}),
         },
       });
+      console.log(`  → DB adminBodyStyle: ${JSON.stringify(result.adminBodyStyle)}, aiBodyStyle: ${JSON.stringify(result.aiBodyStyle)}`);
       updated++;
     } else {
       updated++;
