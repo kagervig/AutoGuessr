@@ -32,9 +32,8 @@ export default async function ArchiveDatePage({ params }: Props) {
   const entry = await prisma.featuredVehicleOfDay.findUnique({
     where: { date },
     include: {
-      vehicle: { select: { id: true, make: true, model: true } },
+      vehicle: { select: { id: true, make: true, model: true, trivia: true } },
       image: { select: { id: true, filename: true } },
-      trivia: true,
     },
   });
 
@@ -58,20 +57,20 @@ export default async function ArchiveDatePage({ params }: Props) {
       id: entry.vehicle.id,
       make: entry.vehicle.make,
       model: entry.vehicle.model,
-      displayModel: entry.trivia?.displayModel ?? null,
+      displayModel: entry.vehicle.trivia?.displayModel ?? null,
     },
     image: {
       id: entry.image.id,
       filename: entry.image.filename,
       url: imageUrl(entry.image.filename, entry.vehicle.id),
     },
-    trivia: entry.trivia
+    trivia: entry.vehicle.trivia
       ? {
-          productionYears: entry.trivia.productionYears,
-          engine: entry.trivia.engine,
-          layout: entry.trivia.layout,
-          regionalNames: entry.trivia.regionalNames,
-          funFacts: entry.trivia.funFacts,
+          productionYears: entry.vehicle.trivia.productionYears,
+          engine: entry.vehicle.trivia.engine,
+          layout: entry.vehicle.trivia.layout,
+          regionalNames: entry.vehicle.trivia.regionalNames,
+          funFacts: entry.vehicle.trivia.funFacts,
         }
       : null,
   };
