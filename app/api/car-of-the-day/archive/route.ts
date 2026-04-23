@@ -18,9 +18,8 @@ export async function GET(request: NextRequest) {
       skip,
       take: limit,
       include: {
-        vehicle: { select: { id: true, make: true, model: true } },
+        vehicle: { select: { id: true, make: true, model: true, trivia: true } },
         image: { select: { id: true, filename: true } },
-        trivia: true,
       },
     }),
     prisma.featuredVehicleOfDay.count({ where: { date: { lt: today } } }),
@@ -33,20 +32,20 @@ export async function GET(request: NextRequest) {
         id: e.vehicle.id,
         make: e.vehicle.make,
         model: e.vehicle.model,
-        displayModel: e.trivia?.displayModel ?? null,
+        displayModel: e.vehicle.trivia?.displayModel ?? null,
       },
       image: {
         id: e.image.id,
         filename: e.image.filename,
         url: imageUrl(e.image.filename, e.vehicle.id),
       },
-      trivia: e.trivia
+      trivia: e.vehicle.trivia
         ? {
-            productionYears: e.trivia.productionYears,
-            engine: e.trivia.engine,
-            layout: e.trivia.layout,
-            regionalNames: e.trivia.regionalNames,
-            funFacts: e.trivia.funFacts,
+            productionYears: e.vehicle.trivia.productionYears,
+            engine: e.vehicle.trivia.engine,
+            layout: e.vehicle.trivia.layout,
+            regionalNames: e.vehicle.trivia.regionalNames,
+            funFacts: e.vehicle.trivia.funFacts,
           }
         : null,
     })),
