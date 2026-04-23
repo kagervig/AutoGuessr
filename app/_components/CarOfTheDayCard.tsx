@@ -123,7 +123,7 @@ export function CarOfTheDayCard({ data, isFound }: Props) {
             key="expanded"
             initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            exit={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
+            exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
             transition={transition}
             className="overflow-hidden"
           >
