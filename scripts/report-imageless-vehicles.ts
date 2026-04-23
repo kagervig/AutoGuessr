@@ -1,5 +1,5 @@
 // Reports all vehicles that have no active images.
-import { PrismaClient } from "../app/generated/prisma";
+import { PrismaClient } from "../app/generated/prisma/client";
 
 const prisma = new PrismaClient();
 
