@@ -1,10 +1,31 @@
 // GET handler for the admin Images tab — returns all published images with vehicle data.
+import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search")?.toLowerCase();
+  const make = searchParams.get("make");
+  const model = searchParams.get("model");
+  const limit = parseInt(searchParams.get("limit") ?? "10000", 10);
+  const activeOnly = searchParams.get("activeOnly") === "true";
+
   const images = await prisma.image.findMany({
+    where: {
+      ...(activeOnly && { isActive: true }),
+      ...(make && { vehicle: { make: { equals: make, mode: "insensitive" } } }),
+      ...(model && { vehicle: { model: { equals: model, mode: "insensitive" } } }),
+      ...(search && {
+        OR: [
+          { vehicle: { make: { contains: search, mode: "insensitive" } } },
+          { vehicle: { model: { contains: search, mode: "insensitive" } } },
+          { filename: { contains: search, mode: "insensitive" } },
+        ],
+      }),
+    },
     orderBy: { uploadedAt: "desc" },
+    take: limit,
     include: {
       vehicle: {
         include: {

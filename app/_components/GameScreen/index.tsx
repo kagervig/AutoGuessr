@@ -28,14 +28,16 @@ interface Props {
   username: string;
   filter: string;
   cfToken?: string;
+  daily?: boolean;
+  dailyDate?: string;
 }
 
 // ─── Main Game component ───────────────────────────────────────────────────
 
-export default function GameScreen({ mode, username, filter, cfToken }: Props) {
+export default function GameScreen({ mode, username, filter, cfToken, daily, dailyDate }: Props) {
   const router = useRouter();
 
-  const { gameData, loading, error, mediumYearGuessing, retrying } = useGameLoader({ mode, username, filter, cfToken });
+  const { gameData, loading, error, mediumYearGuessing, retrying } = useGameLoader({ mode, username, filter, cfToken, daily, dailyDate });
   const [introVisible, setIntroVisible] = useState(() => shouldShowIntro(mode));
 
   // currentIndex is declared here so it can be passed to both useRoundTimer and useGameSession.

@@ -10,10 +10,9 @@ import {
   Settings2,
   Keyboard,
   EyeOff,
-  Timer,
+  CalendarDays,
   Wrench,
   Power,
-  Users,
 } from "lucide-react";
 import { MODES, COUNTRIES, FALLBACK_CATEGORIES, FALLBACK_REGIONS, GameMode } from "@/app/lib/constants";
 import type { ModeId } from "@/app/lib/constants";
@@ -27,7 +26,7 @@ const MODE_ICONS: Record<GameMode, React.ReactNode> = {
   [GameMode.Custom]: <Settings2 className="w-6 h-6" />,
   [GameMode.Standard]: <Keyboard className="w-6 h-6" />,
   [GameMode.Hardcore]: <EyeOff className="w-6 h-6" />,
-  [GameMode.TimeAttack]: <Timer className="w-6 h-6" />,
+  [GameMode.TimeAttack]: null,
   [GameMode.Practice]: <Wrench className="w-6 h-6" />,
 };
 
@@ -174,7 +173,7 @@ export default function HomeScreen({ initialFilterError, cotdSlot }: Props) {
 
           <div className="space-y-4 lg:space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-              {MODES.slice(0, 4).map((mode) => (
+              {MODES.slice(0, 3).map((mode) => (
                 <ModeCard
                   key={mode.id}
                   id={mode.id}
@@ -185,6 +184,14 @@ export default function HomeScreen({ initialFilterError, cotdSlot }: Props) {
                   onClick={() => setSelectedMode(mode.id)}
                 />
               ))}
+              <ModeCard
+                id="daily"
+                title="Daily"
+                description="One challenge every day. Same cars for everyone. Can you top the leaderboard?"
+                icon={<CalendarDays className="w-6 h-6" />}
+                selected={false}
+                onClick={() => router.push("/daily")}
+              />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
               {MODES.slice(4).map((mode) => (
@@ -199,14 +206,6 @@ export default function HomeScreen({ initialFilterError, cotdSlot }: Props) {
                 />
               ))}
             </div>
-            <ModeCard
-              id="community"
-              title="Community"
-              description="Help identify mystery cars. Vote on suggestions from other players."
-              icon={<Users className="w-6 h-6" />}
-              selected={false}
-              onClick={() => router.push("/identify")}
-            />
           </div>
         </motion.div>
 

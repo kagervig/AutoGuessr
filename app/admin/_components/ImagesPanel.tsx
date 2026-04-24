@@ -106,6 +106,8 @@ export default function ImagesPanel() {
   >("ALL");
   const [makeFilter, setMakeFilter] = useState("");
   const [modelFilter, setModelFilter] = useState("");
+  const [deletingUnused, setDeletingUnused] = useState(false);
+  const [deleteResult, setDeleteResult] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -261,6 +263,23 @@ export default function ImagesPanel() {
     }
   }
 
+  async function deleteUnusedInactive() {
+    if (!confirm("Delete all unused inactive images from Cloudinary and the database? This cannot be undone.")) return;
+    setDeletingUnused(true);
+    setDeleteResult(null);
+    const res = await fetch("/api/admin/images/bulk-unused-inactive", { method: "DELETE" });
+    setDeletingUnused(false);
+    if (res.ok) {
+      const data = await res.json();
+      setDeleteResult(`Deleted ${data.deleted}${data.skipped ? `, skipped ${data.skipped} (referenced in game history)` : ""}`);
+      setImages((prev) => prev.filter((img) => img.isActive));
+      setSelectedId(null);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setDeleteResult(data.error ?? "Delete failed");
+    }
+  }
+
   const selected = selectedId
     ? (images.find((img) => img.id === selectedId) ?? null)
     : null;
@@ -313,6 +332,18 @@ export default function ImagesPanel() {
           ))}
         </nav>
         <div className="flex items-center gap-2 py-2">
+          {activeFilter === "inactive" && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={deleteUnusedInactive}
+                disabled={deletingUnused || inactiveCount === 0}
+                className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {deletingUnused ? "Deleting…" : "Delete unused inactive"}
+              </button>
+              {deleteResult && <span className="text-xs text-gray-500">{deleteResult}</span>}
+            </div>
+          )}
           <select
             value={makeFilter}
             onChange={(e) => {

@@ -28,6 +28,8 @@ interface Params {
   username: string;
   filter: string;
   cfToken?: string;
+  daily?: boolean;
+  dailyDate?: string;
 }
 
 interface Result {
@@ -38,7 +40,7 @@ interface Result {
   retrying: boolean;
 }
 
-export function useGameLoader({ mode, username, filter, cfToken }: Params): Result {
+export function useGameLoader({ mode, username, filter, cfToken, daily, dailyDate }: Params): Result {
   const router = useRouter();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,9 +51,10 @@ export function useGameLoader({ mode, username, filter, cfToken }: Params): Resu
 
   useEffect(() => {
     const controller = new AbortController();
-    const params = new URLSearchParams({ mode });
-    if (username) params.set("username", username);
-    if (filter) params.set("filter", filter);
+    const params = new URLSearchParams(daily ? { daily: "true" } : { mode });
+    if (daily && dailyDate) params.set("dailyDate", dailyDate);
+    if (!daily && username) params.set("username", username);
+    if (!daily && filter) params.set("filter", filter);
     if (cfToken) params.set("cf_token", cfToken);
 
     Promise.all([
@@ -99,7 +102,7 @@ export function useGameLoader({ mode, username, filter, cfToken }: Params): Resu
     return () => controller.abort();
     // NOTE: cfToken intentionally omitted — adding it would re-fetch and restart the game
     // after Turnstile verification. It is only needed on the initial load.
-  }, [mode, username, filter, router, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, username, filter, daily, dailyDate, router, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { gameData, loading, error, mediumYearGuessing, retrying };
 }

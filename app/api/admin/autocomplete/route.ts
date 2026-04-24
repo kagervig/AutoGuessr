@@ -9,12 +9,37 @@ export async function GET(request: NextRequest) {
 
   switch (field) {
     case "make": {
-      const [vehicleRows, knownMakes] = await Promise.all([
-        prisma.vehicle.findMany({ select: { make: true }, distinct: ["make"] }),
-        prisma.knownMake.findMany({ select: { name: true } }),
-      ]);
-      const allMakes = [...new Set([...vehicleRows.map((r) => r.make), ...knownMakes.map((k) => k.name)])].sort();
+      const vehicleRows = await prisma.image.findMany({
+        where: { isActive: true },
+        select: { vehicle: { select: { make: true } } },
+        distinct: ["vehicleId"],
+      });
+      const allMakes = [...new Set(vehicleRows.map((r) => r.vehicle.make))].sort();
       return Response.json(allMakes);
+    }
+
+    case "make_models": {
+      const images = await prisma.image.findMany({
+        where: { isActive: true },
+        select: {
+          vehicle: {
+            select: { make: true, model: true },
+          },
+        },
+      });
+
+      const map: Record<string, Set<string>> = {};
+      for (const img of images) {
+        const { make, model } = img.vehicle;
+        if (!map[make]) map[make] = new Set();
+        map[make].add(model);
+      }
+
+      const result: Record<string, string[]> = {};
+      for (const make in map) {
+        result[make] = Array.from(map[make]).sort();
+      }
+      return Response.json(result);
     }
 
     case "model": {

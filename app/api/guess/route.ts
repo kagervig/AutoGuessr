@@ -36,11 +36,12 @@ export async function POST(request: NextRequest) {
     where: { id: roundId },
     include: {
       guess: true,
-      session: { select: { mode: true, sessionToken: true, featuredVehicleIdAtStart: true } },
+      session: { select: { mode: true, sessionToken: true, featuredVehicleIdAtStart: true, dailyChallengeId: true } },
       image: {
         select: {
           id: true,
           vehicleId: true,
+          isHardcoreEligible: true,
           vehicle: {
             select: {
               make: true,
@@ -111,6 +112,7 @@ export async function POST(request: NextRequest) {
     isCorrect &&
     !!round.session.featuredVehicleIdAtStart &&
     round.image.vehicleId === round.session.featuredVehicleIdAtStart;
+  const isDailyChallenge = !!round.session.dailyChallengeId;
 
   const scoring = scoreRound({
     makeCorrect: makeMatch,
@@ -121,6 +123,8 @@ export async function POST(request: NextRequest) {
     mode,
     panelsRevealed,
     isDailyDiscovery,
+    isDailyChallenge,
+    isHardcoreEligible: round.image.isHardcoreEligible,
   });
 
   const proBonus = isCorrect ? round.proBonus : 0;

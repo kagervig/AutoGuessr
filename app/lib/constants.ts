@@ -2,6 +2,10 @@ export const ROUNDS_PER_GAME = parseInt(process.env.ROUNDS_PER_GAME ?? "10", 10)
 
 export const DAILY_DISCOVERY_BONUS = 1000;
 
+export const DAILY_CHALLENGE_ORIGIN = new Date("2026-04-24T00:00:00Z");
+export const DAILY_HARDCORE_BONUS = 1000;
+export const MAX_DAILY_ROUND_SCORE = 800;
+
 export const BODY_STYLES = [
   "coupe", "sedan", "convertible", "hatchback", "wagon",
   "suv", "truck", "pickup", "van", "roadster", "targa", "compact", "special_purpose",

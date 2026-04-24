@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   const session = await prisma.gameSession.findUnique({
     where: { id: gameId },
     include: {
+      dailyChallenge: { select: { challengeNumber: true } },
       rounds: {
         orderBy: { sequenceNumber: "asc" },
         include: {
@@ -42,12 +43,48 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: "Session not found" }, { status: 404 });
   }
 
+  // Compute rank and leaderboard for daily challenge sessions
+  let dailyRank: number | null = null;
+  let dailyLeaderboard: { id: string; initials: string; finalScore: number }[] = [];
+
+  if (session.dailyChallengeId && session.endedAt && session.finalScore !== null) {
+    const [rank, leaderboard] = await Promise.all([
+      prisma.gameSession.count({
+        where: {
+          dailyChallengeId: session.dailyChallengeId,
+          endedAt: { not: null },
+          finalScore: { gt: session.finalScore },
+        },
+      }),
+      prisma.gameSession.findMany({
+        where: {
+          dailyChallengeId: session.dailyChallengeId,
+          endedAt: { not: null },
+          finalScore: { not: null, gt: 0 },
+          initials: { not: null },
+        },
+        orderBy: { finalScore: "desc" },
+        take: 10,
+        select: { id: true, initials: true, finalScore: true },
+      }),
+    ]);
+    dailyRank = rank + 1;
+    dailyLeaderboard = leaderboard as { id: string; initials: string; finalScore: number }[];
+  }
+
   // Enrich rounds with imageUrl
   const rounds = session.rounds.map((r) => ({
     ...r,
     imageUrl: imageUrl(r.image.filename, r.image.vehicleId),
   }));
 
-  return Response.json({ ...session, rounds, personalBest: null });
+  return Response.json({
+    ...session,
+    rounds,
+    personalBest: null,
+    dailyChallengeNumber: session.dailyChallenge?.challengeNumber ?? null,
+    dailyRank,
+    dailyLeaderboard,
+  });
 }
 
