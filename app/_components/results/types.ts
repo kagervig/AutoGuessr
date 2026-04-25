@@ -28,10 +28,20 @@ export interface RoundData {
   guess: GuessData | null;
 }
 
+export interface DailyLeaderboardEntry {
+  id: string;
+  initials: string;
+  finalScore: number;
+}
+
 export interface SessionData {
   id: string;
   mode: string;
   finalScore: number | null;
   rounds: RoundData[];
   personalBest: number | null;
+  dailyChallengeId: string | null;
+  dailyChallengeNumber: number | null;
+  dailyRank: number | null;
+  dailyLeaderboard: DailyLeaderboardEntry[];
 }

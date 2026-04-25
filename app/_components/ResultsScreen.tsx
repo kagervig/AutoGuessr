@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle, Share2 } from "lucide-react";
-import { MODES, GameMode } from "@/app/lib/constants";
+import { Flag, RotateCcw, ArrowLeft, Trophy, CheckCircle, Share2, Flame, Calendar } from "lucide-react";
+import { MODES, GameMode, MAX_DAILY_ROUND_SCORE } from "@/app/lib/constants";
 import { ScoringNudge } from "@/app/components/ui/ScoringNudge";
 import { calcGrade } from "@/app/lib/grade";
 import { InitialsEntry } from "./results/InitialsEntry";
@@ -30,6 +30,11 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
   const [error, setError] = useState<string | null>(null);
   const [initialsSubmitted, setInitialsSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [streak] = useState(() => {
+    if (typeof document === "undefined") return 0;
+    const match = document.cookie.match(/(?:^|; )daily_streak=(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  });
 
   useEffect(() => {
     fetch(`/api/session?gameId=${gameId}`)
@@ -71,8 +76,33 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
   const { grade, color: gradeColor } = calcGrade(approxMax > 0 ? score / approxMax : 0);
   const modeLabel = MODE_LABELS[mode] || mode;
   const showLeaderboard = mode !== GameMode.Practice && score > 0;
+  const isDaily = !!session.dailyChallengeId;
+
+  function roundEmoji(pts: number): string {
+    if (pts >= MAX_DAILY_ROUND_SCORE * 0.8) return "🟢";
+    if (pts >= MAX_DAILY_ROUND_SCORE * 0.4) return "🟡";
+    return "🔴";
+  }
+
+  const emojiGrid = isDaily
+    ? session.rounds.map((r) => roundEmoji(r.guess?.pointsEarned ?? 0)).join("")
+    : "";
+
+  const dailyShareText = isDaily
+    ? `AutoGuessr Daily #${session.dailyChallengeNumber}\n${emojiGrid}\nScore: ${score.toLocaleString()}${session.dailyRank ? ` | Rank #${session.dailyRank}` : ""}\nautoguessr.com/daily`
+    : "";
 
   async function handleShare() {
+    if (isDaily) {
+      try {
+        await navigator.clipboard.writeText(dailyShareText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        prompt("Copy this:", dailyShareText);
+      }
+      return;
+    }
     const url = window.location.href;
     const text = `I scored ${score.toLocaleString()} pts (Grade ${grade}) on Autoguessr — can you beat it?`;
     if (navigator.share) {
@@ -97,11 +127,22 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
           {/* Card header */}
           <div className="flex items-center justify-center gap-4 px-6 pt-4 pb-4">
             <div className="rounded-2xl bg-primary/20 p-4 shrink-0">
-              <Flag className="w-10 h-10 text-primary" />
+              {isDaily ? <Calendar className="w-10 h-10 text-primary" /> : <Flag className="w-10 h-10 text-primary" />}
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-widest uppercase leading-tight">Race Over</h1>
-              <p className="text-base sm:text-lg font-bold tracking-widest uppercase text-muted-foreground">{modeLabel} Mode</p>
+              {isDaily ? (
+                <>
+                  <p className="text-xs font-bold tracking-widest uppercase text-primary">Daily Challenge</p>
+                  <h1 className="text-xl sm:text-2xl font-black tracking-widest uppercase leading-tight">
+                    #{session.dailyChallengeNumber}
+                  </h1>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-xl sm:text-2xl font-black tracking-widest uppercase leading-tight">Race Over</h1>
+                  <p className="text-base sm:text-lg font-bold tracking-widest uppercase text-muted-foreground">{modeLabel} Mode</p>
+                </>
+              )}
             </div>
           </div>
 
@@ -112,6 +153,45 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
             approxMax={approxMax}
             personalBest={session.personalBest}
           />
+
+          {/* Daily challenge results */}
+          {isDaily && (
+            <div className="px-6 py-5 border-t border-white/10 space-y-5">
+              {/* Emoji grid + streak */}
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-3xl tracking-widest">{emojiGrid}</p>
+                {streak > 0 && (
+                  <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
+                    <Flame className="w-4 h-4 text-orange-400" />
+                    <span className="text-sm font-semibold text-orange-300">{streak}-day streak</span>
+                  </div>
+                )}
+                {session.dailyRank && (
+                  <p className="text-sm text-white/70">
+                    Rank <span className="text-white font-bold">#{session.dailyRank}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Leaderboard */}
+              {session.dailyLeaderboard.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 mb-3">
+                    <Trophy className="w-3.5 h-3.5" /> Today&apos;s Top Scores
+                  </p>
+                  <ol className="space-y-2">
+                    {session.dailyLeaderboard.map((entry, i) => (
+                      <li key={entry.id} className="flex items-center text-sm gap-3">
+                        <span className="text-muted-foreground w-6 shrink-0">#{i + 1}</span>
+                        <span className="font-mono font-bold text-white flex-1">{entry.initials}</span>
+                        <span className="text-white/70">{entry.finalScore.toLocaleString()}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Initials entry or confirmation */}
           {showLeaderboard && hasToken && !initialsSubmitted && (
@@ -144,12 +224,13 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
           <div className="flex gap-1.5 px-3 sm:px-6 py-5 border-t border-white/10">
             <button
               onClick={() => {
+                if (isDaily) { router.push("/daily"); return; }
                 const params = new URLSearchParams({ mode, ...(username ? { username } : {}) });
                 router.push(`/game?${params.toString()}`);
               }}
               className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-white font-black tracking-widest uppercase px-5 py-3 rounded-full hover:brightness-110 transition-all text-xs sm:text-sm"
             >
-              <RotateCcw className="w-4 h-4 shrink-0" /> {hasToken ? "Play Again" : "Play Game"}
+              <RotateCcw className="w-4 h-4 shrink-0" /> {isDaily ? "Daily Home" : hasToken ? "Play Again" : "Play Game"}
             </button>
             {!hasToken && (
               <button

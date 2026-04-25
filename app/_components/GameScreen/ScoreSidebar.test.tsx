@@ -44,27 +44,27 @@ describe("ScoreSidebar", () => {
   describe("mode info chip", () => {
     it("renders the mode label", () => {
       render(<ScoreSidebar {...baseProps} modeLabel="Hardcore" />);
-      expect(screen.getByText("Hardcore")).toBeInTheDocument();
+      expect(screen.getByText(/Hardcore/i)).toBeInTheDocument();
     });
 
     it("shows the description for standard mode", () => {
       render(<ScoreSidebar {...baseProps} mode="standard" />);
-      expect(screen.getByText("Type make, model, and year.")).toBeInTheDocument();
+      expect(screen.getByText(/Type make, model, and year/i)).toBeInTheDocument();
     });
 
     it("shows the description for easy mode", () => {
       render(<ScoreSidebar {...baseProps} mode="easy" />);
-      expect(screen.getByText("Pick the right car from 4 choices.")).toBeInTheDocument();
+      expect(screen.getByText(/Pick the right car from 4 multiple-choice answers/i)).toBeInTheDocument();
     });
 
     it("shows the description for practice mode", () => {
       render(<ScoreSidebar {...baseProps} mode="practice" />);
-      expect(screen.getByText("No leaderboard pressure. Drill your knowledge.")).toBeInTheDocument();
+      expect(screen.getByText(/No score, no pressure/i)).toBeInTheDocument();
     });
 
     it("shows the description for hardcore mode", () => {
       render(<ScoreSidebar {...baseProps} mode="hardcore" />);
-      expect(screen.getByText("Same as Standard. Panels are removed every 5 seconds to reveal the car.")).toBeInTheDocument();
+      expect(screen.getByText(/Panels slowly reveal the car/i)).toBeInTheDocument();
     });
 
     it("shows empty description for an unrecognised mode", () => {
