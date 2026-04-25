@@ -27,13 +27,19 @@ export async function DELETE() {
   const unusedFilenames = unusedImages.map((img) => img.filename);
 
   // Exclude any image referenced in a DailyChallenge (stored as a String[] — no FK)
-  const challengesReferencing = await prisma.dailyChallenge.findMany({
-    where: { imageIds: { hasSome: unusedIds } },
-    select: { imageIds: true },
-  });
-  const referencedInChallenge = new Set(
-    challengesReferencing.flatMap((c) => c.imageIds)
-  );
+  // We use dynamic access here so this branch can be deployed without the DailyChallenge schema
+  let referencedInChallenge = new Set<string>();
+  const dcModel = (prisma as any).dailyChallenge;
+  
+  if (dcModel) {
+    const challengesReferencing = await dcModel.findMany({
+      where: { imageIds: { hasSome: unusedIds } },
+      select: { imageIds: true },
+    });
+    referencedInChallenge = new Set(
+      challengesReferencing.flatMap((c: any) => c.imageIds)
+    );
+  }
 
   const safeImages = unusedImages.filter((img) => !referencedInChallenge.has(img.id));
   if (safeImages.length === 0) {
