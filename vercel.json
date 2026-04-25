@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/generate-daily-challenges",
+      "schedule": "0 1 * * 0"
+    },
+    {
+      "path": "/api/cron/car-of-the-day",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
