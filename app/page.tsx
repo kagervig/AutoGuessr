@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HomeScreen from "./_components/HomeScreen";
+import { CarOfTheDayCardServer } from "./_components/CarOfTheDayCardServer";
 
 export const metadata: Metadata = {
   title: "Autoguessr",
@@ -12,5 +13,10 @@ interface Props {
 
 export default async function Page({ searchParams }: Props) {
   const { filterError } = await searchParams;
-  return <HomeScreen initialFilterError={filterError} />;
+  return (
+    <HomeScreen
+      initialFilterError={filterError}
+      cotdSlot={<CarOfTheDayCardServer />}
+    />
+  );
 }

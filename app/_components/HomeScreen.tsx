@@ -39,9 +39,10 @@ interface FilterOption {
 
 interface Props {
   initialFilterError?: string;
+  cotdSlot?: React.ReactNode;
 }
 
-export default function HomeScreen({ initialFilterError }: Props) {
+export default function HomeScreen({ initialFilterError, cotdSlot }: Props) {
   const router = useRouter();
 
   const [selectedMode, setSelectedMode] = useState<ModeId | null>(null);
@@ -146,6 +147,17 @@ export default function HomeScreen({ initialFilterError }: Props) {
 
       {/* Main Configuration Form */}
       <section className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20">
+
+        {/* Car of the Day */}
+        {cotdSlot && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            {cotdSlot}
+          </motion.div>
+        )}
 
         {/* Mode Selection */}
         <motion.div

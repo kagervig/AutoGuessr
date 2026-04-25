@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     where: { id: roundId },
     include: {
       guess: true,
-      session: { select: { mode: true, sessionToken: true } },
+      session: { select: { mode: true, sessionToken: true, featuredVehicleIdAtStart: true } },
       image: {
         select: {
           id: true,
@@ -106,6 +106,12 @@ export async function POST(request: NextRequest) {
 
   const timeLimitMs = round.timeLimitMs ?? TIME_LIMITS[mode] ?? TIME_LIMITS.standard;
 
+  const isCorrect = makeMatch && modelMatch;
+  const isDailyDiscovery =
+    isCorrect &&
+    !!round.session.featuredVehicleIdAtStart &&
+    round.image.vehicleId === round.session.featuredVehicleIdAtStart;
+
   const scoring = scoreRound({
     makeCorrect: makeMatch,
     modelCorrect: modelMatch,
@@ -114,9 +120,8 @@ export async function POST(request: NextRequest) {
     timeLimitMs,
     mode,
     panelsRevealed,
+    isDailyDiscovery,
   });
-
-  const isCorrect = makeMatch && modelMatch;
 
   const proBonus = isCorrect ? round.proBonus : 0;
   const totalPointsEarned = scoring.pointsEarned + proBonus;
@@ -137,6 +142,7 @@ export async function POST(request: NextRequest) {
       yearBonus: scoring.yearBonus,
       timeBonus: scoring.timeBonus,
       proBonus,
+      dailyDiscoveryBonus: scoring.dailyDiscoveryBonus,
       modeMultiplier: scoring.modeMultiplier,
       pointsEarned: totalPointsEarned,
     },
@@ -168,7 +174,7 @@ export async function POST(request: NextRequest) {
     });
   });
 
-  return Response.json({
+  const response = Response.json({
     guessId: guess.id,
     makeMatch,
     modelMatch,
@@ -178,5 +184,28 @@ export async function POST(request: NextRequest) {
     ...scoring,
     proBonus,
     pointsEarned: totalPointsEarned,
+    dailyDiscoveryAwarded: isDailyDiscovery,
   });
+
+  if (isDailyDiscovery) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const existing = request.cookies.get("cotd_found_dates")?.value;
+    const dates: string[] = existing ? JSON.parse(existing) : [];
+    if (!dates.includes(todayStr)) {
+      dates.unshift(todayStr);
+      // Rolling 180-day window
+      const trimmed = dates.slice(0, 180);
+      // Expire at next UTC midnight
+      const now = new Date();
+      const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+      const secondsUntilMidnight = Math.floor((nextMidnight.getTime() - now.getTime()) / 1000);
+      const isProduction = process.env.NODE_ENV === "production";
+      response.headers.append(
+        "Set-Cookie",
+        `cotd_found_dates=${encodeURIComponent(JSON.stringify(trimmed))}; SameSite=Lax; Path=/; Max-Age=${secondsUntilMidnight}${isProduction ? "; Secure" : ""}`,
+      );
+    }
+  }
+
+  return response;
 }

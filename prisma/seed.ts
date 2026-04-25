@@ -1,11 +1,9 @@
-// Seeds the StagingImage table from the Image table. All images get PUBLISHED status
-// except for a random sample assigned to each of the other statuses, which are deleted
-// from the Image table to simulate the pre-publish pipeline state. On rerun, those
-// images are recreated in the Image table before re-seeding.
+// Seeds staging images and vehicle trivia.
 import "dotenv/config";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, StagingStatus } from "../app/generated/prisma/client";
+import { seedTrivia } from "./seed-trivia";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -178,6 +176,9 @@ async function main() {
   await prisma.round.deleteMany({ where: { imageId: { in: nonPublishedIds } } });
   await prisma.imageStats.deleteMany({ where: { imageId: { in: nonPublishedIds } } });
   await prisma.image.deleteMany({ where: { id: { in: nonPublishedIds } } });
+
+  console.log(`\nSeeding vehicle trivia...`);
+  await seedTrivia(prisma);
 
   console.log(`\nDone.`);
   console.log(`  ${publishedImages.length} images active as PUBLISHED`);

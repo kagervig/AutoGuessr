@@ -227,6 +227,7 @@ export function useGameSession({
         timeBonus: data.timeBonus,
         modeMultiplier: data.modeMultiplier,
         proBonus: data.proBonus,
+        dailyDiscoveryBonus: data.dailyDiscoveryBonus ?? 0,
       },
     });
   }

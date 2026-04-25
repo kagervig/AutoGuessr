@@ -1,5 +1,5 @@
 import type { Vehicle } from "../generated/prisma/client";
-import { GameMode } from "./constants";
+import { GameMode, DAILY_DISCOVERY_BONUS } from "./constants";
 
 export function levenshtein(a: string, b: string): number {
   const m = a.length;
@@ -154,6 +154,7 @@ export function scoreRound({
   timeLimitMs,
   mode,
   panelsRevealed,
+  isDailyDiscovery = false,
 }: {
   makeCorrect: boolean;
   modelCorrect: boolean;
@@ -162,12 +163,14 @@ export function scoreRound({
   timeLimitMs: number;
   mode: GameMode;
   panelsRevealed?: number;
+  isDailyDiscovery?: boolean;
 }): {
   makePoints: number;
   modelPoints: number;
   yearBonus: number | null;
   timeBonus: number;
   modeMultiplier: number;
+  dailyDiscoveryBonus: number;
   pointsEarned: number;
 } {
   const makePoints = makeCorrect ? 300 : 0;
@@ -207,9 +210,12 @@ export function scoreRound({
   }
 
   const base = makePoints + modelPoints + (yearBonus ?? 0) + timeBonus;
-  const pointsEarned = mode === GameMode.Practice ? 0 : Math.floor(base * modeMultiplier);
+  const isCorrect = makeCorrect && modelCorrect;
+  const dailyDiscoveryBonus = isDailyDiscovery && isCorrect ? DAILY_DISCOVERY_BONUS : 0;
+  const modeScore = mode === GameMode.Practice ? 0 : Math.floor(base * modeMultiplier);
+  const pointsEarned = modeScore + dailyDiscoveryBonus;
 
-  return { makePoints, modelPoints, yearBonus, timeBonus, modeMultiplier, pointsEarned };
+  return { makePoints, modelPoints, yearBonus, timeBonus, modeMultiplier, dailyDiscoveryBonus, pointsEarned };
 }
 
 // Returns a flat bonus awarded when correctly identifying a statistically hard image.

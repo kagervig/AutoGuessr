@@ -82,6 +82,8 @@ model Vehicle {
   images          Image[]
   aliases         VehicleAlias[]
   guesses         Guess[]
+  trivia          VehicleTrivia?
+  featuredDays    FeaturedVehicleOfDay[]
 }
 
 model Category {
@@ -129,6 +131,7 @@ model Image {
   vehicle              Vehicle     @relation(fields: [vehicleId], references: [id])
   stats                ImageStats?
   rounds               Round[]
+  featuredDays         FeaturedVehicleOfDay[]
 
   @@index([vehicleId])
 }
@@ -187,17 +190,18 @@ model PlayerDimensionStats {
 }
 
 model GameSession {
-  id           String      @id @default(cuid())
-  playerId     String?
-  mode         GameMode
-  filterConfig Json
-  startedAt    DateTime    @default(now())
-  endedAt      DateTime?
-  finalScore   Int?
-  initials     String?
-  sessionToken String      @unique @default(dbgenerated("gen_random_uuid()"))
-  player       Player?     @relation(fields: [playerId], references: [id])
-  rounds       Round[]
+  id                        String      @id @default(cuid())
+  playerId                  String?
+  mode                      GameMode
+  filterConfig              Json
+  startedAt                 DateTime    @default(now())
+  endedAt                   DateTime?
+  finalScore                Int?
+  initials                  String?
+  sessionToken              String      @unique @default(dbgenerated("gen_random_uuid()"))
+  featuredVehicleIdAtStart  String?
+  player                    Player?     @relation(fields: [playerId], references: [id])
+  rounds                    Round[]
 }
 
 model Round {
@@ -217,24 +221,25 @@ model Round {
 }
 
 model Guess {
-  id               String   @id @default(cuid())
-  roundId          String   @unique
-  rawInput         String
-  guessedVehicleId String?
-  isCorrect        Boolean
-  partialCredit    Int
-  yearDelta        Int?
-  timeTakenMs      Int?
-  zoomLevelAtGuess Int?
-  makePoints       Int      @default(0)
-  modelPoints      Int      @default(0)
-  yearBonus        Int?
-  timeBonus        Int      @default(0)
-  proBonus         Int      @default(0)
-  modeMultiplier   Float
-  pointsEarned     Int
-  round            Round    @relation(fields: [roundId], references: [id])
-  guessedVehicle   Vehicle? @relation(fields: [guessedVehicleId], references: [id])
+  id                   String   @id @default(cuid())
+  roundId              String   @unique
+  rawInput             String
+  guessedVehicleId     String?
+  isCorrect            Boolean
+  partialCredit        Int
+  yearDelta            Int?
+  timeTakenMs          Int?
+  zoomLevelAtGuess     Int?
+  makePoints           Int      @default(0)
+  modelPoints          Int      @default(0)
+  yearBonus            Int?
+  timeBonus            Int      @default(0)
+  proBonus             Int      @default(0)
+  dailyDiscoveryBonus  Int      @default(0)
+  modeMultiplier       Float
+  pointsEarned         Int
+  round                Round    @relation(fields: [roundId], references: [id])
+  guessedVehicle       Vehicle? @relation(fields: [guessedVehicleId], references: [id])
 }
 
 model FeatureFlag {
@@ -337,4 +342,30 @@ model CommunityVote {
   suggestion   CommunityIdentification @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
 
   @@unique([suggestionId, username])
+}
+
+model VehicleTrivia {
+  vehicleId       String   @id
+  displayModel    String?
+  productionYears String
+  engine          String?
+  layout          String?
+  regionalNames   String?
+  funFacts        String[]
+  sourceModel     String
+  generatedAt     DateTime @default(now())
+  verifiedByAdmin Boolean  @default(false)
+
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id])
+}
+
+model FeaturedVehicleOfDay {
+  date        DateTime @id
+  vehicleId   String
+  imageId     String
+  curatedBy   String?
+  createdAt   DateTime @default(now())
+
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  image       Image    @relation(fields: [imageId], references: [id])
 }

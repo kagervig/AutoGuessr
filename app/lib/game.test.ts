@@ -568,6 +568,58 @@ describe("scoreRound", () => {
   });
 });
 
+  describe("daily discovery bonus", () => {
+    it("should add DAILY_DISCOVERY_BONUS to pointsEarned on a correct guess", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: null,
+        mode: GameMode.Standard,
+        isDailyDiscovery: true,
+      });
+      expect(result.dailyDiscoveryBonus).toBe(1000);
+      expect(result.pointsEarned).toBeGreaterThan(0);
+      // pointsEarned must include the flat bonus
+      const withoutBonus = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: null,
+        mode: GameMode.Standard,
+        isDailyDiscovery: false,
+      });
+      expect(result.pointsEarned - withoutBonus.pointsEarned).toBe(1000);
+    });
+
+    it("should not add bonus on a wrong guess even if isDailyDiscovery is true", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: false,
+        modelCorrect: false,
+        yearDelta: null,
+        mode: GameMode.Standard,
+        isDailyDiscovery: true,
+      });
+      expect(result.dailyDiscoveryBonus).toBe(0);
+      expect(result.pointsEarned).toBe(0);
+    });
+
+    it("should award the bonus in practice mode (flat, independent of mode score)", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: null,
+        mode: GameMode.Practice,
+        isDailyDiscovery: true,
+      });
+      expect(result.dailyDiscoveryBonus).toBe(1000);
+      // Practice mode still earns no regular points but the bonus is added
+      expect(result.pointsEarned).toBe(1000);
+    });
+  });
+
 // ---------------------------------------------------------------------------
 // proLevelBonus
 // ---------------------------------------------------------------------------

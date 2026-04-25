@@ -11,7 +11,8 @@ export type AdminPage =
   | "duplicates"
   | "flags"
   | "coverage"
-  | "reports";
+  | "reports"
+  | "car-of-the-day";
 
 export type StagingStatus =
   | "PENDING_REVIEW"
