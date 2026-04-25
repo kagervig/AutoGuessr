@@ -6,8 +6,6 @@ import { Calendar, Flame, Trophy, ArrowRight } from "lucide-react";
 import { prisma } from "@/app/lib/prisma";
 import { getDailyChallenge } from "@/app/lib/daily-challenge";
 import { MAX_DAILY_ROUND_SCORE } from "@/app/lib/constants";
-import { FEATURE_FLAG_KEY } from "@/app/lib/feature-flags";
-import { isFeatureEnabled } from "@/app/lib/feature-flags-server";
 import { Navbar } from "@/app/components/layout/Navbar";
 import { Countdown } from "./_components/Countdown";
 import { ShareButton } from "./_components/ShareButton";
@@ -29,18 +27,6 @@ function formatDate(date: Date): string {
 }
 
 export default async function DailyPage() {
-  if (!(await isFeatureEnabled(FEATURE_FLAG_KEY.DailyChallenge))) {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        <Navbar />
-        <main className="max-w-2xl mx-auto px-4 pt-32 pb-20 text-center">
-          <p className="text-muted-foreground text-lg">The daily challenge is currently unavailable.</p>
-          <Link href="/" className="mt-6 inline-block text-sm text-primary hover:underline">← Back to home</Link>
-        </main>
-      </div>
-    );
-  }
-
   const challenge = await getDailyChallenge();
 
   if (!challenge || !challenge.isPublished) {
