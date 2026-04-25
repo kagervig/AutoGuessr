@@ -1,9 +1,9 @@
 // Cron endpoint: generate the next 7 days of daily challenges and email admin for review.
 // Called every Sunday at 01:00 UTC by Vercel Cron.
 import type { NextRequest } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { generateDailyChallenge, getTodayUTCMidnight, getChallengeNumber } from "@/app/lib/daily-challenge";
-import { sendDailyChallengeReviewEmail } from "@/app/lib/email";
+import { prisma } from "../../../lib/prisma";
+import { generateDailyChallenge, getTodayUTCMidnight, getChallengeNumber } from "../../../lib/daily-challenge";
+import { sendDailyChallengeReviewEmail } from "../../../lib/email";
 
 const DAYS_AHEAD = 7;
 

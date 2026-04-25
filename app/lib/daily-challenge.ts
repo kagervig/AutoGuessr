@@ -21,14 +21,19 @@ const ERA_MIN_PICKS: Record<string, number> = {
   contemporary: 2,
 };
 
+export function toUTCMidnight(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
 export function getTodayUTCMidnight(): Date {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  return toUTCMidnight(new Date());
 }
 
 export function getChallengeNumber(date: Date): number {
   const msPerDay = 1000 * 60 * 60 * 24;
-  return Math.floor((date.getTime() - DAILY_CHALLENGE_ORIGIN.getTime()) / msPerDay) + 1;
+  const midnight = toUTCMidnight(date);
+  const origin = toUTCMidnight(DAILY_CHALLENGE_ORIGIN);
+  return Math.floor((midnight.getTime() - origin.getTime()) / msPerDay) + 1;
 }
 
 export async function getDailyChallenge(date?: Date): Promise<DailyChallenge | null> {
