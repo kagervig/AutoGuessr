@@ -15,8 +15,6 @@ import CoveragePanel from "./CoveragePanel";
 import StagingEditFields from "./StagingEditFields";
 import ReviewQueuePanel from "./ReviewQueuePanel";
 import CarOfTheDayPanel from "./CarOfTheDayPanel";
-import DailyChallengesPanel from "./DailyChallengesPanel";
-import FeatureFlagsPanel from "./FeatureFlagsPanel";
 import { useStagingAutocomplete } from "./useStagingAutocomplete";
 import {
   emptyForm,
@@ -75,8 +73,6 @@ export default function StagingImagePanel() {
   const [modelFilter, setModelFilter] = useState("");
   const [filterAiTagged, setFilterAiTagged] = useState(false);
   const [filterIncomplete, setFilterIncomplete] = useState(false);
-  const [deletingUnused, setDeletingUnused] = useState(false);
-  const [deleteResult, setDeleteResult] = useState<string | null>(null);
 
   async function autoUpdate() {
     setAutoUpdating(true);
@@ -107,24 +103,6 @@ export default function StagingImagePanel() {
       if (fixed > 0) fetchImages();
     } else {
       setRepairResult("Repair failed.");
-    }
-  }
-
-  async function deleteUnusedRejected() {
-    if (!confirm("Delete all unused rejected images from Cloudinary and the database? This cannot be undone.")) return;
-    setDeletingUnused(true);
-    setDeleteResult(null);
-    const res = await fetch("/api/admin/staging/bulk-unused-rejected", { method: "DELETE" });
-    setDeletingUnused(false);
-    if (res.ok) {
-      const data = await res.json();
-      setDeleteResult(`Deleted ${data.deleted}${data.skipped ? `, skipped ${data.skipped} (referenced in game history)` : ""}`);
-      setImages((prev) => prev.filter((img) => img.status !== "REJECTED"));
-      setSelectedIds([]);
-      setCounts((prev) => ({ ...prev, REJECTED: data.skipped ?? 0 }));
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setDeleteResult(data.error ?? "Delete failed");
     }
   }
 
@@ -359,7 +337,7 @@ export default function StagingImagePanel() {
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]">
       <header className="border-b border-gray-200 bg-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold text-black">Admin</h1>
+          <h1 className="text-lg font-semibold">Admin</h1>
           <nav className="flex gap-0.5">
             {(
               [
@@ -375,8 +353,6 @@ export default function StagingImagePanel() {
                 ["coverage", "Coverage"],
                 ["reports", "Reports"],
                 ["car-of-the-day", "Car of the Day"],
-                ["daily-challenges", "Daily Challenges"],
-                ["feature-flags", "Feature Flags"],
               ] as [AdminPage, string][]
             ).map(([page, label]) => (
               <button
@@ -409,8 +385,6 @@ export default function StagingImagePanel() {
       {activePage === "coverage" && <CoveragePanel />}
       {activePage === "reports" && <ReportsPanel />}
       {activePage === "car-of-the-day" && <CarOfTheDayPanel />}
-      {activePage === "daily-challenges" && <DailyChallengesPanel />}
-      {activePage === "feature-flags" && <FeatureFlagsPanel />}
 
       {activePage === "staging" && (
       <>
@@ -439,18 +413,6 @@ export default function StagingImagePanel() {
           ))}
         </nav>
         <div className="flex items-center gap-3 ml-auto">
-          {statusFilter === "REJECTED" && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={deleteUnusedRejected}
-                disabled={deletingUnused || (counts.REJECTED ?? 0) === 0}
-                className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                {deletingUnused ? "Deleting…" : "Delete unused rejected"}
-              </button>
-              {deleteResult && <span className="text-xs text-gray-500">{deleteResult}</span>}
-            </div>
-          )}
           <button
             onClick={() => { setFilterAiTagged((v) => !v); setSelectedIds([]); }}
             className={`text-xs px-2.5 py-1.5 border rounded transition-colors ${
