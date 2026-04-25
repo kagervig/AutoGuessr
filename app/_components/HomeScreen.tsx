@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { MODES, COUNTRIES, FALLBACK_CATEGORIES, FALLBACK_REGIONS, GameMode } from "@/app/lib/constants";
 import type { ModeId } from "@/app/lib/constants";
+import { FEATURE_FLAG_KEY, GAME_MODE_FLAG, type FeatureFlagMap } from "@/app/lib/feature-flags";
 import { Navbar } from "@/app/components/layout/Navbar";
 import { ModeCard } from "@/app/components/ui/ModeCard";
 import { FilterGroup } from "@/app/components/ui/FilterGroup";
@@ -39,9 +40,14 @@ interface FilterOption {
 interface Props {
   initialFilterError?: string;
   cotdSlot?: React.ReactNode;
+  flags: FeatureFlagMap;
 }
 
-export default function HomeScreen({ initialFilterError, cotdSlot }: Props) {
+export default function HomeScreen({ initialFilterError, cotdSlot, flags }: Props) {
+  const dailyEnabled = flags[FEATURE_FLAG_KEY.DailyChallenge];
+  const isModeEnabled = (id: GameMode) => flags[GAME_MODE_FLAG[id]];
+  const topModes = MODES.slice(0, 3).filter((m) => isModeEnabled(m.id));
+  const bottomModes = MODES.slice(4).filter((m) => isModeEnabled(m.id));
   const router = useRouter();
 
   const [selectedMode, setSelectedMode] = useState<ModeId | null>(null);
@@ -173,7 +179,7 @@ export default function HomeScreen({ initialFilterError, cotdSlot }: Props) {
 
           <div className="space-y-4 lg:space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-              {MODES.slice(0, 3).map((mode) => (
+              {topModes.map((mode) => (
                 <ModeCard
                   key={mode.id}
                   id={mode.id}
@@ -184,28 +190,32 @@ export default function HomeScreen({ initialFilterError, cotdSlot }: Props) {
                   onClick={() => setSelectedMode(mode.id)}
                 />
               ))}
-              <ModeCard
-                id="daily"
-                title="Daily"
-                description="One challenge every day. Same cars for everyone. Can you top the leaderboard?"
-                icon={<CalendarDays className="w-6 h-6" />}
-                selected={false}
-                onClick={() => router.push("/daily")}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-              {MODES.slice(4).map((mode) => (
+              {dailyEnabled && (
                 <ModeCard
-                  key={mode.id}
-                  id={mode.id}
-                  title={mode.label}
-                  description={mode.description}
-                  icon={MODE_ICONS[mode.id]}
-                  selected={selectedMode === mode.id}
-                  onClick={() => setSelectedMode(mode.id)}
+                  id="daily"
+                  title="Daily"
+                  description="One challenge every day. Same cars for everyone. Can you top the leaderboard?"
+                  icon={<CalendarDays className="w-6 h-6" />}
+                  selected={false}
+                  onClick={() => router.push("/daily")}
                 />
-              ))}
+              )}
             </div>
+            {bottomModes.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                {bottomModes.map((mode) => (
+                  <ModeCard
+                    key={mode.id}
+                    id={mode.id}
+                    title={mode.label}
+                    description={mode.description}
+                    icon={MODE_ICONS[mode.id]}
+                    selected={selectedMode === mode.id}
+                    onClick={() => setSelectedMode(mode.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </motion.div>
 

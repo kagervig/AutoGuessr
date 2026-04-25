@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import HomeScreen from "./_components/HomeScreen";
 import { CarOfTheDayCardServer } from "./_components/CarOfTheDayCardServer";
+import { FEATURE_FLAG_KEY } from "@/app/lib/feature-flags";
+import { getFeatureFlagMap } from "@/app/lib/feature-flags-server";
 
 export const metadata: Metadata = {
   title: "Autoguessr",
@@ -13,10 +15,12 @@ interface Props {
 
 export default async function Page({ searchParams }: Props) {
   const { filterError } = await searchParams;
+  const flags = await getFeatureFlagMap();
   return (
     <HomeScreen
       initialFilterError={filterError}
-      cotdSlot={<CarOfTheDayCardServer />}
+      flags={flags}
+      cotdSlot={flags[FEATURE_FLAG_KEY.CarOfTheDay] ? <CarOfTheDayCardServer /> : null}
     />
   );
 }

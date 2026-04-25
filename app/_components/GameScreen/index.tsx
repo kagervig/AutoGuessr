@@ -216,6 +216,7 @@ export default function GameScreen({ mode, username, filter, cfToken, daily, dai
           maxTotalScore={maxTotalScore}
           currentIndex={currentIndex}
           totalRounds={gameData.rounds.length}
+          daily={daily}
         />
       </div>
 

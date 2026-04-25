@@ -14,11 +14,20 @@ async function main() {
     orderBy: [{ make: "asc" }, { model: "asc" }, { year: "asc" }],
   });
 
-  vehicles.forEach((v) => console.log(`${v.year} ${v.make} ${v.model}`));
-  console.log("---");
-  console.log(`${vehicles.length} vehicles with no active images`);
+  if (vehicles.length === 0) {
+    console.log("No vehicles found with 0 active images.");
+  } else {
+    console.log(`Found ${vehicles.length} vehicles with 0 active images:\n`);
+    for (const v of vehicles) {
+      console.log(`  ${v.year} ${v.make} ${v.model}`);
+    }
+  }
+
+  await prisma.$disconnect();
+  await pool.end();
 }
 
-main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(async () => { await prisma.$disconnect(); await pool.end(); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
