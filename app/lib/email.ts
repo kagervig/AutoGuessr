@@ -14,7 +14,6 @@ export async function sendDailyChallengeReviewEmail(
     return;
   }
 
-  const subject = `Daily Challenge Review: ${challenges.length} challenges generated`;
   const body = `
 The following daily challenges were generated and are ready for review:
 

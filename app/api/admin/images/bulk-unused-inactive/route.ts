@@ -29,7 +29,12 @@ export async function DELETE() {
   // Exclude any image referenced in a DailyChallenge (stored as a String[] — no FK)
   // We use dynamic access here so this branch can be deployed without the DailyChallenge schema
   let referencedInChallenge = new Set<string>();
-  const dcModel = (prisma as any).dailyChallenge;
+  const dcModel = (prisma as Record<string, unknown>).dailyChallenge as {
+    findMany: (args: {
+      where: { imageIds: { hasSome: string[] } };
+      select: { imageIds: true };
+    }) => Promise<{ imageIds: string[] }[]>;
+  } | undefined;
   
   if (dcModel) {
     const challengesReferencing = await dcModel.findMany({
@@ -37,7 +42,7 @@ export async function DELETE() {
       select: { imageIds: true },
     });
     referencedInChallenge = new Set(
-      challengesReferencing.flatMap((c: any) => c.imageIds)
+      challengesReferencing.flatMap((c) => c.imageIds)
     );
   }
 

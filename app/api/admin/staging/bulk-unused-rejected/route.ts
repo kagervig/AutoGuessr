@@ -38,7 +38,12 @@ export async function DELETE() {
 
   // Exclude images referenced in any DailyChallenge (String[] — no FK)
   const linkedImageIds = linkedImages.map((img) => img.id);
-  const dcModel = (prisma as any).dailyChallenge;
+  const dcModel = (prisma as Record<string, unknown>).dailyChallenge as {
+    findMany: (args: {
+      where: { imageIds: { hasSome: string[] } };
+      select: { imageIds: true };
+    }) => Promise<{ imageIds: string[] }[]>;
+  } | undefined;
 
   if (linkedImageIds.length > 0 && dcModel) {
     const challengesReferencing = await dcModel.findMany({
@@ -46,7 +51,7 @@ export async function DELETE() {
       select: { imageIds: true },
     });
     const referencedIds = new Set(
-      challengesReferencing.flatMap((c: any) => c.imageIds)
+      challengesReferencing.flatMap((c) => c.imageIds)
     );
     for (const img of linkedImages) {
       if (referencedIds.has(img.id)) usedFilenames.add(img.filename);
