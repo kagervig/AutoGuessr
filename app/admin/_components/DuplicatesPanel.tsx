@@ -61,6 +61,13 @@ async function rejectImage(img: DuplicateImage): Promise<void> {
 
 const PAGE_SIZE = 500;
 
+interface VehicleDuplicateGroup {
+  make: string;
+  model: string;
+  primary: { id: string; year: number; trim: string | null; _count: { images: number } };
+  duplicates: { id: string; year: number; trim: string | null; _count: { images: number } }[];
+}
+
 export default function DuplicatesPanel() {
   const [algorithm, setAlgorithm] = useState<Algorithm>("sha256");
   const [threshold, setThreshold] = useState(10);
@@ -71,6 +78,40 @@ export default function DuplicatesPanel() {
   const [rejecting, setRejecting] = useState<Set<string>>(new Set());
   const [rejectErrors, setRejectErrors] = useState<Record<string, string>>({});
   const [scannedSoFar, setScannedSoFar] = useState(0);
+
+  const [vehicleGroups, setVehicleGroups] = useState<VehicleDuplicateGroup[]>([]);
+  const [scanningVehicles, setScanningVehicles] = useState(false);
+  const [dedupingVehicles, setDedupingVehicles] = useState(false);
+  const [dedupeResult, setDedupeResult] = useState<{ mergedCount: number; deletedCount: number } | null>(null);
+
+  async function scanVehicles() {
+    setScanningVehicles(true);
+    setDedupeResult(null);
+    try {
+      const res = await fetch("/api/admin/duplicates/vehicles");
+      const data = await res.json();
+      setVehicleGroups(data.duplicateGroups);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setScanningVehicles(false);
+    }
+  }
+
+  async function dedupeVehicles() {
+    if (!confirm(`Are you sure you want to merge ${vehicleGroups.length} groups of duplicate vehicles?`)) return;
+    setDedupingVehicles(true);
+    try {
+      const res = await fetch("/api/admin/duplicates/vehicles", { method: "POST" });
+      const data = await res.json();
+      setDedupeResult(data);
+      setVehicleGroups([]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDedupingVehicles(false);
+    }
+  }
 
   async function runScan(offset = 0) {
     setScanning(true);
@@ -125,6 +166,68 @@ export default function DuplicatesPanel() {
 
   return (
     <div className="p-6 max-w-5xl">
+      <div className="mb-10 pb-10 border-b border-gray-200">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Make/Model Duplicates</h2>
+        <p className="text-sm text-gray-500 mb-6">
+          Finds vehicles that share the same make and model. The record with the most images is kept as the primary, 
+          and all other records are merged into it (images, aliases, and guesses are reassigned).
+        </p>
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={scanVehicles}
+            disabled={scanningVehicles || dedupingVehicles}
+            className="px-4 py-1.5 text-sm bg-white text-gray-900 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          >
+            {scanningVehicles ? "Scanning..." : "Scan for duplicates"}
+          </button>
+          {vehicleGroups.length > 0 && (
+            <button
+              onClick={dedupeVehicles}
+              disabled={dedupingVehicles}
+              className="px-4 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+            >
+              {dedupingVehicles ? "Deduplicating..." : `Merge ${vehicleGroups.length} duplicate groups`}
+            </button>
+          )}
+        </div>
+
+        {dedupeResult && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+            Successfully merged {dedupeResult.mergedCount} groups and deleted {dedupeResult.deletedCount} duplicate vehicle records.
+          </div>
+        )}
+
+        {vehicleGroups.length > 0 && (
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 bg-gray-50 p-4 rounded-lg border border-gray-200">
+            {vehicleGroups.map((group, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-900 mb-2">{group.make} {group.model}</h3>
+                <div className="space-y-1.5">
+                  <div className="text-xs text-green-700 flex items-center gap-2 bg-green-50 p-1.5 rounded">
+                    <span className="font-bold px-1 bg-green-600 text-white rounded text-[10px]">KEEP</span>
+                    <span className="font-mono">{group.primary.id}</span>
+                    <span>Year: {group.primary.year}</span>
+                    <span>Trim: {group.primary.trim || "—"}</span>
+                    <span className="font-semibold">Images: {group.primary._count.images}</span>
+                  </div>
+                  {group.duplicates.map((dup) => (
+                    <div key={dup.id} className="text-xs text-red-600 flex items-center gap-2 bg-red-50 p-1.5 rounded">
+                      <span className="font-bold px-1 bg-red-600 text-white rounded text-[10px]">MERGE</span>
+                      <span className="font-mono">{dup.id}</span>
+                      <span>Year: {dup.year}</span>
+                      <span>Trim: {dup.trim || "—"}</span>
+                      <span className="font-semibold">Images: {dup._count.images}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Image Content Duplicates</h2>
+
       {/* Controls */}
       <div className="flex flex-wrap items-end gap-4 mb-6">
         <div>
