@@ -1,6 +1,6 @@
 // Daily archive helpers: month overview data, ranking, and leaderboard queries.
 
-import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
+import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 import { MAX_DAILY_ROUND_SCORE, ROUNDS_PER_GAME } from "./constants";
 import { dailyPercent } from "./daily-display";
@@ -20,17 +20,21 @@ export type DayOverview = {
   played: PlayedSummary | null;
 };
 
+type CookieStore = Awaited<ReturnType<typeof cookies>>;
+
 export function readDailyCookies(
-  cookieStore: ReadonlyRequestCookies
+  cookieStore: CookieStore
 ): Map<number, string> {
   const map = new Map<number, string>();
 
-  // Iterate all cookies looking for dc_<n> pattern
-  for (const [name, value] of Object.entries(cookieStore.getAll() || {})) {
-    const match = name.match(/^dc_(\d+)$/);
-    if (match && value) {
+  // cookieStore.getAll() returns an array of RequestCookie objects
+  const allCookies = cookieStore.getAll();
+
+  for (const cookie of allCookies) {
+    const match = cookie.name.match(/^dc_(\d+)$/);
+    if (match && cookie.value) {
       const challengeNumber = parseInt(match[1], 10);
-      map.set(challengeNumber, value);
+      map.set(challengeNumber, String(cookie.value));
     }
   }
 
