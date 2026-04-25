@@ -182,7 +182,7 @@ export default function HomeScreen({ initialFilterError, cotdSlot }: Props) {
                 selected={false}
                 onClick={() => router.push("/daily")}
               />
-              {MODES.slice(0, 3).map((mode) => (
+              {MODES.slice(0, 4).map((mode) => (
                 <ModeCard
                   key={mode.id}
                   id={mode.id}

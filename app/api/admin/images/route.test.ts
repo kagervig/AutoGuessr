@@ -48,13 +48,13 @@ beforeEach(() => {
 
 describe("GET /api/admin/images", () => {
   it("returns items array in response", async () => {
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/admin/images") as any);
     const body = await res.json();
     expect(body.items).toHaveLength(1);
   });
 
   it("maps image fields correctly", async () => {
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/admin/images") as any);
     const { items } = await res.json();
     const item = items[0];
     expect(item.id).toBe("img-1");
@@ -66,7 +66,7 @@ describe("GET /api/admin/images", () => {
   });
 
   it("maps vehicle fields correctly", async () => {
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/admin/images") as any);
     const { items } = await res.json();
     const { vehicle } = items[0];
     expect(vehicle.id).toBe("v-1");
@@ -82,26 +82,26 @@ describe("GET /api/admin/images", () => {
   });
 
   it("flattens category slugs into an array", async () => {
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/admin/images") as any);
     const { items } = await res.json();
     expect(items[0].vehicle.categories).toEqual(["sports", "jdm"]);
   });
 
   it("generates imageUrl from filename and vehicle id", async () => {
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/admin/images") as any);
     const { items } = await res.json();
     expect(items[0].imageUrl).toBe("https://cdn.example.com/cars/supra?v=v-1");
   });
 
   it("returns an empty items array when there are no images", async () => {
     vi.mocked(prisma.image.findMany).mockResolvedValue([] as never);
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/admin/images") as any);
     const body = await res.json();
     expect(body.items).toEqual([]);
   });
 
   it("queries images ordered by uploadedAt descending", async () => {
-    await GET();
+    await GET(new Request("http://localhost/api/admin/images") as any);
     expect(prisma.image.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ orderBy: { uploadedAt: "desc" } })
     );
