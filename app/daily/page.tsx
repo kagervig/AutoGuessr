@@ -2,7 +2,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { Calendar, Flame, Trophy, ArrowRight } from "lucide-react";
 import { prisma } from "@/app/lib/prisma";
 import { getDailyChallenge } from "@/app/lib/daily-challenge";

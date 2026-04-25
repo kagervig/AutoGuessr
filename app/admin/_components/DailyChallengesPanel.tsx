@@ -71,7 +71,6 @@ export default function DailyChallengesPanel() {
   const [showPast, setShowPast] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
     fetch("/api/admin/daily-challenges")
       .then((r) => r.json())
       .then((data) => {
@@ -87,7 +86,10 @@ export default function DailyChallengesPanel() {
       .then((data) => setPickerMakeModels(data ?? {}));
   }, [revision]);
 
-  function reload() { setRevision((n) => n + 1); }
+  function reload() { 
+    setLoading(true);
+    setRevision((n) => n + 1); 
+  }
 
   async function publish(id: string) {
     setPublishing(id);
@@ -141,11 +143,6 @@ export default function DailyChallengesPanel() {
     setPickerImages([]);
   }
 
-  // Clear model when make changes
-  useEffect(() => {
-    setPickerModel("");
-  }, [pickerMake]);
-
   useEffect(() => {
     if (!picker) return;
     
@@ -155,8 +152,6 @@ export default function DailyChallengesPanel() {
     const hasSearch = pickerSearch.length >= 2;
 
     if (!hasMakeModel && !hasSearch) {
-      setPickerImages([]);
-      setLoadingPicker(false);
       return;
     }
 
@@ -428,6 +423,8 @@ export default function DailyChallengesPanel() {
                     value={pickerMake}
                     onChange={(e) => {
                       setPickerMake(e.target.value);
+                      setPickerModel("");
+                      setPickerImages([]);
                       setPickerSearch("");
                     }}
                     className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
@@ -441,6 +438,7 @@ export default function DailyChallengesPanel() {
                     value={pickerModel}
                     onChange={(e) => {
                       setPickerModel(e.target.value);
+                      setPickerImages([]);
                       setPickerSearch("");
                     }}
                     disabled={!pickerMake}

@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
-import { MAX_DAILY_ROUND_SCORE, ROUNDS_PER_GAME } from "./constants";
+import { MAX_DAILY_ROUND_SCORE } from "./constants";
 import { dailyPercent } from "./daily-display";
 
 export type PlayedSummary = {

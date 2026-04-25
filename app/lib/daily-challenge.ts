@@ -2,7 +2,7 @@
 
 import type { DailyChallenge } from "../generated/prisma/client";
 import { prisma } from "./prisma";
-import { DAILY_CHALLENGE_ORIGIN, ROUNDS_PER_GAME } from "./constants";
+import { DAILY_CHALLENGE_ORIGIN } from "./constants";
 import { deriveMetrics, pickWeighted } from "./image-selection";
 import type { ScoredImage } from "./image-selection";
 import { shuffle } from "./game";

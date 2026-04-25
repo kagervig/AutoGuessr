@@ -1,0 +1,652 @@
+[
+  {
+    "make": "BMW",
+    "model": "3 Series GT",
+    "productionYears": "2013–2020",
+    "engine": "2.0L Turbo I4 or 3.0L Turbo I6",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": "3 Series Gran Turismo",
+    "funFacts": [
+      "The GT features a wheelbase 110mm longer than the sedan, providing more rear legroom than a 5 Series.",
+      "It is the only 3 Series to feature an active rear spoiler that rises automatically at high speeds.",
+      "It was designed as a niche alternative for people who wanted the space of a wagon but the look of a coupe."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "3.0 CS (E9)",
+    "productionYears": "1968–1975",
+    "engine": "3.0L Inline-6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The E9 chassis was the basis for the legendary 'Batmobile' 3.0 CSL racing car.",
+      "Its pillarless side profile and slim roof pillars offer exceptional 360-degree visibility.",
+      "It established the 'luxury performance' identity that BMW would follow for the next 50 years."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "320i (E30)",
+    "productionYears": "1982–1991",
+    "engine": "2.0L M20 Inline-6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Known for its exceptionally smooth small-displacement 6-cylinder engine.",
+      "It was a status symbol of the 1980s 'Yuppie' era in both Europe and the USA.",
+      "The E30 320i was famously used in the movie 'The Wolf of Wall Street' (as Jordan Belfort's early car)."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "323i (E21)",
+    "productionYears": "1977–1982",
+    "engine": "2.3L Inline-6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The flagship model of the original 3 Series, featuring fuel injection and four-wheel disc brakes.",
+      "Identifiable by its dual exhaust pipes, one on each side of the rear bumper.",
+      "It was one of the fastest small sedans in the world when it was released."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "328",
+    "productionYears": "1936–1940",
+    "engine": "2.0L Inline-6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Won the 1940 Mille Miglia race with an average speed of 103 mph.",
+      "Only 464 units were ever built, making it one of the rarest pre-war BMWs.",
+      "It featured a tubular frame and independent front suspension, which was very advanced for the 1930s."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "4 Series",
+    "productionYears": "2013–Present",
+    "engine": "2.0L Turbo I4 or 3.0L Turbo I6",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Separated from the 3 Series name to distinguish coupes and convertibles as a more premium line.",
+      "The current generation (G22) introduced a controversial vertical 'beaver tooth' kidney grille.",
+      "It features a significantly lower center of gravity compared to the 3 Series sedan for better cornering."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "5 Series",
+    "productionYears": "1972–Present",
+    "engine": "Various I4, I6, and V8 options",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The 5 Series was the car that introduced the 'Series' naming system to BMW's lineup.",
+      "It is famously used as the benchmark for the 'Executive Sedan' segment worldwide.",
+      "BMW has produced over 8 million 5 Series cars since its inception."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "5 Series (E28)",
+    "productionYears": "1981–1988",
+    "engine": "2.0L I4 to 3.5L I6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The E28 generation was the first to offer a diesel engine in a BMW (the 524td).",
+      "It introduced anti-lock brakes (ABS) to the 5 Series for the first time.",
+      "This generation saw the creation of the first-ever BMW M5."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "5 Series (E60)",
+    "productionYears": "2003–2010",
+    "engine": "Various options including a 5.0L V10",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The design by Chris Bangle was initially polarizing but is now seen as a design turning point for BMW.",
+      "It was the first 5 Series to use the iDrive control system.",
+      "The M5 version features a V10 engine that was developed using BMW's Formula 1 racing expertise."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "5 Series (F10)",
+    "productionYears": "2010–2017",
+    "engine": "Various Turbocharged I4, I6, and V8s",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Marked a return to more conservative styling after the experimental E60 generation.",
+      "It was the first 5 Series to offer an 8-speed automatic transmission.",
+      "The F10 M5 switched from the V10 to a twin-turbocharged V8 for better low-end torque."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "6 Series Gran Coupe",
+    "productionYears": "2012–2018",
+    "engine": "3.0L I6 or 4.4L V8",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Despite the 'Coupe' name, it is a 4-door car with a low-slung, sleek roofline.",
+      "It was BMW's response to the popular Mercedes-Benz CLS 'four-door coupe' trend.",
+      "The rear center seat is very small, often referred to as a '4+1' seating arrangement."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "7 Series",
+    "productionYears": "1977–Present",
+    "engine": "Various Inline-6, V8, and V12 options",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "BMW's flagship model, used to showcase their most expensive and cutting-edge tech.",
+      "The 7 Series was the first car in the world to offer a built-in GPS navigation system.",
+      "It is the favorite choice for heads of state and business executives in Europe."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "7 Series (E38)",
+    "productionYears": "1994–2001",
+    "engine": "2.8L I6 to 5.4L V12",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Considered by many fans to be the most beautiful luxury sedan ever built by BMW.",
+      "It gained fame in the film 'Tomorrow Never Dies' where James Bond drove it by remote control.",
+      "It was the first European car to be offered with an integrated satellite navigation system."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "i8",
+    "productionYears": "2014–2020",
+    "engine": "1.5L Turbo I3 + Electric Motor",
+    "layout": "Mid-Engine, All-Wheel Drive (Hybrid)",
+    "regionalNames": null,
+    "funFacts": [
+      "The entire passenger cell is made from carbon fiber to keep the car light despite heavy batteries.",
+      "It uses 'laser headlights', which are 1,000 times brighter than standard LEDs.",
+      "The futuristic design looks almost identical to the initial concept car shown in 2011."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M3",
+    "productionYears": "1986–Present",
+    "engine": "Various high-performance options",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The M3 was originally born as a racing car that happened to be legal for the street.",
+      "It is the most decorated touring car in the world, having won titles in almost every series it entered.",
+      "Every generation of M3 is the benchmark that every other performance sedan is measured against."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M3 (E30)",
+    "productionYears": "1986–1991",
+    "engine": "2.3L or 2.5L Inline-4",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Every body panel except the hood and roof is different from a standard E30 to improve aerodynamics.",
+      "The rear window glass was re-angled and the trunk lid raised to help air flow better to the rear wing.",
+      "It is the only M3 to use a 4-cylinder engine, designed for high-RPM racing performance."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M3 (E92)",
+    "productionYears": "2007–2013",
+    "engine": "4.0L S65 V8",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": "M3 Coupe",
+    "funFacts": [
+      "The only M3 in history to come from the factory with a V8 engine.",
+      "The engine revs to a staggering 8,400 RPM, producing a sound like a baby Formula 1 car.",
+      "The carbon fiber roof was a standard feature on the coupe to lower the center of gravity."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M3 (G80)",
+    "productionYears": "2020–Present",
+    "engine": "3.0L S58 Twin-Turbo I6",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The first M3 to offer a factory All-Wheel Drive system (M xDrive).",
+      "It features a 'Drift Analyzer' that gives the driver a 5-star rating based on the angle and distance of their drift.",
+      "The engine is so strong that its basic block is used in BMW's M4 GT3 race cars."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M3 Touring",
+    "productionYears": "2022–Present",
+    "engine": "3.0L S58 Twin-Turbo I6",
+    "layout": "Front-Engine, All-Wheel Drive",
+    "regionalNames": "M3 Wagon",
+    "funFacts": [
+      "Fans waited over 35 years for BMW to finally build a production M3 wagon.",
+      "It set a record as the fastest station wagon around the Nürburgring upon its release.",
+      "It is only available in the top-tier 'Competition' trim with 503 horsepower."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M4",
+    "productionYears": "2014–Present",
+    "engine": "3.0L Twin-Turbo I6",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The M4 replaced the M3 Coupe when BMW changed its naming system in 2014.",
+      "The limited-edition M4 CSL (2022) removed the rear seats to save weight and maximize track performance.",
+      "It uses a single-piece carbon fiber driveshaft to reduce rotational mass and improve throttle response."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M4 (F82)",
+    "productionYears": "2014–2020",
+    "engine": "3.0L S55 Twin-Turbo I6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": "M4 Coupe",
+    "funFacts": [
+      "This was the first M4 and the first mid-size M-car to move away from natural aspiration to turbos.",
+      "It features an 'Active M Differential' that can vary the locking effect between the rear wheels in milliseconds.",
+      "The hood is made from aluminum and features a 'power bulge' to accommodate the engine's charge air cooler."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M5",
+    "productionYears": "1985–Present",
+    "engine": "Various options up to a Hybrid V8",
+    "layout": "Front-Engine, Rear or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The M5 is generally considered the car that invented the 'super sedan' category.",
+      "Early M5s were hand-built by BMW M technicians in Garching, Germany.",
+      "Modern M5s are capable of reaching 60 mph faster than many Lamborghinis and Ferraris."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M5 (E34)",
+    "productionYears": "1988–1995",
+    "engine": "3.6L or 3.8L Inline-6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "It was the last hand-assembled M-car and the last to use the legendary S38 racing-derived engine.",
+      "Early models had 'M-System' wheels that looked like fans, designed to pull air into the brakes.",
+      "A limited number of 20 'Elekta' editions were built specifically for the Italian market."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "M6 (F13)",
+    "productionYears": "2012–2018",
+    "engine": "4.4L Twin-Turbo V8",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": "M6 Coupe",
+    "funFacts": [
+      "Features a carbon fiber roof and a massive amount of leather and luxury inside.",
+      "It shares its engine and 7-speed dual-clutch transmission with the F10 M5.",
+      "Despite being a heavy grand tourer, it could reach a top speed of 190 mph with the M Driver's Package."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "X1",
+    "productionYears": "2009–Present",
+    "engine": "Various Turbocharged I3 and I4s",
+    "layout": "Front-Engine, Front or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The X1 was BMW's entry into the subcompact luxury crossover market.",
+      "The first generation was built on the 3 Series Touring chassis, making it a very sporty handler.",
+      "The latest models are built on a front-wheel-drive platform shared with MINI models."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "X1 (F48)",
+    "productionYears": "2015–2022",
+    "engine": "2.0L Turbo I4",
+    "layout": "Front-Engine, Front or All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "This generation moved the X1 to a transverse engine layout to provide significantly more interior space.",
+      "It was the first BMW SUV to be based on a front-wheel-drive architecture.",
+      "It proved so popular that it briefly became one of BMW's top three best-selling models worldwide."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "X5",
+    "productionYears": "1999–Present",
+    "engine": "Various Inline-6 and V8 options",
+    "layout": "Front-Engine, All-Wheel Drive",
+    "regionalNames": "SAV (Sport Activity Vehicle)",
+    "funFacts": [
+      "BMW's first SUV; it was famously designed while BMW owned Land Rover.",
+      "It was marketed as a 'Sport Activity Vehicle' to distance it from slower, clunky traditional SUVs.",
+      "The 4.6is and 4.8is models were the predecessors to the modern high-performance X5 M."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "X5 (F15)",
+    "productionYears": "2013–2018",
+    "engine": "3.0L I6 or 4.4L V8",
+    "layout": "Front-Engine, All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "This generation introduced the first plug-in hybrid X5, the xDrive40e.",
+      "It featured 'Aero Curtains' in the front bumper that reduced fuel consumption by channeling air around the wheels.",
+      "It was the first X5 to offer a digital instrument cluster in later production years."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "X6 M",
+    "productionYears": "2009–Present",
+    "engine": "4.4L Twin-Turbo V8",
+    "layout": "Front-Engine, All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Pioneered the 'SUV Coupe' segment, which has since been copied by almost every other luxury brand.",
+      "The X6 M (along with the X5 M) was the first M-car to use an automatic transmission and all-wheel drive.",
+      "The current version has 617 horsepower, making it as powerful as a McLaren F1."
+    ]
+  },
+  {
+    "make": "BMW",
+    "model": "Z4",
+    "productionYears": "2002–Present",
+    "engine": "2.0L I4 or 3.0L I6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The current generation (G29) was co-developed with the Toyota GR Supra.",
+      "The design of the first generation was led by Chris Bangle and featured sharp, 'flame surfaced' lines.",
+      "BMW moved from a folding hardtop back to a lightweight fabric soft-top for the latest model to save weight."
+    ]
+  },
+  {
+    "make": "Borgward",
+    "model": "Isabella",
+    "productionYears": "1954–1962",
+    "engine": "1.5L Inline-4",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The Isabella was the most successful model for the German brand Borgward before they went bankrupt in 1961.",
+      "The car's name was originally a secret project code, but the public loved it so much that Borgward kept it.",
+      "It was considered more stylish and modern than many equivalent Mercedes-Benz models of the mid-50s."
+    ]
+  },
+  {
+    "make": "Bugatti",
+    "model": "Chiron",
+    "productionYears": "2016–2022",
+    "engine": "8.0L Quad-Turbo W16",
+    "layout": "Mid-Engine, All-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The Chiron's engine has 10 radiators to manage the extreme heat produced by its four turbochargers.",
+      "At its top speed of 261 mph, the tires will only last for about 15 minutes of continuous driving.",
+      "Its headlights are the flattest LED projectors ever fitted to a car, each containing eight individual light squares."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "Centurion",
+    "productionYears": "1971–1973",
+    "engine": "5.7L or 7.5L V8",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Replaced the Buick Wildcat as the brand's 'sporty' full-size car.",
+      "The name was taken from a 1956 concept car that featured a revolutionary backup camera.",
+      "It used a unique Roman soldier's head emblem instead of the usual Buick Trishield logo."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "Electra 225",
+    "productionYears": "1959–1990",
+    "engine": "Various V8s up to 7.5L",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": "Deuce and a Quarter",
+    "funFacts": [
+      "The '225' refers to the car's overall length in inches—nearly 19 feet long.",
+      "It was nicknamed 'Deuce and a Quarter' by American car enthusiasts.",
+      "It was the absolute flagship of the Buick range, offering Cadillac-levels of luxury for a slightly lower price."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "GS",
+    "productionYears": "1965–1975",
+    "engine": "6.6L or 7.5L V8",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": "Gran Sport",
+    "funFacts": [
+      "The GS (Gran Sport) was Buick's equivalent to the legendary Pontiac GTO muscle car.",
+      "The 1970 Stage 1 455 version produced 510 lb-ft of torque, a record that stood for 33 years in America.",
+      "Known as 'gentleman's muscle cars' because they combined raw speed with very high-quality interior materials."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "LeSabre",
+    "productionYears": "1959–2005",
+    "engine": "Various I6, V6, and V8 options",
+    "layout": "Front-Engine, Rear or Front-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "For many decades, the LeSabre was Buick's entry-level full-size car and its most consistent best-seller.",
+      "The name was inspired by the 1951 Le Sabre concept car, which looked like a jet plane for the road.",
+      "In the 1990s, the LeSabre was consistently ranked as one of the most reliable American cars on the market."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "Limited",
+    "productionYears": "1936–1942 / 1958",
+    "engine": "5.2L Straight-8 or 6.0L V8",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The 1958 model is famous for its excessive chrome, including 16 square blocks on the rear fenders.",
+      "In the 30s, the Limited was so luxurious that Cadillac executives reportedly complained it was taking their customers.",
+      "The 1958 Limited was only built for one year due to its high price and the US recession of that year."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "Regal",
+    "productionYears": "1973–2020",
+    "engine": "3.8L V6 or 2.0L Turbo I4",
+    "layout": "Front-Engine, Rear or Front-Wheel Drive",
+    "regionalNames": "Opel Insignia (Europe)",
+    "funFacts": [
+      "The second-gen Regal was the platform for the legendary 'Grand National' and 'GNX' muscle cars.",
+      "The Regal nameplate has been more successful in China than in its home market of the USA.",
+      "The final generation was a rebadged version of the German-engineered Opel Insignia."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "Riviera",
+    "productionYears": "1963–1999",
+    "engine": "Various V8s or Supercharged V6",
+    "layout": "Front-Engine, Rear or Front-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The 1963 Riviera is considered by many designers to be the most beautiful American car ever made.",
+      "The 1971-73 models are famous for their 'Boattail' rear window design.",
+      "It was GM's first purpose-built entry into the 'personal luxury car' market."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "Skylark",
+    "productionYears": "1953–1998",
+    "engine": "Various V8 and V6 options",
+    "layout": "Front-Engine, Rear or Front-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The original 1953 model featured chrome-plated wire wheels as standard.",
+      "The 1960s Skylark was the basis for the high-performance Gran Sport models.",
+      "The 1990s Skylark featured a very controversial 'beak' nose that made it easy to identify from a distance."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "Special",
+    "productionYears": "1936–1969",
+    "engine": "Various V8s",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The 1961 Special introduced an aluminum V8 engine that was eventually sold to Rover and used in Land Rovers for 40 years.",
+      "Traditionally the most affordable car in the Buick range.",
+      "The 1949 model featured the first 'VentiPorts' on the fenders, which became a permanent Buick design trait."
+    ]
+  },
+  {
+    "make": "Buick",
+    "model": "Wildcat",
+    "productionYears": "1962–1970",
+    "engine": "6.6L to 7.5L V8",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "Named after a line of jet-powered experimental concept cars from the early 1950s.",
+      "It featured a console-mounted tachometer, a very sporty feature for a full-size luxury car in the 60s.",
+      "The 1970 model was the final year and is prized for its massive 455 cubic-inch V8 engine."
+    ]
+  },
+  {
+    "make": "Cadillac",
+    "model": "Brougham",
+    "productionYears": "1987–1992",
+    "engine": "5.0L or 5.7L V8",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "One of the last Cadillacs to use traditional body-on-frame construction and a rear-wheel-drive layout.",
+      "Its name is a reference to a type of horse-drawn carriage used in the 1800s.",
+      "It was a favorite for luxury limo conversions due to its massive, square proportions."
+    ]
+  },
+  {
+    "make": "Cadillac",
+    "model": "DeVille",
+    "productionYears": "1958–2005",
+    "engine": "Various large V8s",
+    "layout": "Front-Engine, Rear or Front-Wheel Drive",
+    "regionalNames": "Cadillac DTS (Late models)",
+    "funFacts": [
+      "The 1959 model is world-famous for having the tallest and most iconic tailfins in automotive history.",
+      "The name 'DeVille' is French for 'of the town' or 'urban'.",
+      "In 2000, it was the first production car in the world to offer a Night Vision infrared system."
+    ]
+  },
+  {
+    "make": "Cadillac",
+    "model": "Eldorado",
+    "productionYears": "1953–2002",
+    "engine": "8.2L V8 (Largest modern passenger V8)",
+    "layout": "Front-Engine, Rear or Front-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The 1970 model used a massive 500 cubic-inch (8.2L) V8, the highest displacement engine in any post-WWII car.",
+      "The 1967 model moved to front-wheel drive, using a specialized 'Unified Powerplant Package' to handle the V8's power.",
+      "The 1953 original was a limited edition halo car with only 532 units ever built."
+    ]
+  },
+  {
+    "make": "Cadillac",
+    "model": "Fleetwood Brougham",
+    "productionYears": "1977–1986",
+    "engine": "7.0L or 6.0L V8",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The vehicle of choice for US Presidents and foreign dignitaries throughout the 1980s.",
+      "It featured extra-thick carpeting and deep-tufted leather seats that felt like a living room sofa.",
+      "The 'Fleetwood' name came from an old-school high-end coachbuilding company in Pennsylvania."
+    ]
+  },
+  {
+    "make": "Cadillac",
+    "model": "Series 62",
+    "productionYears": "1940–1964",
+    "engine": "Various V8s",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "It was the first Cadillac to feature 'Dagmar' bumpers—the large bullet-shaped guards on the front.",
+      "The 1948 model introduced the tailfin, a design trend that would define the entire 1950s era of American cars.",
+      "It was the primary high-volume seller that established Cadillac as the 'Standard of the World'."
+    ]
+  },
+  {
+    "make": "Chevrolet",
+    "model": "210",
+    "productionYears": "1953–1957",
+    "engine": "3.9L I6 or 4.3L V8",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": "Two-Ten",
+    "funFacts": [
+      "The middle model between the basic 150 and the luxury Bel Air.",
+      "Hot rodders loved the 210 because it was lighter and simpler than the Bel Air.",
+      "It is a core member of the legendary 'Tri-Five' Chevrolet family (1955, 1956, 1957)."
+    ]
+  },
+  {
+    "make": "Chevrolet",
+    "model": "400",
+    "productionYears": "1962–1974",
+    "engine": "3.8L Inline-6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": "Chevy II Nova (Argentina)",
+    "funFacts": [
+      "Built in Argentina, it was based on the Chevy II/Nova but adapted for South American roads.",
+      "It was a dominant force in Argentine touring car racing (Turismo Carretera) for many years.",
+      "It is a beloved classic in Argentina, much like the original Mustang is in the USA."
+    ]
+  },
+  {
+    "make": "Chevrolet",
+    "model": "Bel Air",
+    "productionYears": "1950–1975",
+    "engine": "4.6L V8 (283) or 3.9L I6",
+    "layout": "Front-Engine, Rear-Wheel Drive",
+    "regionalNames": null,
+    "funFacts": [
+      "The 1957 Bel Air is arguably the most recognizable American car design of all time.",
+      "In 1955, it debuted the legendary Small Block V8 engine, which remained in production for decades.",
+      "It started as a luxury trim of the Deluxe model before becoming its own legendary series."
+    ]
+  }
+]

@@ -127,8 +127,7 @@ export async function POST() {
             where: { vehicleId: dup.id },
           });
           if (dupTrivia) {
-            const triviaData = { ...dupTrivia };
-            delete (triviaData as any).vehicleId;
+            const { vehicleId: _, ...triviaData } = dupTrivia;
             await tx.vehicleTrivia.delete({ where: { vehicleId: dup.id } });
             await tx.vehicleTrivia.create({
               data: {

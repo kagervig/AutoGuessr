@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import ImagesPanel from "./ImagesPanel";
-import CheckboxField from "./CheckboxField";
 import MakesModelsPanel from "./MakesModelsPanel";
 import CategoriesPanel from "./CategoriesPanel";
 import RegionsPanel from "./RegionsPanel";

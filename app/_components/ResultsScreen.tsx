@@ -30,12 +30,11 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
   const [error, setError] = useState<string | null>(null);
   const [initialsSubmitted, setInitialsSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [streak, setStreak] = useState(0);
-
-  useEffect(() => {
+  const [streak] = useState(() => {
+    if (typeof document === "undefined") return 0;
     const match = document.cookie.match(/(?:^|; )daily_streak=(\d+)/);
-    if (match) setStreak(parseInt(match[1], 10));
-  }, []);
+    return match ? parseInt(match[1], 10) : 0;
+  });
 
   useEffect(() => {
     fetch(`/api/session?gameId=${gameId}`)
