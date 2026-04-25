@@ -8,8 +8,6 @@ import { selectTieredImages } from "@/app/lib/image-selection";
 import { getOrCreateTodaysFeatured } from "@/app/lib/car-of-the-day";
 import { getOrCreateTodaysChallenge, getDailyChallenge } from "@/app/lib/daily-challenge";
 import type { DailyChallenge } from "@/app/generated/prisma/client";
-import { FEATURE_FLAG_KEY, GAME_MODE_FLAG } from "@/app/lib/feature-flags";
-import { getFeatureFlagMap } from "@/app/lib/feature-flags-server";
 
 const VALID_MODES = Object.values(GameMode);
 type Mode = GameMode;
@@ -40,14 +38,6 @@ export async function GET(request: NextRequest) {
 
   if (!daily && (!mode || !VALID_MODES.includes(mode))) {
     return Response.json({ error: "Invalid or missing mode" }, { status: 400 });
-  }
-
-  const flags = await getFeatureFlagMap();
-  if (daily && !flags[FEATURE_FLAG_KEY.DailyChallenge]) {
-    return Response.json({ error: "Daily challenge is currently disabled" }, { status: 403 });
-  }
-  if (!daily && mode && !flags[GAME_MODE_FLAG[mode]]) {
-    return Response.json({ error: "This game mode is currently disabled" }, { status: 403 });
   }
 
   if (process.env.NODE_ENV === "production" && process.env.TURNSTILE_SECRET_KEY) {

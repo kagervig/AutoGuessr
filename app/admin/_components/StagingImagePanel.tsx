@@ -15,7 +15,6 @@ import StagingEditFields from "./StagingEditFields";
 import ReviewQueuePanel from "./ReviewQueuePanel";
 import CarOfTheDayPanel from "./CarOfTheDayPanel";
 import DailyChallengesPanel from "./DailyChallengesPanel";
-import FeatureFlagsPanel from "./FeatureFlagsPanel";
 import { useStagingAutocomplete } from "./useStagingAutocomplete";
 import {
   emptyForm,
@@ -375,7 +374,6 @@ export default function StagingImagePanel() {
                 ["reports", "Reports"],
                 ["car-of-the-day", "Car of the Day"],
                 ["daily-challenges", "Daily Challenges"],
-                ["feature-flags", "Feature Flags"],
               ] as [AdminPage, string][]
             ).map(([page, label]) => (
               <button
@@ -409,7 +407,6 @@ export default function StagingImagePanel() {
       {activePage === "reports" && <ReportsPanel />}
       {activePage === "car-of-the-day" && <CarOfTheDayPanel />}
       {activePage === "daily-challenges" && <DailyChallengesPanel />}
-      {activePage === "feature-flags" && <FeatureFlagsPanel />}
 
       {activePage === "staging" && (
       <>

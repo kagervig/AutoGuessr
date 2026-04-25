@@ -13,8 +13,7 @@ export type AdminPage =
   | "coverage"
   | "reports"
   | "car-of-the-day"
-  | "daily-challenges"
-  | "feature-flags";
+  | "daily-challenges";
 
 export type StagingStatus =
   | "PENDING_REVIEW"

@@ -2,16 +2,10 @@
 import { imageUrl } from "@/app/lib/game";
 import { getOrCreateTodaysFeatured, getTodayUTCMidnight } from "@/app/lib/car-of-the-day";
 import { DAILY_DISCOVERY_BONUS } from "@/app/lib/constants";
-import { FEATURE_FLAG_KEY } from "@/app/lib/feature-flags";
-import { isFeatureEnabled } from "@/app/lib/feature-flags-server";
 
 export const revalidate = 3600;
 
 export async function GET() {
-  if (!(await isFeatureEnabled(FEATURE_FLAG_KEY.CarOfTheDay))) {
-    return Response.json({ error: "Car of the Day is currently disabled" }, { status: 404 });
-  }
-
   const featured = await getOrCreateTodaysFeatured();
   const date = getTodayUTCMidnight();
 
