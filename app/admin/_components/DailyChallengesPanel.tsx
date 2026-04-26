@@ -17,7 +17,7 @@ interface ChallengeImage {
 }
 
 interface UpcomingChallenge {
-  id: string;
+  id: number;
   challengeNumber: number;
   date: string;
   isPublished: boolean;
@@ -26,7 +26,7 @@ interface UpcomingChallenge {
 }
 
 interface PastChallenge {
-  id: string;
+  id: number;
   challengeNumber: number;
   date: string;
   isPublished: boolean;
@@ -48,7 +48,7 @@ export default function DailyChallengesPanel() {
   const [revision, setRevision] = useState(0);
   const [publishing, setPublishing] = useState<string | null>(null);
   const [rerolling, setRerolling] = useState<number | null>(null);
-  const [picker, setPicker] = useState<{ challengeId: string; slotIndex: number } | null>(null);
+  const [picker, setPicker] = useState<{ challengeId: number; slotIndex: number } | null>(null);
   const [pickerImages, setPickerImages] = useState<PickerImage[]>([]);
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerMakeModels, setPickerMakeModels] = useState<Record<string, string[]>>({});
