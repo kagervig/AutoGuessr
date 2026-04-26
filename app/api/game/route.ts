@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 
   let selected: SelectableImage[];
   let makes: string[] | undefined;
-  let dailyChallengeId: string | undefined;
+  let dailyChallengeId: number | undefined;
   let dailyChallengeNumber: number | undefined;
 
   if (daily) {
