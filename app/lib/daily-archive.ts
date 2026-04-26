@@ -98,7 +98,7 @@ export async function getMonthOverview(args: {
 
   // Build a map: challengeId → user session
   const userSessionByChallengeId = new Map<
-    string,
+    number,
     (typeof userSessions)[0]
   >();
   for (const session of userSessions) {
