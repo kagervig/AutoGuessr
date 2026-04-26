@@ -189,6 +189,17 @@ model PlayerDimensionStats {
   @@id([playerId, dimensionType, dimensionKey])
 }
 
+model DailyChallenge {
+  id               Int       @id @default(autoincrement())
+  challengeNumber  Int       @unique
+  date             DateTime  @unique
+  imageIds         String[]
+  isPublished      Boolean   @default(false)
+  curatedBy        String?
+  generatedAt      DateTime  @default(now())
+  sessions         GameSession[]
+}
+
 model GameSession {
   id                        String          @id @default(cuid())
   playerId                  String?
@@ -200,7 +211,7 @@ model GameSession {
   initials                  String?
   sessionToken              String          @unique @default(dbgenerated("gen_random_uuid()"))
   featuredVehicleIdAtStart  String?
-  dailyChallengeId          String?
+  dailyChallengeId          Int?
   player                    Player?         @relation(fields: [playerId], references: [id])
   dailyChallenge            DailyChallenge? @relation(fields: [dailyChallengeId], references: [id])
   rounds                    Round[]
@@ -370,16 +381,4 @@ model FeaturedVehicleOfDay {
 
   vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
   image       Image    @relation(fields: [imageId], references: [id])
-}
-
-model DailyChallenge {
-  id              String        @id @default(cuid())
-  challengeNumber Int           @unique
-  date            DateTime      @unique
-  imageIds        String[]
-  isPublished     Boolean       @default(false)
-  curatedBy       String?
-  generatedAt     DateTime      @default(now())
-
-  sessions        GameSession[]
 }

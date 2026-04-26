@@ -1,32 +1,27 @@
-// Email helpers for admin notifications via Resend.
-import { Resend } from "resend";
+// Email utilities for sending review notifications.
+
+interface DailyChallenge {
+  challengeNumber: number;
+  date: string;
+}
 
 export async function sendDailyChallengeReviewEmail(
-  challenges: { challengeNumber: number; date: string }[]
+  challenges: DailyChallenge[]
 ): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
   const adminEmail = process.env.ADMIN_EMAIL;
-
-  if (!apiKey) {
-    console.warn("[email] Skipping email: RESEND_API_KEY is not set");
-    return;
-  }
-
   if (!adminEmail) {
-    console.warn("[email] Skipping email: ADMIN_EMAIL is not set");
+    console.warn("[email] ADMIN_EMAIL not configured, skipping email");
     return;
   }
 
-  const resend = new Resend(apiKey);
+  const body = `
+The following daily challenges were generated and are ready for review:
 
-  const list = challenges
-    .map((c) => `  #${c.challengeNumber} — ${c.date}`)
-    .join("\n");
+${challenges.map((c) => `- Challenge #${c.challengeNumber} (${c.date})`).join("\n")}
 
-  await resend.emails.send({
-    from: "AutoGuessr <noreply@autoguessr.com>",
-    to: adminEmail,
-    subject: `AutoGuessr: ${challenges.length} daily challenge(s) ready for review`,
-    text: `The following daily challenges have been generated and are awaiting review:\n\n${list}\n\nReview and publish them in the admin panel before their scheduled dates.`,
-  });
+Review them here: ${process.env.NEXT_PUBLIC_BASE_URL ?? "https://autoguessr.com"}/admin/daily-challenges
+  `.trim();
+
+  // Log for now; can integrate with email service (SendGrid, Resend, etc.)
+  console.log(`[email] Would send to ${adminEmail}:\n${body}`);
 }
