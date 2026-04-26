@@ -24,6 +24,7 @@ export async function generateMetadata({
   const {
     gameId,
     mode,
+    username,
     maxScore: maxScoreParam,
   } = await searchParams;
 
