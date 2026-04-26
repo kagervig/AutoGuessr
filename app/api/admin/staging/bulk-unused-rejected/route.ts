@@ -38,7 +38,7 @@ export async function DELETE() {
 
   // Exclude images referenced in any DailyChallenge (String[] — no FK)
   const linkedImageIds = linkedImages.map((img) => img.id);
-  const dcModel = (prisma as Record<string, unknown>).dailyChallenge as {
+  const dcModel = (prisma as unknown as Record<string, unknown>).dailyChallenge as {
     findMany: (args: {
       where: { imageIds: { hasSome: string[] } };
       select: { imageIds: true };
