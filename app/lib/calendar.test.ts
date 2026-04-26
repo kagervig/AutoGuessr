@@ -78,7 +78,7 @@ describe("buildMonthGrid", () => {
 });
 
 describe("parseMonthSlug", () => {
-  const origin = DAILY_CHALLENGE_ORIGIN;
+  const origin = new Date("2026-04-01T00:00:00Z");
   const today = new Date("2026-04-25T00:00:00Z");
 
   it("parses valid slug", () => {
@@ -95,7 +95,7 @@ describe("parseMonthSlug", () => {
   });
 
   it("returns null for month before origin", () => {
-    // Assume origin is April 2026 (month 3)
+    // Origin is April 2026 (month 3)
     const result = parseMonthSlug("2026-03", today, origin);
     expect(result).toBeNull();
   });
@@ -130,24 +130,25 @@ describe("monthToSlug", () => {
 });
 
 describe("getAdjacentMonths", () => {
-  const origin = DAILY_CHALLENGE_ORIGIN; // 2026-04
-  const today = new Date("2026-04-25T00:00:00Z");
+  const origin = new Date("2026-04-01T00:00:00Z");
+  const today = new Date("2026-06-25T00:00:00Z"); // Today is June
 
   it("returns prev/next for middle month", () => {
-    // If we had a month between origin and today (which we don't for this test setup),
-    // it would return both. For April 2026, we should get next but not prev.
-    const result = getAdjacentMonths(2026, 3, origin, today);
-    expect(result.prev).toBeNull(); // April is the origin
-    expect(result.next).toBeNull(); // April is today's month
+    // Testing May (month 4) while origin is April and today is June
+    const result = getAdjacentMonths(2026, 4, origin, today);
+    expect(result.prev).toEqual({ year: 2026, month: 3 }); // April
+    expect(result.next).toEqual({ year: 2026, month: 5 }); // June
   });
 
   it("returns null for prev when at origin month", () => {
     const result = getAdjacentMonths(2026, 3, origin, today);
     expect(result.prev).toBeNull();
+    expect(result.next).toEqual({ year: 2026, month: 4 });
   });
 
   it("returns null for next when at today month", () => {
-    const result = getAdjacentMonths(2026, 3, origin, today);
+    const result = getAdjacentMonths(2026, 5, origin, today);
+    expect(result.prev).toEqual({ year: 2026, month: 4 });
     expect(result.next).toBeNull();
   });
 
