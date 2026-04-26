@@ -44,9 +44,9 @@ export default function DailyChallengesPanel() {
   const [upcoming, setUpcoming] = useState<UpcomingChallenge[]>([]);
   const [past, setPast] = useState<PastChallenge[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [revision, setRevision] = useState(0);
-  const [publishing, setPublishing] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState<number | null>(null);
   const [rerolling, setRerolling] = useState<number | null>(null);
   const [picker, setPicker] = useState<{ challengeId: number; slotIndex: number } | null>(null);
   const [pickerImages, setPickerImages] = useState<PickerImage[]>([]);
@@ -91,7 +91,7 @@ export default function DailyChallengesPanel() {
     setRevision((n) => n + 1); 
   }
 
-  async function publish(id: string) {
+  async function publish(id: number) {
     setPublishing(id);
     await fetch(`/api/admin/daily-challenges/${id}`, {
       method: "PUT",
@@ -102,7 +102,7 @@ export default function DailyChallengesPanel() {
     reload();
   }
 
-  async function unpublish(id: string) {
+  async function unpublish(id: number) {
     setPublishing(id);
     await fetch(`/api/admin/daily-challenges/${id}`, {
       method: "PUT",
@@ -113,7 +113,7 @@ export default function DailyChallengesPanel() {
     reload();
   }
 
-  async function reroll(challengeId: string, slotIndex: number) {
+  async function reroll(challengeId: number, slotIndex: number) {
     setRerolling(slotIndex);
     const res = await fetch(`/api/admin/daily-challenges/${challengeId}/reroll`, {
       method: "POST",
@@ -135,7 +135,7 @@ export default function DailyChallengesPanel() {
     }
   }
 
-  async function openPicker(challengeId: string, slotIndex: number) {
+  async function openPicker(challengeId: number, slotIndex: number) {
     setPicker({ challengeId, slotIndex });
     setPickerSearch("");
     setPickerMake("");
