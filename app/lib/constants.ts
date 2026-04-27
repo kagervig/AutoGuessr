@@ -2,6 +2,8 @@ export const ROUNDS_PER_GAME = parseInt(process.env.ROUNDS_PER_GAME ?? "10", 10)
 
 export const DAILY_DISCOVERY_BONUS = 1000;
 
+export const MAX_DAILY_ROUND_SCORE = 800; // make (300) + model (400) + time bonus (100)
+
 export const BODY_STYLES = [
   "coupe", "sedan", "convertible", "hatchback", "wagon",
   "suv", "truck", "pickup", "van", "roadster", "targa", "compact", "special_purpose",
@@ -102,3 +104,5 @@ export const FALLBACK_REGIONS = [
   { id: "australia", slug: "australia", label: "Australia" },
   { id: "uk", slug: "uk", label: "United Kingdom" },
 ];
+
+export const DAILY_CHALLENGE_ORIGIN = new Date(Date.UTC(2024, 0, 1)); // January 1, 2024 UTC

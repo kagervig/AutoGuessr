@@ -6,6 +6,8 @@ import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, proLev
 import { ROUNDS_PER_GAME, GameMode } from "@/app/lib/constants";
 import { selectTieredImages } from "@/app/lib/image-selection";
 import { getOrCreateTodaysFeatured } from "@/app/lib/car-of-the-day";
+import { getOrCreateTodaysChallenge, getDailyChallenge } from "@/app/lib/daily-challenge";
+import type { DailyChallenge } from "@/app/generated/prisma/client";
 
 const VALID_MODES = Object.values(GameMode);
 type Mode = GameMode;
@@ -29,11 +31,12 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const mode = searchParams.get("mode") as Mode | null;
+  let mode = searchParams.get("mode") as Mode | null;
   const filterRaw = searchParams.get("filter");
   const cfToken = searchParams.get("cf_token");
+  const daily = searchParams.get("daily") === "true";
 
-  if (!mode || !VALID_MODES.includes(mode)) {
+  if (!daily && (!mode || !VALID_MODES.includes(mode))) {
     return Response.json({ error: "Invalid or missing mode" }, { status: 400 });
   }
 
@@ -79,8 +82,60 @@ export async function GET(request: NextRequest) {
 
   let selected: SelectableImage[];
   let makes: string[] | undefined;
+  let dailyChallengeId: number | undefined;
+  let dailyChallengeNumber: number | undefined;
 
-  if (mode === GameMode.Easy || mode === GameMode.Standard || mode === GameMode.Hardcore) {
+  if (daily) {
+    const dailyDateParam = searchParams.get("dailyDate");
+    let challenge: DailyChallenge;
+
+    if (dailyDateParam) {
+      // Archive game — look up by date, no replay prevention
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dailyDateParam)) {
+        return Response.json({ error: "Invalid dailyDate format" }, { status: 400 });
+      }
+      const archiveDate = new Date(`${dailyDateParam}T00:00:00.000Z`);
+      const found = await getDailyChallenge(archiveDate);
+      if (!found || !found.isPublished) {
+        return Response.json({ error: "Challenge not found" }, { status: 404 });
+      }
+      challenge = found;
+    } else {
+      // Today's challenge — enforce publish gate and replay prevention
+      challenge = await getOrCreateTodaysChallenge();
+      if (!challenge.isPublished) {
+        return Response.json({ error: "Today's challenge is not yet available" }, { status: 404 });
+      }
+      const existingSessionId = request.cookies.get(`dc_${challenge.challengeNumber}`)?.value;
+      if (existingSessionId) {
+        const existingSession = await prisma.gameSession.findUnique({
+          where: { id: existingSessionId },
+          select: { id: true, endedAt: true },
+        });
+        if (existingSession?.endedAt) {
+          return Response.json(
+            { error: "Already played today's challenge", sessionId: existingSession.id },
+            { status: 409 }
+          );
+        }
+      }
+      dailyChallengeNumber = challenge.challengeNumber;
+    }
+
+    dailyChallengeId = challenge.id;
+    mode = GameMode.Easy;
+
+    const images = await prisma.image.findMany({
+      where: { id: { in: challenge.imageIds } },
+      include: {
+        vehicle: { select: { id: true, make: true, model: true, year: true, era: true } },
+      },
+    });
+    const imageMap = new Map(images.map((img) => [img.id, img]));
+    selected = challenge.imageIds
+      .map((id) => imageMap.get(id))
+      .filter((img): img is NonNullable<typeof img> => img !== undefined);
+  } else if (mode === GameMode.Easy || mode === GameMode.Standard || mode === GameMode.Hardcore) {
     try {
       if (mode === GameMode.Easy) {
         selected = await selectTieredImages(mode, vehicleFilters);
@@ -147,10 +202,11 @@ export async function GET(request: NextRequest) {
   const sessionToken = crypto.randomUUID();
   const session = await prisma.gameSession.create({
     data: {
-      mode,
+      mode: mode!,
       filterConfig: filterConfig as object,
       sessionToken,
       featuredVehicleIdAtStart,
+      ...(dailyChallengeId ? { dailyChallengeId } : {}),
     },
   });
 
@@ -271,5 +327,15 @@ export async function GET(request: NextRequest) {
     "Set-Cookie",
     `st_${session.id}=${sessionToken}; HttpOnly; SameSite=Strict; Max-Age=1200; Path=/${isProduction ? "; Secure" : ""}`,
   );
+  if (dailyChallengeNumber !== undefined) {
+    // Expires at next UTC midnight so the cookie is scoped to today's challenge
+    const now = new Date();
+    const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const secondsUntilMidnight = Math.floor((nextMidnight.getTime() - now.getTime()) / 1000);
+    response.headers.append(
+      "Set-Cookie",
+      `dc_${dailyChallengeNumber}=${session.id}; HttpOnly; SameSite=Strict; Max-Age=${secondsUntilMidnight}; Path=/${isProduction ? "; Secure" : ""}`,
+    );
+  }
   return response;
 }
