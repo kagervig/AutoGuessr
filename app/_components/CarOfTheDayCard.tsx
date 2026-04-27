@@ -72,7 +72,7 @@ export function CarOfTheDayCard({ data, isFound }: Props) {
   return (
     <motion.article
       layout={!prefersReducedMotion}
-      className="w-[70%] mx-auto rounded-3xl border border-orange-500/30 bg-gradient-to-br from-zinc-900 to-black overflow-hidden shadow-[0_0_40px_rgba(249,115,22,0.08)]"
+      className="w-[95%] sm:w-[70%] mx-auto rounded-3xl border border-orange-500/30 bg-gradient-to-br from-zinc-900 to-black overflow-hidden shadow-[0_0_40px_rgba(249,115,22,0.08)]"
     >
       {/* Collapsed row */}
       <button
