@@ -21,12 +21,12 @@ beforeEach(() => {
 
 describe("HomeScreen", () => {
   it.each([...MODES])("renders the $label mode card", ({ label }) => {
-    render(<HomeScreen />);
+    render(<HomeScreen enabledModes={MODES.map((m) => m.id)} />);
     expect(screen.getByText(label)).toBeInTheDocument();
   });
 
   it("renders the Community card", () => {
-    render(<HomeScreen />);
+    render(<HomeScreen enabledModes={MODES.map((m) => m.id)} />);
 
     expect(screen.getByText("Community")).toBeInTheDocument();
   });
