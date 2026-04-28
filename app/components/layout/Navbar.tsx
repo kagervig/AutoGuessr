@@ -1,7 +1,19 @@
+"use client";
+// Top navigation bar. Inline links on sm+ screens; hamburger menu on mobile.
+
 import Link from "next/link";
-import { Flag, Trophy, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { Flag, Trophy, TrendingUp, Search, Menu, X } from "lucide-react";
+
+const NAV_ITEMS = [
+  { href: "/identify", label: "COMMUNITY", Icon: Search },
+  { href: "/scoring", label: "SCORING", Icon: TrendingUp },
+  { href: "/leaderboard", label: "LEADERBOARD", Icon: Trophy },
+];
 
 export function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <nav className="fixed top-0 inset-x-0 z-50 glass-panel border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,23 +27,46 @@ export function Navbar() {
             </span>
           </Link>
 
-          <div className="flex items-center gap-6">
-            <Link
-              href="/scoring"
-              className="text-sm font-semibold tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-2"
-            >
-              <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">SCORING</span>
-            </Link>
-            <Link
-              href="/leaderboard"
-              className="text-sm font-semibold tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-2"
-            >
-              <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">LEADERBOARD</span>
-            </Link>
+          <div className="hidden sm:flex items-center gap-6">
+            {NAV_ITEMS.map(({ href, label, Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="text-sm font-semibold tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-2"
+              >
+                <Icon className="w-4 h-4" />
+                <span>{label}</span>
+              </Link>
+            ))}
           </div>
+
+          <button
+            type="button"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="sm:hidden p-2 -mr-2 text-muted-foreground hover:text-white transition-colors"
+          >
+            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
+
+        {menuOpen && (
+          <div id="mobile-nav" className="sm:hidden pb-4 flex flex-col gap-1">
+            {NAV_ITEMS.map(({ href, label, Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-semibold tracking-wider text-muted-foreground hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3 px-3 py-3 rounded-md"
+              >
+                <Icon className="w-4 h-4" />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </nav>
   );
