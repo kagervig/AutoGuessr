@@ -25,9 +25,4 @@ describe("HomeScreen", () => {
     expect(screen.getByText(label)).toBeInTheDocument();
   });
 
-  it("renders the Community card", () => {
-    render(<HomeScreen enabledModes={MODES.map((m) => m.id)} />);
-
-    expect(screen.getByText("Community")).toBeInTheDocument();
-  });
 });

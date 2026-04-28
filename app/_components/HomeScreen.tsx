@@ -13,7 +13,6 @@ import {
   Timer,
   Wrench,
   Power,
-  Users,
 } from "lucide-react";
 import { MODES, COUNTRIES, FALLBACK_CATEGORIES, FALLBACK_REGIONS, GameMode } from "@/app/lib/constants";
 import type { ModeId } from "@/app/lib/constants";
@@ -176,7 +175,7 @@ export default function HomeScreen({ initialFilterError, cotdSlot, enabledModes 
 
           <div className="space-y-4 lg:space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-              {visibleModes.slice(0, 4).map((mode) => (
+              {visibleModes.map((mode) => (
                 <ModeCard
                   key={mode.id}
                   id={mode.id}
@@ -188,85 +187,61 @@ export default function HomeScreen({ initialFilterError, cotdSlot, enabledModes 
                 />
               ))}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-              {visibleModes.slice(4).map((mode) => (
-                <ModeCard
-                  key={mode.id}
-                  id={mode.id}
-                  title={mode.label}
-                  description={mode.description}
-                  icon={MODE_ICONS[mode.id]}
-                  selected={selectedMode === mode.id}
-                  onClick={() => setSelectedMode(mode.id)}
-                />
-              ))}
-            </div>
-            <ModeCard
-              id="community"
-              title="Community"
-              description="Help identify mystery cars. Vote on suggestions from other players."
-              icon={<Users className="w-6 h-6" />}
-              selected={false}
-              onClick={() => router.push("/identify")}
-            />
           </div>
         </motion.div>
 
         {/* Filters */}
-        <motion.div
-          ref={filterRef}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-2xl font-display font-black tracking-widest text-white uppercase">
-              Vehicle Filters
-            </h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
-            <span className={cn(
-              "text-xs font-bold tracking-widest uppercase",
-              isCustomMode ? "text-primary" : "text-muted-foreground"
-            )}>
-              {isCustomMode ? "Required" : "Optional"}
-            </span>
-          </div>
+        {isCustomMode && (
+          <motion.div
+            ref={filterRef}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <div className="flex items-center gap-4 mb-8">
+              <h2 className="text-2xl font-display font-black tracking-widest text-white uppercase">
+                Vehicle Filters
+              </h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
+              <span className="text-xs font-bold tracking-widest uppercase text-primary">
+                Required
+              </span>
+            </div>
 
-          {isCustomMode && (
             <p className="text-sm text-muted-foreground mb-6 -mt-4">
               Pick as many filters as you like to test your knowledge in your niche — minimum of one required.
             </p>
-          )}
 
-          <div className="space-y-4">
-            <FilterGroup
-              title="CATEGORIES"
-              options={categories.map((c) => ({ label: c.label, value: c.slug }))}
-              selectedValues={selectedCategories}
-              onChange={setSelectedCategories}
-            />
-            <FilterGroup
-              title="REGIONS"
-              options={regions.map((r) => ({ label: r.label, value: r.slug }))}
-              selectedValues={selectedRegions}
-              onChange={setSelectedRegions}
-            />
-            <FilterGroup
-              title="COUNTRIES"
-              options={countries.map((c) => ({ label: c.label, value: c.code }))}
-              selectedValues={selectedCountries}
-              onChange={setSelectedCountries}
-            />
-            {makes.length > 0 && (
+            <div className="space-y-4">
               <FilterGroup
-                title="MANUFACTURER"
-                options={makes.map((m) => ({ label: m, value: m }))}
-                selectedValues={selectedMakes}
-                onChange={setSelectedMakes}
+                title="CATEGORIES"
+                options={categories.map((c) => ({ label: c.label, value: c.slug }))}
+                selectedValues={selectedCategories}
+                onChange={setSelectedCategories}
               />
-            )}
-          </div>
-        </motion.div>
+              <FilterGroup
+                title="REGIONS"
+                options={regions.map((r) => ({ label: r.label, value: r.slug }))}
+                selectedValues={selectedRegions}
+                onChange={setSelectedRegions}
+              />
+              <FilterGroup
+                title="COUNTRIES"
+                options={countries.map((c) => ({ label: c.label, value: c.code }))}
+                selectedValues={selectedCountries}
+                onChange={setSelectedCountries}
+              />
+              {makes.length > 0 && (
+                <FilterGroup
+                  title="MANUFACTURER"
+                  options={makes.map((m) => ({ label: m, value: m }))}
+                  selectedValues={selectedMakes}
+                  onChange={setSelectedMakes}
+                />
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* Filter error */}
         {filterError && (
