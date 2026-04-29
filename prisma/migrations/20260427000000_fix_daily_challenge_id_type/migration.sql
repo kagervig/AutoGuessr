@@ -1,0 +1,2 @@
+-- This migration was applied directly to the database. The changes are already
+-- captured in 20260423194338_add_daily_challenge.
