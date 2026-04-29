@@ -2,7 +2,7 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
-import { pickImageIdsForChallenge } from "@/app/lib/daily-challenge";
+import { pickImageIdsForChallenge, isChallengeAccessible } from "@/app/lib/daily-challenge";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -13,6 +13,10 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
 
   const challenge = await prisma.dailyChallenge.findUnique({ where: { id } });
   if (!challenge) return Response.json({ error: "Not found" }, { status: 404 });
+
+  if (isChallengeAccessible(challenge)) {
+    return Response.json({ error: "Cannot modify a past or live challenge" }, { status: 409 });
+  }
 
   try {
     await prisma.dailyChallenge.delete({ where: { id } });
@@ -39,9 +43,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const challenge = await prisma.dailyChallenge.findUnique({ where: { id } });
   if (!challenge) return Response.json({ error: "Not found" }, { status: 404 });
 
-  const todayUTC = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
-  if (challenge.date <= todayUTC) {
-    return Response.json({ error: "Cannot edit a challenge from the past or present" }, { status: 403 });
+  if (isChallengeAccessible(challenge)) {
+    return Response.json({ error: "Cannot modify a past or live challenge" }, { status: 409 });
   }
 
   if (!challenge.imageIds.includes(replaceImageId)) {
