@@ -39,7 +39,7 @@ const STATE_FILE = path.join(process.cwd(), ".gemini-key-state.json");
 
 const args = process.argv.slice(2);
 const limitArg = args.indexOf("--limit");
-const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : undefined;
+const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : 10;
 
 // ── API key management ────────────────────────────────────────────────────────
 
@@ -109,9 +109,23 @@ class QuotaExceededError extends Error {
 }
 
 function isQuotaError(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  const msg = err.message.toLowerCase();
-  return msg.includes("429") || msg.includes("resource_exhausted") || msg.includes("quota");
+  if (!err) return false;
+  
+  // Handle standard Error objects
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    if (msg.includes("429") || msg.includes("resource_exhausted") || msg.includes("quota") || msg.includes("too many requests")) {
+      return true;
+    }
+  }
+
+  // Handle SDK-specific error objects if they have a status or code
+  const errorObj = err as any;
+  if (errorObj.status === 429 || errorObj.code === 429 || errorObj.status === "RESOURCE_EXHAUSTED") {
+    return true;
+  }
+
+  return false;
 }
 
 // ── Gemini prompt ─────────────────────────────────────────────────────────────
@@ -198,8 +212,9 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
 
   let result;
   try {
+    // Correct model name to gemini-1.5-flash
     result = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
@@ -216,21 +231,22 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
     });
   } catch (err) {
     if (isQuotaError(err)) throw new QuotaExceededError();
-    throw err;
+    console.error(`  Error calling Gemini for ${cloudinaryPublicId}:`, err);
+    return null;
   }
 
   const text = result.text ?? "";
 
   if (!text) {
     const reason = result.candidates?.[0]?.finishReason ?? "unknown";
-    console.warn(`  Empty response (finishReason: ${reason})`);
+    console.warn(`  Empty response (finishReason: ${reason}) for ${cloudinaryPublicId}`);
     return null;
   }
 
   try {
     return JSON.parse(text) as GeminiTag;
   } catch {
-    console.warn(`  Could not parse response:`, text.slice(0, 300));
+    console.warn(`  Could not parse response for ${cloudinaryPublicId}:`, text.slice(0, 300));
     return null;
   }
 }
@@ -367,28 +383,32 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log(`Tagging ${untagged.length} image(s)...`);
+  console.log(`Tagging up to ${untagged.length} image(s)...`);
 
   let keyIndex = 0;
   let ai = new GoogleGenAI({ apiKey: availableKeys[keyIndex].key });
-  console.log(`Using key ${availableKeys[keyIndex].id}`);
+  console.log(`Using key GEMINI_API_KEY_${availableKeys[keyIndex].id}`);
 
   let tagged = 0;
   let failed = 0;
 
   for (let i = 0; i < untagged.length; i++) {
     const record = untagged[i];
-    console.log(`[${i + 1}/${untagged.length}] ${record.filename}`);
+    console.log(`[${i + 1}/${untagged.length}] Processing ${record.filename} (${record.cloudinaryPublicId})`);
 
     let tag: GeminiTag | null = null;
 
     try {
       tag = await tagImage(ai, record.cloudinaryPublicId);
     } catch (err) {
-      if (!(err instanceof QuotaExceededError)) throw err;
+      if (!(err instanceof QuotaExceededError)) {
+        console.error(`  Unexpected error processing ${record.filename}:`, err);
+        failed++;
+        continue;
+      }
 
       markKeyUsed(availableKeys[keyIndex].id);
-      console.warn(`  Key ${availableKeys[keyIndex].id} quota exceeded.`);
+      console.warn(`  Key GEMINI_API_KEY_${availableKeys[keyIndex].id} quota exceeded.`);
       keyIndex++;
 
       if (keyIndex >= availableKeys.length) {
@@ -398,51 +418,51 @@ async function main(): Promise<void> {
       }
 
       ai = new GoogleGenAI({ apiKey: availableKeys[keyIndex].key });
-      console.log(`  Switched to key ${availableKeys[keyIndex].id} — retrying image.`);
-
-      try {
-        tag = await tagImage(ai, record.cloudinaryPublicId);
-      } catch (retryErr) {
-        if (retryErr instanceof QuotaExceededError) {
-          // Let the next iteration handle further key rotation
-          i--;
-          continue;
-        }
-        throw retryErr;
-      }
+      console.log(`  Switched to key GEMINI_API_KEY_${availableKeys[keyIndex].id} — retrying image.`);
+      
+      // Retry this same image with the new key
+      i--;
+      continue;
     }
 
     if (!tag) {
+      console.warn(`  Failed to tag image ${record.filename}`);
       failed++;
     } else {
-      await prisma.stagingImage.update({
-        where: { id: record.id },
-        data: {
-          aiMake:       tag.make || null,
-          aiModel:      tag.model || null,
-          aiYear:       tag.year,
-          aiBodyStyle:  tag.body_style || null,
-          aiConfidence: tag.confidence,
-          aiTaggedAt:   new Date(),
-          // Boolean flags: only set when admin hasn't already reviewed them
-          ...(record.adminIsLogoVisible        === null ? { adminIsLogoVisible:        tag.is_logo_visible        } : {}),
-          ...(record.adminIsModelNameVisible   === null ? { adminIsModelNameVisible:   tag.is_model_name_visible  } : {}),
-          ...(record.adminHasMultipleVehicles  === null ? { adminHasMultipleVehicles:  tag.has_multiple_vehicles  } : {}),
-          ...(record.adminIsFaceVisible        === null ? { adminIsFaceVisible:        tag.is_face_visible        } : {}),
-          ...(record.adminIsVehicleUnmodified  === null ? { adminIsVehicleUnmodified:  tag.is_vehicle_unmodified  } : {}),
-          // Store notes in adminNotes only if it's empty — don't overwrite human edits
-          ...(record.adminNotes === null && tag.notes
-            ? { adminNotes: `[AI] ${tag.notes}` }
-            : {}),
-        },
-      });
+      try {
+        await prisma.stagingImage.update({
+          where: { id: record.id },
+          data: {
+            aiMake:       tag.make || null,
+            aiModel:      tag.model || null,
+            aiYear:       tag.year,
+            aiBodyStyle:  tag.body_style || null,
+            aiConfidence: tag.confidence,
+            aiTaggedAt:   new Date(),
+            // Boolean flags: only set when admin hasn't already reviewed them
+            ...(record.adminIsLogoVisible        === null ? { adminIsLogoVisible:        tag.is_logo_visible        } : {}),
+            ...(record.adminIsModelNameVisible   === null ? { adminIsModelNameVisible:   tag.is_model_name_visible  } : {}),
+            ...(record.adminHasMultipleVehicles  === null ? { adminHasMultipleVehicles:  tag.has_multiple_vehicles  } : {}),
+            ...(record.adminIsFaceVisible        === null ? { adminIsFaceVisible:        tag.is_face_visible        } : {}),
+            ...(record.adminIsVehicleUnmodified  === null ? { adminIsVehicleUnmodified:  tag.is_vehicle_unmodified  } : {}),
+            // Store notes in adminNotes only if it's empty — don't overwrite human edits
+            ...(record.adminNotes === null && tag.notes
+              ? { adminNotes: `[AI] ${tag.notes}` }
+              : {}),
+          },
+        });
 
-      const yearStr = tag.year ? String(tag.year) : "?";
-      console.log(`  → ${tag.make} ${tag.model} ${yearStr} (confidence: ${tag.confidence})${tag.notes ? ` — ${tag.notes}` : ""}`);
-      tagged++;
+        const yearStr = tag.year ? String(tag.year) : "?";
+        console.log(`  → ${tag.make} ${tag.model} ${yearStr} (confidence: ${tag.confidence})${tag.notes ? ` — ${tag.notes}` : ""}`);
+        console.log(`  Tagged image: ${record.filename}`); // Keyword for GA summary
+        tagged++;
 
-      if (tag.confidence >= AUTOPUBLISH_CONFIDENCE_THRESHOLD) {
-        await autopublish(prisma, record.id, tag);
+        if (tag.confidence >= AUTOPUBLISH_CONFIDENCE_THRESHOLD) {
+          await autopublish(prisma, record.id, tag);
+        }
+      } catch (dbErr) {
+        console.error(`  Database error updating ${record.filename}:`, dbErr);
+        failed++;
       }
     }
 
