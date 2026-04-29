@@ -41,6 +41,10 @@ const args = process.argv.slice(2);
 const limitArg = args.indexOf("--limit");
 const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : 10;
 
+const force = args.includes("--force");
+const minConfidenceArg = args.indexOf("--min-confidence");
+const minConfidence = minConfidenceArg !== -1 ? parseFloat(args[minConfidenceArg + 1]) : undefined;
+
 // ── API key management ────────────────────────────────────────────────────────
 
 interface KeyEntry {
@@ -370,8 +374,21 @@ async function main(): Promise<void> {
   const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
+  const queryWhere: any = {
+    status: { in: ["PENDING_REVIEW", "COMMUNITY_REVIEW", "READY"] }
+  };
+
+  if (!force) {
+    queryWhere.aiTaggedAt = null;
+  } else if (minConfidence !== undefined) {
+    queryWhere.OR = [
+      { aiTaggedAt: null },
+      { aiConfidence: { lt: minConfidence } }
+    ];
+  }
+
   const untagged = await prisma.stagingImage.findMany({
-    where: { aiTaggedAt: null },
+    where: queryWhere,
     orderBy: { createdAt: "asc" },
     ...(limit ? { take: limit } : {}),
   });
