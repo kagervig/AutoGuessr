@@ -6,5 +6,11 @@ export async function GET() {
     orderBy: { date: "desc" },
   });
 
-  return Response.json({ challenges });
+  return Response.json({
+    challenges: challenges.map((c) => ({
+      ...c,
+      date: c.date.toISOString().slice(0, 10),
+      generatedAt: c.generatedAt.toISOString(),
+    })),
+  });
 }
