@@ -44,6 +44,7 @@ enum GameMode {
   hardcore
   time_attack
   practice
+  daily
 }
 
 enum DimensionType {
@@ -200,8 +201,12 @@ model GameSession {
   initials                  String?
   sessionToken              String      @unique @default(dbgenerated("gen_random_uuid()"))
   featuredVehicleIdAtStart  String?
-  player                    Player?     @relation(fields: [playerId], references: [id])
+  dailyChallengeId          Int?
+  dailyChallenge            DailyChallenge? @relation(fields: [dailyChallengeId], references: [id])
+  player                    Player?         @relation(fields: [playerId], references: [id])
   rounds                    Round[]
+
+  @@index([dailyChallengeId])
 }
 
 model Round {
@@ -357,6 +362,17 @@ model VehicleTrivia {
   verifiedByAdmin Boolean  @default(false)
 
   vehicle         Vehicle  @relation(fields: [vehicleId], references: [id])
+}
+
+model DailyChallenge {
+  id              Int           @id @default(autoincrement())
+  challengeNumber Int           @unique
+  date            DateTime      @unique
+  imageIds        String[]
+  isPublished     Boolean       @default(false)
+  curatedBy       String?
+  generatedAt     DateTime      @default(now())
+  sessions        GameSession[]
 }
 
 model FeaturedVehicleOfDay {
