@@ -265,7 +265,9 @@ export default function DailyChallengePanel() {
         ) : (
           <div className="max-w-2xl space-y-4">
             <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900">{selectedChallenge.date}</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                {new Date(`${selectedChallenge.date}T00:00:00.000Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}
+              </h2>
 
               {selectedChallenge.isPublished && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Published</span>
