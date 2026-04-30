@@ -3,7 +3,7 @@
 // Admin panel for viewing and managing Daily Challenges via a monthly calendar.
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Shuffle, Trash2 } from "lucide-react";
 
 interface ChallengeImage {
   id: string;
@@ -58,6 +58,26 @@ export default function DailyChallengePanel() {
   const [generating, setGenerating] = useState(false);
   const [generateResult, setGenerateResult] = useState<string | null>(null);
 
+  // Image slot editing state
+  const [rerollingImageId, setRerollingImageId] = useState<string | null>(null);
+  const [replacingImageId, setReplacingImageId] = useState<string | null>(null);
+  const [pickerMake, setPickerMake] = useState("");
+  const [pickerModel, setPickerModel] = useState("");
+  const [pickerMakeOptions, setPickerMakeOptions] = useState<string[]>([]);
+  const [pickerModelOptions, setPickerModelOptions] = useState<string[]>([]);
+  const [pickerImages, setPickerImages] = useState<{ id: string; url: string }[]>([]);
+  const [pickerLoadingImages, setPickerLoadingImages] = useState(false);
+  const [submittingReplaceId, setSubmittingReplaceId] = useState<string | null>(null);
+
+  function selectDate(date: string | null) {
+    setSelectedDate(date);
+    setRerollingImageId(null);
+    setReplacingImageId(null);
+    setPickerMake("");
+    setPickerModel("");
+    setPickerImages([]);
+  }
+
   useEffect(() => {
     const { start, end } = monthBounds(viewYear, viewMonth);
     fetch(`/api/admin/daily-challenge?startDate=${start}&endDate=${end}`)
@@ -74,14 +94,14 @@ export default function DailyChallengePanel() {
   }, [viewYear, viewMonth, revision]);
 
   function prevMonth() {
-    setSelectedDate(null);
+    selectDate(null);
     setLoading(true);
     if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
     else setViewMonth((m) => m - 1);
   }
 
   function nextMonth() {
-    setSelectedDate(null);
+    selectDate(null);
     setLoading(true);
     if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
     else setViewMonth((m) => m + 1);
@@ -123,9 +143,92 @@ export default function DailyChallengePanel() {
     fetch(`/api/admin/daily-challenge/${challenge.id}`, { method: "DELETE" })
       .then(() => {
         setDeleting(false);
-        setSelectedDate(null);
+        selectDate(null);
         setRevision((v) => v + 1);
       });
+  }
+
+  function handleReroll(replaceImageId: string) {
+    const challenge = selectedDate ? challengeMap[selectedDate] : null;
+    if (!challenge) return;
+    setRerollingImageId(replaceImageId);
+    fetch(`/api/admin/daily-challenge/${challenge.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ replaceImageId }),
+    })
+      .then((r) => r.json())
+      .then((data: DailyChallenge & { error?: string }) => {
+        if (data.error) { alert(data.error); return; }
+        setChallengeMap((prev) => ({ ...prev, [data.date]: data }));
+      })
+      .catch((err: Error) => alert(err.message))
+      .finally(() => setRerollingImageId(null));
+  }
+
+  function handleOpenReplace(imageId: string) {
+    setReplacingImageId(imageId);
+    setPickerMake("");
+    setPickerModel("");
+    setPickerImages([]);
+    fetch("/api/admin/autocomplete?field=make")
+      .then((r) => r.json())
+      .then((d) => Array.isArray(d) && setPickerMakeOptions(d))
+      .catch(() => null);
+  }
+
+  function handlePickerMakeChange(make: string) {
+    setPickerMake(make);
+    setPickerModel("");
+    setPickerImages([]);
+    if (!make) { setPickerModelOptions([]); return; }
+    fetch(`/api/admin/autocomplete?field=model&make=${encodeURIComponent(make)}`)
+      .then((r) => r.json())
+      .then((d) => Array.isArray(d) && setPickerModelOptions(d))
+      .catch(() => null);
+  }
+
+  function handlePickerModelChange(model: string) {
+    setPickerModel(model);
+    setPickerImages([]);
+    if (!model || !pickerMake) return;
+    setPickerLoadingImages(true);
+    fetch(`/api/admin/vehicles?make=${encodeURIComponent(pickerMake)}&model=${encodeURIComponent(model)}`)
+      .then((r) => r.json())
+      .then(({ vehicles }: { vehicles: { id: string }[] }) => {
+        if (!vehicles?.length) { setPickerLoadingImages(false); return; }
+        return Promise.all(
+          vehicles.map((v) =>
+            fetch(`/api/admin/vehicles/${v.id}/images`).then((r) => r.json())
+          )
+        ).then((results) => {
+          setPickerImages(results.flatMap((r: { images?: { id: string; url: string }[] }) => r.images ?? []));
+        });
+      })
+      .catch(() => null)
+      .finally(() => setPickerLoadingImages(false));
+  }
+
+  function handleReplaceWithImage(replaceImageId: string, withImageId: string) {
+    const challenge = selectedDate ? challengeMap[selectedDate] : null;
+    if (!challenge) return;
+    setSubmittingReplaceId(withImageId);
+    fetch(`/api/admin/daily-challenge/${challenge.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ replaceImageId, withImageId }),
+    })
+      .then((r) => r.json())
+      .then((data: DailyChallenge & { error?: string }) => {
+        if (data.error) { alert(data.error); return; }
+        setChallengeMap((prev) => ({ ...prev, [data.date]: data }));
+        setReplacingImageId(null);
+        setPickerMake("");
+        setPickerModel("");
+        setPickerImages([]);
+      })
+      .catch((err: Error) => alert(err.message))
+      .finally(() => setSubmittingReplaceId(null));
   }
 
   const today = new Date().toISOString().slice(0, 10);
@@ -139,6 +242,7 @@ export default function DailyChallengePanel() {
   while (cells.length % 7 !== 0) cells.push(null);
 
   const selectedChallenge = selectedDate ? challengeMap[selectedDate] ?? null : null;
+  const isFutureChallenge = selectedDate !== null && selectedDate > today;
 
   return (
     <div className="flex h-full">
@@ -192,7 +296,10 @@ export default function DailyChallengePanel() {
                 return (
                   <button
                     key={dateStr}
-                    onClick={() => setSelectedDate(dateStr)}
+                    onClick={() => {
+                      if (!challenge) handleStartDateChange(dateStr);
+                      selectDate(dateStr);
+                    }}
                     aria-label={`${dateStr}${challenge ? " — challenge exists" : " — no challenge"}`}
                     className={`aspect-square flex items-center justify-center text-xs font-medium rounded transition-colors ${cls}`}
                   >
@@ -288,27 +395,124 @@ export default function DailyChallengePanel() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {selectedChallenge.images.map((img) => (
-                <div key={img.id} className="rounded-xl overflow-hidden bg-gray-100">
-                  {img.url ? (
-                    <div className="relative aspect-video">
-                      <Image
-                        src={img.url}
-                        alt={`${img.make ?? ""} ${img.model ?? ""}`.trim()}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 50vw, 33vw"
-                      />
+              {selectedChallenge.images.map((img) => {
+                const isRerolling = rerollingImageId === img.id;
+                const isReplacing = replacingImageId === img.id;
+                return (
+                  <div key={img.id} className="rounded-xl overflow-hidden bg-gray-100">
+                    <div className="relative">
+                      {img.url ? (
+                        <div className="relative aspect-video">
+                          <Image
+                            src={img.url}
+                            alt={`${img.make ?? ""} ${img.model ?? ""}`.trim()}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 50vw, 33vw"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-video bg-gray-200" />
+                      )}
+                      {isFutureChallenge && (
+                        <button
+                          onClick={() => handleReroll(img.id)}
+                          disabled={isRerolling || rerollingImageId !== null}
+                          title="Replace with a random image"
+                          aria-label="Reroll image"
+                          className="absolute top-1.5 right-1.5 p-1 bg-black/50 hover:bg-black/70 text-white rounded transition-colors disabled:opacity-40"
+                        >
+                          {isRerolling
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Shuffle className="w-3.5 h-3.5" />
+                          }
+                        </button>
+                      )}
                     </div>
-                  ) : (
-                    <div className="aspect-video bg-gray-200" />
-                  )}
-                  <div className="px-2 py-1.5">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider">{img.make ?? "—"}</p>
-                    <p className="text-sm font-semibold text-gray-900 truncate">{img.model ?? "—"}</p>
+
+                    <div className="px-2 py-1.5">
+                      <p className="text-xs text-gray-400 uppercase tracking-wider">{img.make ?? "—"}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{img.model ?? "—"}</p>
+                      {isFutureChallenge && (
+                        <button
+                          onClick={() => isReplacing ? setReplacingImageId(null) : handleOpenReplace(img.id)}
+                          className="mt-0.5 text-xs text-blue-600 hover:underline"
+                        >
+                          {isReplacing ? "Cancel" : "Replace…"}
+                        </button>
+                      )}
+                    </div>
+
+                    {isReplacing && (
+                      <div className="px-2 pb-3 border-t border-gray-200 pt-2 space-y-2">
+                        <div>
+                          <input
+                            list="picker-makes"
+                            value={pickerMake}
+                            onChange={(e) => handlePickerMakeChange(e.target.value)}
+                            placeholder="Make"
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white text-gray-900"
+                          />
+                          <datalist id="picker-makes">
+                            {pickerMakeOptions.map((m) => <option key={m} value={m} />)}
+                          </datalist>
+                        </div>
+
+                        {pickerMake && (
+                          <div>
+                            <input
+                              list="picker-models"
+                              value={pickerModel}
+                              onChange={(e) => handlePickerModelChange(e.target.value)}
+                              placeholder="Model"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white text-gray-900"
+                            />
+                            <datalist id="picker-models">
+                              {pickerModelOptions.map((m) => <option key={m} value={m} />)}
+                            </datalist>
+                          </div>
+                        )}
+
+                        {pickerLoadingImages && (
+                          <p className="text-xs text-gray-400 flex items-center gap-1">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Loading images…
+                          </p>
+                        )}
+
+                        {!pickerLoadingImages && pickerModel && pickerImages.length === 0 && (
+                          <p className="text-xs text-gray-400">No active images found.</p>
+                        )}
+
+                        {pickerImages.length > 0 && (
+                          <div className="grid grid-cols-3 gap-1 max-h-36 overflow-y-auto">
+                            {pickerImages.map((pImg) => (
+                              <button
+                                key={pImg.id}
+                                onClick={() => handleReplaceWithImage(img.id, pImg.id)}
+                                disabled={submittingReplaceId !== null}
+                                title="Select this image"
+                                className="relative aspect-video rounded overflow-hidden hover:ring-2 ring-blue-500 disabled:opacity-50 transition-all"
+                              >
+                                {submittingReplaceId === pImg.id
+                                  ? <div className="absolute inset-0 flex items-center justify-center bg-black/30"><Loader2 className="w-4 h-4 text-white animate-spin" /></div>
+                                  : null
+                                }
+                                <Image
+                                  src={pImg.url}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                  sizes="80px"
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
