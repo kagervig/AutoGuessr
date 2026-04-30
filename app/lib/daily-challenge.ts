@@ -55,6 +55,12 @@ export async function generateChallengesForRange(
     Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate())
   );
 
+  const maxRow = await prisma.dailyChallenge.findFirst({
+    orderBy: { challengeNumber: "desc" },
+    select: { challengeNumber: true },
+  });
+  let nextChallengeNumber = (maxRow?.challengeNumber ?? 0) + 1;
+
   const current = new Date(start);
   while (current <= end) {
     const dateStr = current.toISOString().slice(0, 10);
@@ -79,6 +85,7 @@ export async function generateChallengesForRange(
           date: daySnapshot,
           imageIds,
           isPublished: true,
+          challengeNumber: nextChallengeNumber++,
         },
       });
       created.push(challenge);
