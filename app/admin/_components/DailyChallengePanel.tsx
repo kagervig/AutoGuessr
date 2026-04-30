@@ -48,7 +48,20 @@ const STATUS_LABEL: Record<ChallengeStatus, string> = {
   past: "Past",
 };
 
+function monthBounds(year: number, month: number): { start: string; end: string } {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return {
+    start: `${year}-${pad(month + 1)}-01`,
+    end: `${year}-${pad(month + 1)}-${pad(lastDay)}`,
+  };
+}
+
 export default function DailyChallengePanel() {
+  const now = new Date();
+  const [viewYear, setViewYear] = useState(now.getUTCFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getUTCMonth()); // 0-indexed
+
   const [challenges, setChallenges] = useState<DailyChallenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
@@ -61,10 +74,24 @@ export default function DailyChallengePanel() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
 
+  function goToPrevMonth() {
+    if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
+    else setViewMonth((m) => m - 1);
+  }
+
+  function goToNextMonth() {
+    if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
+    else setViewMonth((m) => m + 1);
+  }
+
+  const monthLabel = new Date(Date.UTC(viewYear, viewMonth, 1))
+    .toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+
   useEffect(() => {
     setLoading(true);
     setLoadError(null);
-    fetch("/api/admin/daily-challenge")
+    const { start, end } = monthBounds(viewYear, viewMonth);
+    fetch(`/api/admin/daily-challenge?startDate=${start}&endDate=${end}`)
       .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error ?? `Server error ${r.status}`);
@@ -79,7 +106,7 @@ export default function DailyChallengePanel() {
       .finally(() => {
         setLoading(false);
       });
-  }, [revision]);
+  }, [revision, viewYear, viewMonth]);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -148,13 +175,31 @@ export default function DailyChallengePanel() {
         )}
       </form>
 
+      <div className="flex items-center gap-3 mb-4 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 w-fit">
+        <button
+          onClick={goToPrevMonth}
+          aria-label="Previous month"
+          className="px-2 py-1 text-sm text-gray-700 border border-gray-300 rounded bg-white hover:bg-gray-100 transition-colors"
+        >
+          ‹
+        </button>
+        <span className="text-sm font-medium text-gray-700 w-36 text-center">{monthLabel}</span>
+        <button
+          onClick={goToNextMonth}
+          aria-label="Next month"
+          className="px-2 py-1 text-sm text-gray-700 border border-gray-300 rounded bg-white hover:bg-gray-100 transition-colors"
+        >
+          ›
+        </button>
+      </div>
+
       {loadError && (
         <p className="text-sm text-red-500 mb-4">Error: {loadError}</p>
       )}
       {loading ? (
         <p className="text-sm text-gray-400">Loading…</p>
       ) : challenges.length === 0 ? (
-        <p className="text-sm text-gray-400">No challenges yet.</p>
+        <p className="text-sm text-gray-400">No challenges for {monthLabel}.</p>
       ) : (
         <div className="overflow-y-auto max-h-[calc(100vh-220px)] space-y-2">
           {challenges.map((c) => {
