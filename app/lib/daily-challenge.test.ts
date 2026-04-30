@@ -6,7 +6,6 @@ import type { DailyChallenge } from "../generated/prisma/client";
 vi.mock("@/app/lib/prisma", () => ({
   prisma: {
     dailyChallenge: {
-      findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
     },
@@ -64,7 +63,6 @@ describe("pickImageIdsForChallenge", () => {
 describe("generateChallengesForRange", () => {
   beforeEach(() => {
     vi.mocked(prisma.$queryRaw).mockResolvedValue(TEN_IMAGE_ROWS);
-    vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.dailyChallenge.create).mockResolvedValue(
       makeChallenge({ date: new Date("2025-01-01T00:00:00Z") })
     );
