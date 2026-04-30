@@ -24,6 +24,11 @@ interface DailyChallenge {
 
 type ChallengeStatus = "future" | "today" | "past";
 
+function formatChallengeDate(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00.000Z`);
+  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
+}
+
 function getChallengeStatus(dateStr: string): ChallengeStatus {
   const d = new Date(`${dateStr}T00:00:00.000Z`);
   const now = new Date();
@@ -66,8 +71,7 @@ export default function DailyChallengePanel() {
       });
   }, [revision]);
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate() {
     setGenerating(true);
     setGenerateResult(null);
     try {
@@ -101,7 +105,7 @@ export default function DailyChallengePanel() {
 
   return (
     <div className="p-6 max-w-4xl">
-      <form onSubmit={handleGenerate} className="mb-6 flex items-end gap-3 flex-wrap">
+      <form action={handleGenerate} className="mb-6 flex items-end gap-3 flex-wrap">
         <div>
           <label className="block text-xs text-gray-500 mb-1">Start date</label>
           <input
@@ -150,8 +154,7 @@ export default function DailyChallengePanel() {
                   >
                     {STATUS_LABEL[status]}
                   </span>
-                  <span className="text-sm font-medium text-gray-900">#{c.challengeNumber}</span>
-                  <span className="text-sm text-gray-500">{c.date}</span>
+                  <span className="text-sm font-medium text-gray-900">{formatChallengeDate(c.date)}</span>
                   {status === "future" && (
                     <button
                       onClick={() => handleDelete(c.id)}
