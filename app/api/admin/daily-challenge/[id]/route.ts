@@ -10,9 +10,14 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
   if (isNaN(id)) return Response.json({ error: "Invalid id" }, { status: 400 });
 
   const challenge = await prisma.dailyChallenge.findUnique({ where: { id } });
-  if (!challenge) return Response.json({ error: "Not found" }, { status: 404 });  
+  if (!challenge) return Response.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.dailyChallenge.delete({ where: { id } });
+  try {
+    await prisma.dailyChallenge.delete({ where: { id } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return Response.json({ error: message }, { status: 500 });
+  }
 
   return new Response(null, { status: 204 });
 }

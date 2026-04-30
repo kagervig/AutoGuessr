@@ -3,9 +3,7 @@
 import { Prisma } from "../generated/prisma/client";
 import { prisma } from "./prisma";
 import type { DailyChallenge } from "../generated/prisma/client";
-
-// Daily challenges are always exactly 10 rounds regardless of the DAILY_CHALLENGE_ROUNDS env var.
-const DAILY_CHALLENGE_ROUNDS = 10;
+import { ROUNDS_PER_GAME } from "./constants";
 
 export type GenerateResult = {
   created: DailyChallenge[];
@@ -13,10 +11,9 @@ export type GenerateResult = {
 };
 
 
-// Picks `count` random active image IDs, optionally excluding a list of IDs.
-// Raw SQL is required here because Prisma's ORM layer doesn't expose ORDER BY RANDOM().
+// Picks ROUNDS_PER_GAME random active image IDs, optionally excluding a list of IDs.
 export async function pickImageIdsForChallenge(
-  count = DAILY_CHALLENGE_ROUNDS,
+  count = ROUNDS_PER_GAME,
   excludeIds: string[] = []
 ): Promise<string[]> {
   const excludeFilter =
@@ -73,7 +70,7 @@ export async function generateChallengesForRange(
       const prevChallenge = await prisma.dailyChallenge.findUnique({ where: { date: prevDay } });
 
       const imageIds = await pickImageIdsForChallenge(
-        DAILY_CHALLENGE_ROUNDS,
+        ROUNDS_PER_GAME,
         prevChallenge?.imageIds ?? []
       );
 

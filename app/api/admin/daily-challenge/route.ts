@@ -1,10 +1,21 @@
-// Admin: list all daily challenges ordered newest first.
+// Admin: list daily challenges ordered newest first, optionally filtered by date range.
+import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = request.nextUrl;
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+
+    const dateFilter: { gte?: Date; lte?: Date } = {}; //Prisma requires a date filter
+    if (startDate) dateFilter.gte = new Date(startDate);
+    if (endDate) dateFilter.lte = new Date(endDate);
+    const where = Object.keys(dateFilter).length > 0 ? { date: dateFilter } : {};
+
     const challenges = await prisma.dailyChallenge.findMany({
+      where,
       orderBy: { date: "desc" },
     });
 
