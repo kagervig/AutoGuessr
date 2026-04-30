@@ -54,11 +54,6 @@ export default function DailyChallengePanel() {
   const [generating, setGenerating] = useState(false);
   const [generateResult, setGenerateResult] = useState<string | null>(null);
 
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editImageIds, setEditImageIds] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-
   const [deleting, setDeleting] = useState<number | null>(null);
 
   useEffect(() => {
@@ -90,43 +85,6 @@ export default function DailyChallengePanel() {
       }
     } finally {
       setGenerating(false);
-    }
-  }
-
-  function openEditor(challenge: DailyChallenge) {
-    setEditingId(challenge.id);
-    setEditImageIds(challenge.imageIds.join("\n"));
-    setSaveError(null);
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditImageIds("");
-    setSaveError(null);
-  }
-
-  async function saveEdit(id: number) {
-    setSaving(true);
-    setSaveError(null);
-    const imageIds = editImageIds
-      .split(/[\n,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    try {
-      const res = await fetch(`/api/admin/daily-challenge/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageIds }),
-      });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) {
-        setSaveError(data.error ?? "Save failed");
-      } else {
-        setEditingId(null);
-        setRevision((v) => v + 1);
-      }
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -184,10 +142,8 @@ export default function DailyChallengePanel() {
         <div className="overflow-y-auto max-h-[calc(100vh-220px)] space-y-2">
           {challenges.map((c) => {
             const status = getChallengeStatus(c.date);
-            const isEditing = editingId === c.id;
             return (
               <div key={c.id} className="border border-gray-200 rounded-lg bg-white">
-                {/* Header row */}
                 <div className="flex items-center gap-3 px-4 py-3">
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[status]}`}
@@ -196,84 +152,40 @@ export default function DailyChallengePanel() {
                   </span>
                   <span className="text-sm font-medium text-gray-900">#{c.challengeNumber}</span>
                   <span className="text-sm text-gray-500">{c.date}</span>
-                  {status === "future" && !isEditing && (
-                    <div className="flex gap-2 ml-auto">
-                      <button
-                        onClick={() => openEditor(c)}
-                        className="text-xs px-2.5 py-1 border border-gray-300 rounded hover:bg-gray-50 text-gray-600 transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(c.id)}
-                        disabled={deleting === c.id}
-                        className="text-xs px-2.5 py-1 border border-red-200 rounded hover:bg-red-50 text-red-600 disabled:opacity-50 transition-colors"
-                      >
-                        {deleting === c.id ? "Deleting…" : "Delete"}
-                      </button>
-                    </div>
+                  {status === "future" && (
+                    <button
+                      onClick={() => handleDelete(c.id)}
+                      disabled={deleting === c.id}
+                      className="ml-auto text-xs px-2.5 py-1 border border-red-200 rounded hover:bg-red-50 text-red-600 disabled:opacity-50 transition-colors"
+                    >
+                      {deleting === c.id ? "Deleting…" : "Delete"}
+                    </button>
                   )}
                 </div>
-
-                {/* Thumbnail grid */}
-                {!isEditing && (
-                  <div className="px-4 pb-3 grid grid-cols-5 gap-2">
-                    {c.images.map((img) => (
-                      <div key={img.id} className="flex flex-col gap-1">
-                        <div className="relative w-full aspect-[4/3] bg-gray-100 rounded overflow-hidden">
-                          {img.url ? (
-                            <Image
-                              src={img.url}
-                              alt={img.make && img.model ? `${img.make} ${img.model}` : img.id}
-                              fill
-                              sizes="120px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
-                              ?
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 truncate leading-tight">
-                          {img.make && img.model ? `${img.make} ${img.model}` : img.id}
-                        </p>
+                <div className="px-4 pb-3 grid grid-cols-5 gap-2">
+                  {c.images.map((img) => (
+                    <div key={img.id} className="flex flex-col gap-1">
+                      <div className="relative w-full aspect-[4/3] bg-gray-100 rounded overflow-hidden">
+                        {img.url ? (
+                          <Image
+                            src={img.url}
+                            alt={img.make && img.model ? `${img.make} ${img.model}` : img.id}
+                            fill
+                            sizes="120px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
+                            ?
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Edit form */}
-                {isEditing && (
-                  <div className="border-t border-gray-100 px-4 py-3 space-y-2">
-                    <label className="block text-xs text-gray-500">
-                      Image IDs (one per line or comma-separated)
-                    </label>
-                    <textarea
-                      value={editImageIds}
-                      onChange={(e) => setEditImageIds(e.target.value)}
-                      rows={10}
-                      className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono text-gray-900"
-                    />
-                    {saveError && <p className="text-xs text-red-600">{saveError}</p>}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => saveEdit(c.id)}
-                        disabled={saving}
-                        className="text-xs px-3 py-1.5 bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
-                      >
-                        {saving ? "Saving…" : "Save"}
-                      </button>
-                      <button
-                        onClick={cancelEdit}
-                        disabled={saving}
-                        className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 text-gray-600 disabled:opacity-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
+                      <p className="text-xs text-gray-500 truncate leading-tight">
+                        {img.make && img.model ? `${img.make} ${img.model}` : img.id}
+                      </p>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
             );
           })}
