@@ -1,8 +1,9 @@
 "use client";
 
-// Admin panel for generating and managing daily challenges.
+// Admin panel for viewing and managing Daily Challenges via a monthly calendar.
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
 interface ChallengeImage {
   id: string;
@@ -13,7 +14,8 @@ interface ChallengeImage {
 
 interface DailyChallenge {
   id: number;
-  date: string; // YYYY-MM-DD
+  date: string;
+  challengeNumber: number;
   imageIds: string[];
   images: ChallengeImage[];
   isPublished: boolean;
@@ -21,237 +23,295 @@ interface DailyChallenge {
   generatedAt: string;
 }
 
-type ChallengeStatus = "future" | "today" | "past";
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const DAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function formatChallengeDate(dateStr: string): string {
-  const d = new Date(`${dateStr}T00:00:00.000Z`);
-  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
+function toDateStr(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function getChallengeStatus(dateStr: string): ChallengeStatus {
-  const d = new Date(`${dateStr}T00:00:00.000Z`);
-  const now = new Date();
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  if (d.getTime() === today.getTime()) return "today";
-  return d > today ? "future" : "past";
-}
-
-const STATUS_BADGE: Record<ChallengeStatus, string> = {
-  future: "bg-blue-100 text-blue-700",
-  today: "bg-green-100 text-green-700",
-  past: "bg-gray-100 text-gray-500",
-};
-
-const STATUS_LABEL: Record<ChallengeStatus, string> = {
-  future: "Future",
-  today: "Live today",
-  past: "Past",
-};
-
-function monthBounds(year: number, month: number): { start: string; end: string } {
-  const pad = (n: number) => String(n).padStart(2, "0");
+function monthBounds(year: number, month: number) {
   const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
   return {
-    start: `${year}-${pad(month + 1)}-01`,
-    end: `${year}-${pad(month + 1)}-${pad(lastDay)}`,
+    start: toDateStr(year, month, 1),
+    end: toDateStr(year, month, lastDay),
   };
 }
 
 export default function DailyChallengePanel() {
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getUTCFullYear());
-  const [viewMonth, setViewMonth] = useState(now.getUTCMonth()); // 0-indexed
+  const [viewMonth, setViewMonth] = useState(now.getUTCMonth());
 
-  const [challenges, setChallenges] = useState<DailyChallenge[]>([]);
+  const [challengeMap, setChallengeMap] = useState<Record<string, DailyChallenge>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
+
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generateResult, setGenerateResult] = useState<string | null>(null);
 
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState<number | null>(null);
+  useEffect(() => {
+    const { start, end } = monthBounds(viewYear, viewMonth);
+    fetch(`/api/admin/daily-challenge?startDate=${start}&endDate=${end}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) { setLoadError(data.error); setLoading(false); return; }
+        const map: Record<string, DailyChallenge> = {};
+        for (const c of data.challenges ?? []) map[c.date] = c;
+        setLoadError(null);
+        setChallengeMap(map);
+        setLoading(false);
+      })
+      .catch((err: Error) => { setLoadError(err.message); setLoading(false); });
+  }, [viewYear, viewMonth, revision]);
 
-  function goToPrevMonth() {
+  function prevMonth() {
+    setSelectedDate(null);
+    setLoading(true);
     if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
     else setViewMonth((m) => m - 1);
   }
 
-  function goToNextMonth() {
+  function nextMonth() {
+    setSelectedDate(null);
+    setLoading(true);
     if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
     else setViewMonth((m) => m + 1);
   }
 
-  const monthLabel = new Date(Date.UTC(viewYear, viewMonth, 1))
-    .toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  function handleStartDateChange(val: string) {
+    setStartDate(val);
+    setEndDate(val);
+  }
 
-  useEffect(() => {
-    setLoading(true);
-    setLoadError(null);
-    const { start, end } = monthBounds(viewYear, viewMonth);
-    fetch(`/api/admin/daily-challenge?startDate=${start}&endDate=${end}`)
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error ?? `Server error ${r.status}`);
-        return data;
-      })
-      .then((data) => {
-        setChallenges(data.challenges ?? []);
-      })
-      .catch((err: Error) => {
-        setLoadError(err.message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [revision, viewYear, viewMonth]);
-
-  async function handleGenerate() {
+  function handleGenerate(e: React.FormEvent) {
+    e.preventDefault();
     setGenerating(true);
     setGenerateResult(null);
-    try {
-      const res = await fetch("/api/admin/daily-challenge/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startDate, endDate }),
-      });
-      const data = await res.json() as { created?: DailyChallenge[]; skipped?: string[]; error?: string };
-      if (!res.ok) {
-        setGenerateResult(`Error: ${data.error}`);
-      } else {
-        setGenerateResult(`Created ${data.created?.length ?? 0}, skipped ${data.skipped?.length ?? 0}`);
-        setRevision((v) => v + 1);
-      }
-    } finally {
-      setGenerating(false);
-    }
+    fetch("/api/admin/daily-challenge/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ startDate, endDate }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) {
+          setGenerateResult(`Error: ${data.error}`);
+        } else {
+          setGenerateResult(`Created ${data.created?.length ?? 0}, skipped ${data.skipped?.length ?? 0}`);
+          setRevision((v) => v + 1);
+        }
+        setGenerating(false);
+      })
+      .catch((err: Error) => { setGenerateResult(`Error: ${err.message}`); setGenerating(false); });
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this challenge?")) return;
-    setDeleting(id);
-    try {
-      const res = await fetch(`/api/admin/daily-challenge/${id}`, { method: "DELETE" });
-      if (res.ok) setRevision((v) => v + 1);
-    } finally {
-      setDeleting(null);
-    }
+  function handleDelete() {
+    if (!selectedDate) return;
+    const challenge = challengeMap[selectedDate];
+    if (!challenge) return;
+    if (!confirm(`Delete challenge for ${selectedDate}?`)) return;
+    setDeleting(true);
+    fetch(`/api/admin/daily-challenge/${challenge.id}`, { method: "DELETE" })
+      .then(() => {
+        setDeleting(false);
+        setSelectedDate(null);
+        setRevision((v) => v + 1);
+      });
   }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+
+  const cells: (number | null)[] = [
+    ...Array<null>(firstDayOfWeek).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const selectedChallenge = selectedDate ? challengeMap[selectedDate] ?? null : null;
 
   return (
-    <div className="p-6 max-w-4xl">
-      <form action={handleGenerate} className="mb-6 flex items-end gap-3 flex-wrap">
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Start date</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            required
-            className="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-900 bg-white"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">End date</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            required
-            className="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-900 bg-white"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={generating}
-          className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
-        >
-          {generating ? "Generating…" : "Generate"}
-        </button>
-        {generateResult && (
-          <span className="text-sm text-gray-500">{generateResult}</span>
-        )}
-      </form>
+    <div className="flex h-full">
+      {/* Left: calendar + generate form */}
+      <aside className="w-72 border-r border-gray-200 p-4 shrink-0 overflow-y-auto flex flex-col gap-6">
 
-      <div className="flex items-center gap-3 mb-4 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 w-fit">
-        <button
-          onClick={goToPrevMonth}
-          aria-label="Previous month"
-          className="px-2 py-1 text-sm text-gray-700 border border-gray-300 rounded bg-white hover:bg-gray-100 transition-colors"
-        >
-          ‹
-        </button>
-        <span className="text-sm font-medium text-gray-700 w-36 text-center">{monthLabel}</span>
-        <button
-          onClick={goToNextMonth}
-          aria-label="Next month"
-          className="px-2 py-1 text-sm text-gray-700 border border-gray-300 rounded bg-white hover:bg-gray-100 transition-colors"
-        >
-          ›
-        </button>
-      </div>
+        {/* Month navigation */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={prevMonth} aria-label="Previous month" className="p-1 hover:bg-gray-100 rounded transition-colors">
+              <ChevronLeft className="w-4 h-4 text-gray-600" />
+            </button>
+            <span className="text-sm font-semibold text-gray-900">
+              {MONTH_NAMES[viewMonth]} {viewYear}
+            </span>
+            <button onClick={nextMonth} aria-label="Next month" className="p-1 hover:bg-gray-100 rounded transition-colors">
+              <ChevronRight className="w-4 h-4 text-gray-600" />
+            </button>
+          </div>
 
-      {loadError && (
-        <p className="text-sm text-red-500 mb-4">Error: {loadError}</p>
-      )}
-      {loading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
-      ) : challenges.length === 0 ? (
-        <p className="text-sm text-gray-400">No challenges for {monthLabel}.</p>
-      ) : (
-        <div className="overflow-y-auto max-h-[calc(100vh-220px)] space-y-2">
-          {challenges.map((c) => {
-            const status = getChallengeStatus(c.date);
-            return (
-              <div key={c.id} className="border border-gray-200 rounded-lg bg-white">
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[status]}`}
+          {/* Day headers */}
+          <div className="grid grid-cols-7 mb-1">
+            {DAY_HEADERS.map((d) => (
+              <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>
+            ))}
+          </div>
+
+          {/* Calendar grid */}
+          {loading ? (
+            <div className="text-center text-sm text-gray-400 py-6">Loading…</div>
+          ) : loadError ? (
+            <div className="text-xs text-red-500 py-4 break-all">{loadError}</div>
+          ) : (
+            <div className="grid grid-cols-7 gap-0.5">
+              {cells.map((day, i) => {
+                if (day === null) return <div key={`e-${i}`} />;
+                const dateStr = toDateStr(viewYear, viewMonth, day);
+                const challenge = challengeMap[dateStr];
+                const isPastOrToday = dateStr <= today;
+                const isSelected = dateStr === selectedDate;
+
+                let cls: string;
+                if (!challenge) {
+                  cls = isSelected ? "bg-red-600 text-white" : "bg-red-100 text-red-900 hover:bg-red-200";
+                } else if (isPastOrToday) {
+                  cls = isSelected ? "bg-green-700 text-white" : "bg-green-100 text-green-900 hover:bg-green-200";
+                } else {
+                  cls = isSelected ? "bg-blue-700 text-white" : "bg-blue-100 text-blue-900 hover:bg-blue-200";
+                }
+
+                return (
+                  <button
+                    key={dateStr}
+                    onClick={() => setSelectedDate(dateStr)}
+                    aria-label={`${dateStr}${challenge ? ` — challenge #${challenge.challengeNumber}` : " — no challenge"}`}
+                    className={`aspect-square flex items-center justify-center text-xs font-medium rounded transition-colors ${cls}`}
                   >
-                    {STATUS_LABEL[status]}
-                  </span>
-                  <span className="text-sm font-medium text-gray-900">{formatChallengeDate(c.date)}</span>
-                  {status === "future" && (
-                    <button
-                      onClick={() => handleDelete(c.id)}
-                      disabled={deleting === c.id}
-                      className="ml-auto text-xs px-2.5 py-1 border border-red-200 rounded hover:bg-red-50 text-red-600 disabled:opacity-50 transition-colors"
-                    >
-                      {deleting === c.id ? "Deleting…" : "Delete"}
-                    </button>
-                  )}
-                </div>
-                <div className="px-4 pb-3 grid grid-cols-5 gap-2">
-                  {c.images.map((img) => (
-                    <div key={img.id} className="flex flex-col gap-1">
-                      <div className="relative w-full aspect-[4/3] bg-gray-100 rounded overflow-hidden">
-                        {img.url ? (
-                          <Image
-                            src={img.url}
-                            alt={img.make && img.model ? `${img.make} ${img.model}` : img.id}
-                            fill
-                            sizes="120px"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
-                            ?
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 truncate leading-tight">
-                        {img.make && img.model ? `${img.make} ${img.model}` : img.id}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Legend */}
+          <div className="mt-3 space-y-1">
+            {[
+              { color: "bg-green-200", label: "Past/present challenge" },
+              { color: "bg-blue-200", label: "Future challenge" },
+              { color: "bg-red-200", label: "No challenge" },
+            ].map(({ color, label }) => (
+              <div key={label} className="flex items-center gap-2 text-xs text-gray-500">
+                <div className={`w-3 h-3 rounded ${color}`} />
+                {label}
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      )}
+
+        {/* Generate form */}
+        <form onSubmit={handleGenerate} className="space-y-3">
+          <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Generate</p>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">From</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-900 bg-white [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:invert"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">To</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-900 bg-white [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:invert"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={generating}
+            className="w-full px-3 py-1.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          >
+            {generating ? "Generating…" : "Generate"}
+          </button>
+          {generateResult && (
+            <p className={`text-xs ${generateResult.startsWith("Error") ? "text-red-500" : "text-gray-500"}`}>
+              {generateResult}
+            </p>
+          )}
+        </form>
+      </aside>
+
+      {/* Right: detail */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {!selectedDate ? (
+          <p className="text-gray-400 text-sm">Select a day to view the challenge.</p>
+        ) : !selectedChallenge ? (
+          <p className="text-gray-500 text-sm">No challenge generated for {selectedDate}.</p>
+        ) : (
+          <div className="max-w-2xl space-y-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-lg font-bold text-gray-900">{selectedChallenge.date}</h2>
+              <span className="text-xs text-gray-500">Challenge #{selectedChallenge.challengeNumber}</span>
+              {selectedChallenge.isPublished && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Published</span>
+              )}
+              {selectedChallenge.curatedBy && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                  Curated by {selectedChallenge.curatedBy}
+                </span>
+              )}
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="ml-auto flex items-center gap-1 px-2.5 py-1 text-xs border border-red-200 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50 transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {selectedChallenge.images.map((img) => (
+                <div key={img.id} className="rounded-xl overflow-hidden bg-gray-100">
+                  {img.url ? (
+                    <div className="relative aspect-video">
+                      <Image
+                        src={img.url}
+                        alt={`${img.make ?? ""} ${img.model ?? ""}`.trim()}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 50vw, 33vw"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-video bg-gray-200" />
+                  )}
+                  <div className="px-2 py-1.5">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider">{img.make ?? "—"}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{img.model ?? "—"}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
