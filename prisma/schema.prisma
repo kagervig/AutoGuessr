@@ -366,7 +366,6 @@ model VehicleTrivia {
 
 model DailyChallenge {
   id              Int           @id @default(autoincrement())
-  challengeNumber Int           @unique
   date            DateTime      @unique
   imageIds        String[]
   isPublished     Boolean       @default(false)

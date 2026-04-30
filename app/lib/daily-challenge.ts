@@ -50,9 +50,6 @@ export async function generateChallengesForRange(
   const created: DailyChallenge[] = [];
   const skipped: string[] = [];
 
-  const last = await prisma.dailyChallenge.findFirst({ orderBy: { challengeNumber: "desc" } });
-  let nextChallengeNumber = (last?.challengeNumber ?? 0) + 1;
-
   // Normalise to UTC midnight so comparisons against DB DateTime values are timezone-safe.
   const start = new Date(
     Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate())
@@ -82,7 +79,6 @@ export async function generateChallengesForRange(
 
       const challenge = await prisma.dailyChallenge.create({
         data: {
-          challengeNumber: nextChallengeNumber++,
           date: daySnapshot,
           imageIds,
           isPublished: true,
