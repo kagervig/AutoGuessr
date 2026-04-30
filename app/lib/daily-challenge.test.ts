@@ -27,7 +27,7 @@ function makeChallenge(overrides: Partial<DailyChallenge> & { challengeNumber: n
     curatedBy: null,
     generatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
-  };
+  } as DailyChallenge;
 }
 
 const TEN_IMAGE_ROWS = Array.from({ length: 10 }, (_, i) => ({ id: `img-${i + 1}` }));
@@ -65,13 +65,8 @@ describe("generateChallengesForRange", () => {
   beforeEach(() => {
     vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.$queryRaw).mockResolvedValue(TEN_IMAGE_ROWS);
-    vi.mocked(prisma.dailyChallenge.create).mockImplementation(async ({ data }) =>
-      makeChallenge({
-        challengeNumber: data.challengeNumber as number,
-        date: data.date as Date,
-        imageIds: data.imageIds as string[],
-        isPublished: data.isPublished as boolean,
-      })
+    vi.mocked(prisma.dailyChallenge.create).mockResolvedValue(
+      makeChallenge({ challengeNumber: 1, date: new Date("2025-01-01T00:00:00Z") })
     );
   });
 
@@ -121,26 +116,19 @@ describe("generateChallengesForRange", () => {
     expect(createCall.data.challengeNumber).toBe(43);
   });
 
-  it("should use yesterday's imageIds as exclusions when picking images", async () => {
+  it("should look up yesterday's challenge to build the image exclusion list", async () => {
     const date = new Date("2025-01-15T00:00:00Z");
-    const prevImageIds = ["prev-1", "prev-2", "prev-3"];
-    const prevChallenge = makeChallenge({
-      challengeNumber: 1,
-      date: new Date("2025-01-14T00:00:00Z"),
-      imageIds: prevImageIds,
-    });
+    const yesterday = new Date("2025-01-14T00:00:00Z");
 
     vi.mocked(prisma.dailyChallenge.findUnique)
-      .mockResolvedValueOnce(null)       // today has no existing challenge
-      .mockResolvedValueOnce(prevChallenge); // yesterday's challenge
+      .mockResolvedValueOnce(null)  // today has no existing challenge
+      .mockResolvedValueOnce(null); // yesterday's challenge lookup
 
     await generateChallengesForRange(date, date);
 
-    const queryRawCall = vi.mocked(prisma.$queryRaw).mock.calls[0];
-    // The tagged template literal includes the exclusion list as a bound parameter.
-    // We verify the raw SQL fragments contain the exclude IDs.
-    const sqlStrings = queryRawCall[0] as TemplateStringsArray;
-    expect(sqlStrings.join("")).toContain("ANY");
+    const calls = vi.mocked(prisma.dailyChallenge.findUnique).mock.calls;
+    const yesterdayLookup = calls[1][0].where.date as Date;
+    expect(yesterdayLookup.toISOString()).toBe(yesterday.toISOString());
   });
 
   it("should process a multi-day range and mix creates and skips correctly", async () => {

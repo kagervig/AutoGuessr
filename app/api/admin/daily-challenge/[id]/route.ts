@@ -1,7 +1,6 @@
 // Admin: delete a future daily challenge.
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { isChallengeAccessible } from "@/app/lib/daily-challenge";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -11,11 +10,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
   if (isNaN(id)) return Response.json({ error: "Invalid id" }, { status: 400 });
 
   const challenge = await prisma.dailyChallenge.findUnique({ where: { id } });
-  if (!challenge) return Response.json({ error: "Not found" }, { status: 404 });
-
-  if (isChallengeAccessible(challenge)) {
-    return Response.json({ error: "Cannot delete a past or live challenge" }, { status: 409 });
-  }
+  if (!challenge) return Response.json({ error: "Not found" }, { status: 404 });  
 
   await prisma.dailyChallenge.delete({ where: { id } });
 
