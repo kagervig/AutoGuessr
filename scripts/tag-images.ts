@@ -39,11 +39,26 @@ const STATE_FILE = path.join(process.cwd(), ".gemini-key-state.json");
 
 const args = process.argv.slice(2);
 const limitArg = args.indexOf("--limit");
+<<<<<<< Updated upstream
 const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : 10;
 
 const force = args.includes("--force");
 const minConfidenceArg = args.indexOf("--min-confidence");
 const minConfidence = minConfidenceArg !== -1 ? parseFloat(args[minConfidenceArg + 1]) : undefined;
+||||||| Stash base
+const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : undefined;
+=======
+const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : 10;
+
+const force = args.includes("--force");
+const usePro = args.includes("--pro");
+const resetKeys = args.includes("--reset-keys");
+const minConfidenceArg = args.indexOf("--min-confidence");
+const minConfidence = minConfidenceArg !== -1 ? parseFloat(args[minConfidenceArg + 1]) : undefined;
+
+// Flash: 15 RPM (4.5s), Pro: 2 RPM (30.5s)
+const effectiveRateLimit = usePro ? 30500 : RATE_LIMIT_MS;
+>>>>>>> Stashed changes
 
 // ── API key management ────────────────────────────────────────────────────────
 
@@ -112,6 +127,7 @@ class QuotaExceededError extends Error {
   }
 }
 
+<<<<<<< Updated upstream
 function isQuotaError(err: unknown): boolean {
   if (!err) return false;
   
@@ -130,6 +146,26 @@ function isQuotaError(err: unknown): boolean {
   }
 
   return false;
+||||||| Stash base
+function isQuotaError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message.toLowerCase();
+  return msg.includes("429") || msg.includes("resource_exhausted") || msg.includes("quota");
+=======
+function shouldRotateKey(err: unknown): boolean {
+  if (!err) return false;
+  
+  const msg = err instanceof Error ? err.message.toLowerCase() : "";
+  const errorObj = err as any;
+  const status = errorObj.status || errorObj.code;
+
+  // 429: Quota exceeded
+  // 503: High demand / Service Unavailable
+  const isRetryableStatus = status === 429 || status === 503 || status === "RESOURCE_EXHAUSTED" || status === "UNAVAILABLE";
+  const isRetryableMessage = msg.includes("429") || msg.includes("503") || msg.includes("quota") || msg.includes("high demand") || msg.includes("resource_exhausted") || msg.includes("unavailable");
+
+  return isRetryableStatus || isRetryableMessage;
+>>>>>>> Stashed changes
 }
 
 // ── Gemini prompt ─────────────────────────────────────────────────────────────
@@ -216,9 +252,20 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
 
   let result;
   try {
+<<<<<<< Updated upstream
     // Correct model name to gemini-1.5-flash
+||||||| Stash base
+=======
+    const modelName = usePro ? "gemini-2.5-pro" : "gemini-2.5-flash";
+>>>>>>> Stashed changes
     result = await ai.models.generateContent({
+<<<<<<< Updated upstream
       model: "gemini-1.5-flash",
+||||||| Stash base
+      model: "gemini-2.5-flash",
+=======
+      model: modelName,
+>>>>>>> Stashed changes
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
@@ -234,9 +281,18 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
       ],
     });
   } catch (err) {
+<<<<<<< Updated upstream
     if (isQuotaError(err)) throw new QuotaExceededError();
     console.error(`  Error calling Gemini for ${cloudinaryPublicId}:`, err);
     return null;
+||||||| Stash base
+    if (isQuotaError(err)) throw new QuotaExceededError();
+    throw err;
+=======
+    if (shouldRotateKey(err)) throw new QuotaExceededError();
+    console.error(`  Error calling Gemini for ${cloudinaryPublicId}:`, err);
+    return null;
+>>>>>>> Stashed changes
   }
 
   const text = result.text ?? "";
@@ -351,6 +407,13 @@ async function autopublish(prisma: PrismaClient, stagingId: string, tag: GeminiT
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
+  if (resetKeys) {
+    if (fs.existsSync(STATE_FILE)) {
+      fs.unlinkSync(STATE_FILE);
+      console.log("Key state reset. All keys are now available.");
+    }
+  }
+
   if (!process.env.CLOUDINARY_CLOUD_NAME) {
     console.error("Missing CLOUDINARY_CLOUD_NAME — add it to your .env file");
     process.exit(1);
@@ -484,7 +547,7 @@ async function main(): Promise<void> {
     }
 
     if (i < untagged.length - 1) {
-      await sleep(RATE_LIMIT_MS);
+      await sleep(effectiveRateLimit);
     }
   }
 
