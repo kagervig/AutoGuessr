@@ -12,31 +12,8 @@ export type GenerateResult = {
   skipped: string[]; // YYYY-MM-DD dates that already had a challenge
 };
 
-export function startOfTodayUTC(): Date {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-}
 
-export function isChallengeAccessible(challenge: Pick<DailyChallenge, "date">): boolean {
-  return challenge.date <= startOfTodayUTC();
-}
-
-export async function getAccessibleChallengeByDate(date: Date): Promise<DailyChallenge | null> {
-  const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  const challenge = await prisma.dailyChallenge.findUnique({ where: { date: target } });
-  if (!challenge || !isChallengeAccessible(challenge)) return null;
-  return challenge;
-}
-
-export async function assertNotAlreadyPlayed(playerId: string, challengeId: number): Promise<void> {
-  const existing = await prisma.gameSession.findFirst({
-    where: { playerId, dailyChallengeId: challengeId, endedAt: { not: null } },
-  });
-  if (existing) {
-    throw new Error(`Player ${playerId} has already completed challenge ${challengeId}`);
-  }
-}
-
+// Raw SQL is required here because Prisma's ORM layer doesn't expose ORDER BY RANDOM().
 export async function pickImageIdsForChallenge(
   count = DAILY_CHALLENGE_ROUNDS,
   excludeIds: string[] = []
@@ -53,6 +30,7 @@ export async function pickImageIdsForChallenge(
     LIMIT ${count}
   `;
 
+  // Throw rather than returning a partial set — a short challenge would silently corrupt the game.
   if (rows.length < count) {
     throw new Error(
       `Not enough active images to generate a challenge (need ${count}, got ${rows.length})`
@@ -72,6 +50,7 @@ export async function generateChallengesForRange(
   const last = await prisma.dailyChallenge.findFirst({ orderBy: { challengeNumber: "desc" } });
   let nextChallengeNumber = (last?.challengeNumber ?? 0) + 1;
 
+  // Normalise to UTC midnight so comparisons against DB DateTime values are timezone-safe.
   const start = new Date(
     Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate())
   );
@@ -88,6 +67,7 @@ export async function generateChallengesForRange(
     if (existing) {
       skipped.push(dateStr);
     } else {
+      // Exclude yesterday's images so consecutive days don't share the same cars.
       const prevDay = new Date(daySnapshot);
       prevDay.setUTCDate(prevDay.getUTCDate() - 1);
       const prevChallenge = await prisma.dailyChallenge.findUnique({ where: { date: prevDay } });

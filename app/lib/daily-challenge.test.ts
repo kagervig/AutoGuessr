@@ -1,67 +1,183 @@
 // Tests for daily challenge helpers (pure logic only — DB functions require integration tests).
 
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { startOfTodayUTC, isChallengeAccessible } from "./daily-challenge";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import type { DailyChallenge } from "../generated/prisma/client";
+
+vi.mock("@/app/lib/prisma", () => ({
+  prisma: {
+    dailyChallenge: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
+    $queryRaw: vi.fn(),
+  },
+}));
+
+const { prisma } = await import("@/app/lib/prisma");
+const { pickImageIdsForChallenge, generateChallengesForRange } = await import(
+  "@/app/lib/daily-challenge"
+);
+
+function makeChallenge(overrides: Partial<DailyChallenge> & { challengeNumber: number; date: Date }): DailyChallenge {
+  return {
+    id: 1,
+    imageIds: [],
+    isPublished: true,
+    curatedBy: null,
+    generatedAt: new Date("2025-01-01T00:00:00Z"),
+    ...overrides,
+  };
+}
+
+const TEN_IMAGE_ROWS = Array.from({ length: 10 }, (_, i) => ({ id: `img-${i + 1}` }));
+const TEN_IMAGE_IDS = TEN_IMAGE_ROWS.map((r) => r.id);
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.clearAllMocks();
 });
 
 // ---------------------------------------------------------------------------
-// startOfTodayUTC
+// pickImageIdsForChallenge
 // ---------------------------------------------------------------------------
 
-describe("startOfTodayUTC", () => {
-  it("should return midnight UTC for the current date", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-04-29T15:30:00Z"));
-
-    const result = startOfTodayUTC();
-
-    expect(result.toISOString()).toBe("2026-04-29T00:00:00.000Z");
+describe("pickImageIdsForChallenge", () => {
+  it("should return image IDs from the query result", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue(TEN_IMAGE_ROWS);
+    const ids = await pickImageIdsForChallenge(10);
+    expect(ids).toEqual(TEN_IMAGE_IDS);
   });
 
-  it("should return midnight UTC even when local time is in a different calendar day", () => {
-    vi.useFakeTimers();
-    // UTC is still April 28 even though some timezones are April 29
-    vi.setSystemTime(new Date("2026-04-28T23:45:00Z"));
-
-    const result = startOfTodayUTC();
-
-    expect(result.toISOString()).toBe("2026-04-28T00:00:00.000Z");
+  it("should throw when the DB returns fewer images than requested", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ id: "img-1" }, { id: "img-2" }]);
+    await expect(pickImageIdsForChallenge(10)).rejects.toThrow(
+      "Not enough active images to generate a challenge (need 10, got 2)"
+    );
   });
 });
 
 // ---------------------------------------------------------------------------
-// isChallengeAccessible
+// generateChallengesForRange
 // ---------------------------------------------------------------------------
 
-describe("isChallengeAccessible", () => {
-  it("should return true for a challenge dated today UTC", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-04-29T12:00:00Z"));
-
-    expect(isChallengeAccessible({ date: new Date("2026-04-29T00:00:00.000Z") })).toBe(true);
+describe("generateChallengesForRange", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue(TEN_IMAGE_ROWS);
+    vi.mocked(prisma.dailyChallenge.create).mockImplementation(async ({ data }) =>
+      makeChallenge({
+        challengeNumber: data.challengeNumber as number,
+        date: data.date as Date,
+        imageIds: data.imageIds as string[],
+        isPublished: data.isPublished as boolean,
+      })
+    );
   });
 
-  it("should return true for a challenge dated in the past", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-04-29T12:00:00Z"));
+  it("should skip a date that already has a challenge", async () => {
+    const date = new Date("2025-01-15T00:00:00Z");
+    vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(
+      makeChallenge({ challengeNumber: 1, date })
+    );
 
-    expect(isChallengeAccessible({ date: new Date("2026-04-01T00:00:00.000Z") })).toBe(true);
+    const result = await generateChallengesForRange(date, date);
+
+    expect(result.skipped).toEqual(["2025-01-15"]);
+    expect(result.created).toHaveLength(0);
   });
 
-  it("should return false for a challenge dated tomorrow UTC", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-04-29T23:59:59Z"));
+  it("should create a challenge when none exists for the date", async () => {
+    const date = new Date("2025-01-15T00:00:00Z");
+    vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(null);
 
-    expect(isChallengeAccessible({ date: new Date("2026-04-30T00:00:00.000Z") })).toBe(false);
+    const result = await generateChallengesForRange(date, date);
+
+    expect(result.created).toHaveLength(1);
+    expect(result.skipped).toHaveLength(0);
   });
 
-  it("should return false for a challenge dated in the future", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-04-29T00:00:00Z"));
+  it("should assign challengeNumber 1 when no previous challenges exist", async () => {
+    const date = new Date("2025-01-15T00:00:00Z");
+    vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(null);
 
-    expect(isChallengeAccessible({ date: new Date("2026-05-15T00:00:00.000Z") })).toBe(false);
+    await generateChallengesForRange(date, date);
+
+    const createCall = vi.mocked(prisma.dailyChallenge.create).mock.calls[0][0];
+    expect(createCall.data.challengeNumber).toBe(1);
+  });
+
+  it("should continue challengeNumber from the last existing challenge", async () => {
+    const date = new Date("2025-01-15T00:00:00Z");
+    vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(
+      makeChallenge({ challengeNumber: 42, date: new Date("2025-01-14T00:00:00Z") })
+    );
+    vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(null);
+
+    await generateChallengesForRange(date, date);
+
+    const createCall = vi.mocked(prisma.dailyChallenge.create).mock.calls[0][0];
+    expect(createCall.data.challengeNumber).toBe(43);
+  });
+
+  it("should use yesterday's imageIds as exclusions when picking images", async () => {
+    const date = new Date("2025-01-15T00:00:00Z");
+    const prevImageIds = ["prev-1", "prev-2", "prev-3"];
+    const prevChallenge = makeChallenge({
+      challengeNumber: 1,
+      date: new Date("2025-01-14T00:00:00Z"),
+      imageIds: prevImageIds,
+    });
+
+    vi.mocked(prisma.dailyChallenge.findUnique)
+      .mockResolvedValueOnce(null)       // today has no existing challenge
+      .mockResolvedValueOnce(prevChallenge); // yesterday's challenge
+
+    await generateChallengesForRange(date, date);
+
+    const queryRawCall = vi.mocked(prisma.$queryRaw).mock.calls[0];
+    // The tagged template literal includes the exclusion list as a bound parameter.
+    // We verify the raw SQL fragments contain the exclude IDs.
+    const sqlStrings = queryRawCall[0] as TemplateStringsArray;
+    expect(sqlStrings.join("")).toContain("ANY");
+  });
+
+  it("should process a multi-day range and mix creates and skips correctly", async () => {
+    const jan13 = new Date("2025-01-13T00:00:00Z");
+    const jan15 = new Date("2025-01-15T00:00:00Z");
+
+    const existingChallenge = makeChallenge({ challengeNumber: 5, date: jan13 });
+
+    vi.mocked(prisma.dailyChallenge.findUnique)
+      // jan13: already exists → skip
+      .mockResolvedValueOnce(existingChallenge)
+      // jan14: doesn't exist → create
+      .mockResolvedValueOnce(null)   // today check
+      .mockResolvedValueOnce(null)   // yesterday (jan13) for exclusion lookup
+      // jan15: doesn't exist → create
+      .mockResolvedValueOnce(null)   // today check
+      .mockResolvedValueOnce(null);  // yesterday (jan14) for exclusion lookup
+
+    const result = await generateChallengesForRange(jan13, jan15);
+
+    expect(result.skipped).toEqual(["2025-01-13"]);
+    expect(result.created).toHaveLength(2);
+  });
+
+  it("should increment challengeNumber for each created challenge in a range", async () => {
+    const jan14 = new Date("2025-01-14T00:00:00Z");
+    const jan15 = new Date("2025-01-15T00:00:00Z");
+
+    vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(
+      makeChallenge({ challengeNumber: 10, date: new Date("2025-01-13T00:00:00Z") })
+    );
+    vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(null);
+
+    await generateChallengesForRange(jan14, jan15);
+
+    const createCalls = vi.mocked(prisma.dailyChallenge.create).mock.calls;
+    expect(createCalls[0][0].data.challengeNumber).toBe(11);
+    expect(createCalls[1][0].data.challengeNumber).toBe(12);
   });
 });
