@@ -6,7 +6,6 @@ import type { DailyChallenge } from "../generated/prisma/client";
 vi.mock("@/app/lib/prisma", () => ({
   prisma: {
     dailyChallenge: {
-      findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
     },
@@ -19,7 +18,7 @@ const { pickImageIdsForChallenge, generateChallengesForRange } = await import(
   "@/app/lib/daily-challenge"
 );
 
-function makeChallenge(overrides: Partial<DailyChallenge> & { challengeNumber: number; date: Date }): DailyChallenge {
+function makeChallenge(overrides: Partial<DailyChallenge> & { date: Date }): DailyChallenge {
   return {
     id: 1,
     imageIds: [],
@@ -63,17 +62,16 @@ describe("pickImageIdsForChallenge", () => {
 
 describe("generateChallengesForRange", () => {
   beforeEach(() => {
-    vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.$queryRaw).mockResolvedValue(TEN_IMAGE_ROWS);
     vi.mocked(prisma.dailyChallenge.create).mockResolvedValue(
-      makeChallenge({ challengeNumber: 1, date: new Date("2025-01-01T00:00:00Z") })
+      makeChallenge({ date: new Date("2025-01-01T00:00:00Z") })
     );
   });
 
   it("should skip a date that already has a challenge", async () => {
     const date = new Date("2025-01-15T00:00:00Z");
     vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(
-      makeChallenge({ challengeNumber: 1, date })
+      makeChallenge({ date })
     );
 
     const result = await generateChallengesForRange(date, date);
@@ -90,30 +88,6 @@ describe("generateChallengesForRange", () => {
 
     expect(result.created).toHaveLength(1);
     expect(result.skipped).toHaveLength(0);
-  });
-
-  it("should assign challengeNumber 1 when no previous challenges exist", async () => {
-    const date = new Date("2025-01-15T00:00:00Z");
-    vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(null);
-
-    await generateChallengesForRange(date, date);
-
-    const createCall = vi.mocked(prisma.dailyChallenge.create).mock.calls[0][0];
-    expect(createCall.data.challengeNumber).toBe(1);
-  });
-
-  it("should continue challengeNumber from the last existing challenge", async () => {
-    const date = new Date("2025-01-15T00:00:00Z");
-    vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(
-      makeChallenge({ challengeNumber: 42, date: new Date("2025-01-14T00:00:00Z") })
-    );
-    vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(null);
-
-    await generateChallengesForRange(date, date);
-
-    const createCall = vi.mocked(prisma.dailyChallenge.create).mock.calls[0][0];
-    expect(createCall.data.challengeNumber).toBe(43);
   });
 
   it("should look up yesterday's challenge to build the image exclusion list", async () => {
@@ -135,7 +109,7 @@ describe("generateChallengesForRange", () => {
     const jan13 = new Date("2025-01-13T00:00:00Z");
     const jan15 = new Date("2025-01-15T00:00:00Z");
 
-    const existingChallenge = makeChallenge({ challengeNumber: 5, date: jan13 });
+    const existingChallenge = makeChallenge({ date: jan13 });
 
     vi.mocked(prisma.dailyChallenge.findUnique)
       // jan13: already exists → skip
@@ -151,21 +125,5 @@ describe("generateChallengesForRange", () => {
 
     expect(result.skipped).toEqual(["2025-01-13"]);
     expect(result.created).toHaveLength(2);
-  });
-
-  it("should increment challengeNumber for each created challenge in a range", async () => {
-    const jan14 = new Date("2025-01-14T00:00:00Z");
-    const jan15 = new Date("2025-01-15T00:00:00Z");
-
-    vi.mocked(prisma.dailyChallenge.findFirst).mockResolvedValue(
-      makeChallenge({ challengeNumber: 10, date: new Date("2025-01-13T00:00:00Z") })
-    );
-    vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(null);
-
-    await generateChallengesForRange(jan14, jan15);
-
-    const createCalls = vi.mocked(prisma.dailyChallenge.create).mock.calls;
-    expect(createCalls[0][0].data.challengeNumber).toBe(11);
-    expect(createCalls[1][0].data.challengeNumber).toBe(12);
   });
 });

@@ -13,7 +13,6 @@ interface ChallengeImage {
 
 interface DailyChallenge {
   id: number;
-  challengeNumber: number;
   date: string; // YYYY-MM-DD
   imageIds: string[];
   images: ChallengeImage[];
@@ -59,14 +58,25 @@ export default function DailyChallengePanel() {
   const [generating, setGenerating] = useState(false);
   const [generateResult, setGenerateResult] = useState<string | null>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setLoadError(null);
     fetch("/api/admin/daily-challenge")
-      .then((r) => r.json())
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error ?? `Server error ${r.status}`);
+        return data;
+      })
       .then((data) => {
         setChallenges(data.challenges ?? []);
+      })
+      .catch((err: Error) => {
+        setLoadError(err.message);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, [revision]);
@@ -138,6 +148,9 @@ export default function DailyChallengePanel() {
         )}
       </form>
 
+      {loadError && (
+        <p className="text-sm text-red-500 mb-4">Error: {loadError}</p>
+      )}
       {loading ? (
         <p className="text-sm text-gray-400">Loading…</p>
       ) : challenges.length === 0 ? (
