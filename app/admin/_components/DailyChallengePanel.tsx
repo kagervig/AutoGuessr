@@ -15,7 +15,6 @@ interface ChallengeImage {
 interface DailyChallenge {
   id: number;
   date: string;
-  challengeNumber: number;
   imageIds: string[];
   images: ChallengeImage[];
   isPublished: boolean;
@@ -194,7 +193,7 @@ export default function DailyChallengePanel() {
                   <button
                     key={dateStr}
                     onClick={() => setSelectedDate(dateStr)}
-                    aria-label={`${dateStr}${challenge ? ` — challenge #${challenge.challengeNumber}` : " — no challenge"}`}
+                    aria-label={`${dateStr}${challenge ? " — challenge exists" : " — no challenge"}`}
                     className={`aspect-square flex items-center justify-center text-xs font-medium rounded transition-colors ${cls}`}
                   >
                     {day}
@@ -267,7 +266,7 @@ export default function DailyChallengePanel() {
           <div className="max-w-2xl space-y-4">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-lg font-bold text-gray-900">{selectedChallenge.date}</h2>
-              <span className="text-xs text-gray-500">Challenge #{selectedChallenge.challengeNumber}</span>
+
               {selectedChallenge.isPublished && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Published</span>
               )}
