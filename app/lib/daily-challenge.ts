@@ -14,6 +14,7 @@ export type GenerateResult = {
 };
 
 
+// Picks `count` random active image IDs, optionally excluding a list of IDs.
 // Raw SQL is required here because Prisma's ORM layer doesn't expose ORDER BY RANDOM().
 export async function pickImageIdsForChallenge(
   count = DAILY_CHALLENGE_ROUNDS,
