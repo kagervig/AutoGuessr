@@ -28,6 +28,7 @@ interface Params {
   username: string;
   filter: string;
   cfToken?: string;
+  playerId?: string | null;
 }
 
 interface Result {
@@ -38,7 +39,7 @@ interface Result {
   retrying: boolean;
 }
 
-export function useGameLoader({ mode, username, filter, cfToken }: Params): Result {
+export function useGameLoader({ mode, username, filter, cfToken, playerId }: Params): Result {
   const router = useRouter();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +54,7 @@ export function useGameLoader({ mode, username, filter, cfToken }: Params): Resu
     if (username) params.set("username", username);
     if (filter) params.set("filter", filter);
     if (cfToken) params.set("cf_token", cfToken);
+    if (playerId) params.set("playerId", playerId);
 
     Promise.all([
       fetch(`/api/game?${params.toString()}`, { signal: controller.signal }).then((r) =>

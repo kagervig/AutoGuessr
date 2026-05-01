@@ -18,6 +18,8 @@ import { PracticeCompleteScreen } from "./PracticeCompleteScreen";
 import { useGameLoader } from "@/app/_hooks/useGameLoader";
 import { useRoundTimer } from "@/app/_hooks/useRoundTimer";
 import { useGameSession } from "@/app/_hooks/useGameSession";
+import { usePlayerId } from "@/app/_hooks/usePlayerId";
+import { useDailyHistory } from "@/app/_hooks/useDailyHistory";
 
 const MODE_LABELS: Record<string, string> = Object.fromEntries(
   MODES.map((m) => [m.id, m.label]),
@@ -34,8 +36,10 @@ interface Props {
 
 export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const router = useRouter();
+  const playerId = usePlayerId();
+  const { recordGame } = useDailyHistory();
 
-  const { gameData, loading, error, mediumYearGuessing, retrying } = useGameLoader({ mode, username, filter, cfToken });
+  const { gameData, loading, error, mediumYearGuessing, retrying } = useGameLoader({ mode, username, filter, cfToken, playerId });
   const [introVisible, setIntroVisible] = useState(() => shouldShowIntro(mode));
 
   // currentIndex is declared here so it can be passed to both useRoundTimer and useGameSession.
@@ -93,6 +97,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
     autoSubmitRef,
     panelIndexRef,
     panelIntervalRef,
+    recordGame,
   });
 
   if (loading) {
