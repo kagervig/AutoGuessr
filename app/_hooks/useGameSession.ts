@@ -60,6 +60,7 @@ interface Params {
   autoSubmitRef: { current: ReturnType<typeof setTimeout> | null };
   panelIndexRef: { current: number };
   panelIntervalRef: { current: ReturnType<typeof setInterval> | null };
+  recordGame?: (date: string, gameId: string) => void;
 }
 
 interface Result {
@@ -102,6 +103,7 @@ export function useGameSession({
   autoSubmitRef,
   panelIndexRef,
   panelIntervalRef,
+  recordGame,
 }: Params): Result {
   const router = useRouter();
 
@@ -388,6 +390,12 @@ export function useGameSession({
         setPracticeComplete(true);
         return;
       }
+
+      if (mode === GameMode.Daily && recordGame) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        recordGame(todayStr, gameData!.gameId);
+      }
+
       try {
         const endRes = await fetch("/api/session/end", {
           method: "POST",
