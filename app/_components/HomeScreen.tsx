@@ -21,6 +21,8 @@ import { Navbar } from "@/app/components/layout/Navbar";
 import { ModeCard } from "@/app/components/ui/ModeCard";
 import { FilterGroup } from "@/app/components/ui/FilterGroup";
 import { cn } from "@/app/lib/utils";
+import { usePlayerId } from "../_hooks/usePlayerId";
+import { useDailyHistory } from "../_hooks/useDailyHistory";
 
 const MODE_ICONS: Record<GameMode, React.ReactNode> = {
   [GameMode.Daily]: <CalendarDays className="w-6 h-6" />,
@@ -47,6 +49,8 @@ interface Props {
 export default function HomeScreen({ initialFilterError, cotdSlot, enabledModes }: Props) {
   const visibleModes = MODES.filter((m) => enabledModes.includes(m.id));
   const router = useRouter();
+  const playerId = usePlayerId();
+  const { getGameIdForDate } = useDailyHistory();
 
   const [selectedMode, setSelectedMode] = useState<ModeId | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -97,9 +101,17 @@ export default function HomeScreen({ initialFilterError, cotdSlot, enabledModes 
     }
   }, [isCustomMode]);
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const existingDailyGameId = getGameIdForDate(todayStr);
+
   function handleStart() {
     if (!selectedMode) return;
     if (isCustomMode && !hasFilter) return;
+
+    if (selectedMode === GameMode.Daily && existingDailyGameId) {
+      router.push(`/results?gameId=${existingDailyGameId}&mode=${GameMode.Daily}`);
+      return;
+    }
 
     const filterConfig = {
       categorySlugs: selectedCategories,
@@ -111,6 +123,7 @@ export default function HomeScreen({ initialFilterError, cotdSlot, enabledModes 
     const params = new URLSearchParams({ mode: selectedMode });
     params.set("filter", encodeURIComponent(JSON.stringify(filterConfig)));
     if (turnstileToken) params.set("cf_token", turnstileToken);
+    if (playerId) params.set("playerId", playerId);
 
     router.push(`/game?${params.toString()}`);
   }
@@ -310,7 +323,7 @@ export default function HomeScreen({ initialFilterError, cotdSlot, enabledModes 
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
           )}
           <Power className={cn("w-6 h-6", selectedMode && (!isCustomMode || hasFilter) && (!isProd || !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || turnstileToken) && "animate-pulse")} />
-          <span>Start Engine</span>
+          <span>{selectedMode === GameMode.Daily && existingDailyGameId ? "View Results" : "Start Engine"}</span>
         </button>
       </motion.div>}
       </AnimatePresence>

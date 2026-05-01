@@ -10,6 +10,7 @@ import { calcGrade } from "@/app/lib/grade";
 import { InitialsEntry } from "./results/InitialsEntry";
 import { ScorePanel } from "./results/ScorePanel";
 import { RoundBreakdown } from "./results/RoundBreakdown";
+import { DailyRank } from "./results/DailyRank";
 import type { SessionData } from "./results/types";
 
 const MODE_LABELS: Record<string, string> = Object.fromEntries(
@@ -70,7 +71,8 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
   const approxMax = maxScore ?? 0;
   const { grade, color: gradeColor } = calcGrade(approxMax > 0 ? score / approxMax : 0);
   const modeLabel = MODE_LABELS[mode] || mode;
-  const showLeaderboard = mode !== GameMode.Practice && score > 0;
+  const isDaily = mode === GameMode.Daily;
+  const showLeaderboard = mode !== GameMode.Practice && mode !== GameMode.Daily && score > 0;
 
   async function handleShare() {
     const url = window.location.href;
@@ -112,6 +114,8 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
             approxMax={approxMax}
             personalBest={session.personalBest}
           />
+
+          {isDaily && <DailyRank gameId={gameId} />}
 
           {/* Initials entry or confirmation */}
           {showLeaderboard && hasToken && !initialsSubmitted && (
