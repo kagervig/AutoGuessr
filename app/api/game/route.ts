@@ -34,8 +34,18 @@ export async function GET(request: NextRequest) {
   const mode = searchParams.get("mode") as Mode | null;
   const filterRaw = searchParams.get("filter");
   const cfToken = searchParams.get("cf_token");
-  const playerId = searchParams.get("playerId");
+  let playerId = searchParams.get("playerId");
   const requestedDate = searchParams.get("date"); // YYYY-MM-DD
+
+  if (playerId) {
+    const player = await prisma.player.findUnique({
+      where: { id: playerId },
+      select: { id: true },
+    });
+    if (!player) {
+      playerId = null;
+    }
+  }
 
   if (!mode || !VALID_MODES.includes(mode)) {
     return Response.json({ error: "Invalid or missing mode" }, { status: 400 });
@@ -155,11 +165,14 @@ export async function GET(request: NextRequest) {
             .then((rows) => rows.map((v) => v.make)),
         ]);
       }
-    } catch {
-      return Response.json(
-        { error: "Not enough cars match this filter. Try broadening your selection." },
-        { status: 400 }
-      );
+    } catch (err) {
+      if (err instanceof Error && err.message === "Not enough images match this filter") {
+        return Response.json(
+          { error: "Not enough cars match this filter. Try broadening your selection." },
+          { status: 400 }
+        );
+      }
+      throw err;
     }
   } else {
     // custom, practice, time_attack: existing shuffle-and-slice path
