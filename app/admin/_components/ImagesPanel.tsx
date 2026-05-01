@@ -1,7 +1,7 @@
 "use client";
 // Admin panel for browsing and editing published images and their vehicle data.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Combobox from "@/app/_components/Combobox";
 import CheckboxField from "./CheckboxField";
 import { BODY_STYLES, ERAS, RARITIES } from "@/app/lib/constants";
@@ -106,22 +106,45 @@ export default function ImagesPanel() {
   >("ALL");
   const [makeFilter, setMakeFilter] = useState("");
   const [modelFilter, setModelFilter] = useState("");
+  const [missingFieldFilter, setMissingFieldFilter] = useState("");
   const [deletingUnused, setDeletingUnused] = useState(false);
   const [deleteResult, setDeleteResult] = useState<string | null>(null);
+  const [autoUpdating, setAutoUpdating] = useState(false);
+  const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const fetchImages = useCallback(() => {
     fetch("/api/admin/images")
       .then((r) => r.json())
       .then((data) => {
-        if (cancelled) return;
         setImages(data.items);
         setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+      })
+      .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchImages();
+  }, [fetchImages]);
+
+  async function autoUpdate() {
+    setAutoUpdating(true);
+    setAutoUpdateResult(null);
+    const res = await fetch("/api/admin/images/auto-update", { method: "POST" });
+    setAutoUpdating(false);
+    if (res.ok) {
+      const { updated, skipped } = await res.json();
+      const parts: string[] = [];
+      if (updated > 0) parts.push(`Filled categories for ${updated} vehicle${updated !== 1 ? "s" : ""}`);
+      if (skipped > 0) parts.push(`${skipped} skipped (no matching model)`);
+      setAutoUpdateResult(parts.length > 0 ? parts.join(", ") + "." : "Nothing to update.");
+      if (updated > 0) {
+        setLoading(true);
+        fetchImages();
+      }
+    } else {
+      setAutoUpdateResult("Auto update failed.");
+    }
+  }
 
   // Load autocomplete options once on mount
   useEffect(() => {
@@ -292,11 +315,25 @@ export default function ImagesPanel() {
       .filter(Boolean),
   )].sort();
 
+  function isMissingField(img: ImageItem, field: string): boolean {
+    switch (field) {
+      case "categories": return img.vehicle.categories.length === 0;
+      case "make": return !img.vehicle.make;
+      case "model": return !img.vehicle.model;
+      case "year": return !img.vehicle.year;
+      case "era": return !img.vehicle.era;
+      case "region": return !img.vehicle.regionSlug;
+      case "country": return !img.vehicle.countryOfOrigin;
+      default: return false;
+    }
+  }
+
   const filteredImages = images.filter((img) => {
     if (activeFilter === "active" && !img.isActive) return false;
     if (activeFilter === "inactive" && img.isActive) return false;
     if (makeFilter && img.vehicle.make !== makeFilter) return false;
     if (modelFilter && img.vehicle.model !== modelFilter) return false;
+    if (missingFieldFilter && !isMissingField(img, missingFieldFilter)) return false;
     return true;
   });
 
@@ -369,6 +406,34 @@ export default function ImagesPanel() {
               <option key={model} value={model}>{model}</option>
             ))}
           </select>
+          <select
+            value={missingFieldFilter}
+            onChange={(e) => { setMissingFieldFilter(e.target.value); setSelectedId(null); }}
+            className={`text-xs border rounded px-2 py-1 bg-white focus:outline-none focus:border-gray-400 ${
+              missingFieldFilter
+                ? "border-orange-300 text-orange-700"
+                : "border-gray-200 text-gray-600 hover:border-gray-400"
+            }`}
+          >
+            <option value="">Missing field…</option>
+            <option value="categories">Missing categories</option>
+            <option value="make">Missing make</option>
+            <option value="model">Missing model</option>
+            <option value="year">Missing year</option>
+            <option value="era">Missing era</option>
+            <option value="region">Missing region</option>
+            <option value="country">Missing country</option>
+          </select>
+          {autoUpdateResult && (
+            <span className="text-xs text-gray-500">{autoUpdateResult}</span>
+          )}
+          <button
+            onClick={autoUpdate}
+            disabled={autoUpdating}
+            className="text-xs px-2.5 py-1.5 border border-gray-200 rounded text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50"
+          >
+            {autoUpdating ? "Updating…" : "Auto update"}
+          </button>
         </div>
       </div>
 

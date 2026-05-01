@@ -127,6 +127,7 @@ export async function POST() {
             where: { vehicleId: dup.id },
           });
           if (dupTrivia) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { vehicleId: _, ...triviaData } = dupTrivia;
             await tx.vehicleTrivia.delete({ where: { vehicleId: dup.id } });
             await tx.vehicleTrivia.create({
