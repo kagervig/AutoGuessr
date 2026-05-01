@@ -48,12 +48,8 @@ export async function generateChallengesForRange(
   const skipped: string[] = [];
 
   // Normalise to UTC midnight so comparisons against DB DateTime values are timezone-safe.
-  const start = new Date(
-    Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate())
-  );
-  const end = new Date(
-    Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate())
-  );
+  const start = normalizeToUtcMidnight(startDate);
+  const end = normalizeToUtcMidnight(endDate);
 
   const current = new Date(start);
   while (current <= end) {
@@ -90,17 +86,27 @@ export async function generateChallengesForRange(
   return { created, skipped };
 }
 
-export async function getOrCreateTodaysChallenge(): Promise<DailyChallenge> {
-  const now = new Date();
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+export function normalizeToUtcMidnight(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
 
-  const existing = await prisma.dailyChallenge.findUnique({ where: { date: today } });
+export async function getChallengeByDate(dateStr: string): Promise<DailyChallenge | null> {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return prisma.dailyChallenge.findUnique({ where: { date } });
+}
+
+export async function getOrCreateTodaysChallenge(): Promise<DailyChallenge> {
+  const today = normalizeToUtcMidnight(new Date());
+  const dateStr = today.toISOString().slice(0, 10);
+
+  const existing = await getChallengeByDate(dateStr);
   if (existing) return existing;
 
   const { created } = await generateChallengesForRange(today, today);
   if (created.length === 0) {
     // This could happen if another request created it between the findUnique and generate call
-    const race = await prisma.dailyChallenge.findUnique({ where: { date: today } });
+    const race = await getChallengeByDate(dateStr);
     if (!race) throw new Error("Failed to get or create daily challenge");
     return race;
   }
