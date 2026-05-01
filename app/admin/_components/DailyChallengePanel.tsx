@@ -2,25 +2,9 @@
 
 // Admin panel for viewing and managing Daily Challenges via a monthly calendar.
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
-
-interface ChallengeImage {
-  id: string;
-  url: string | null;
-  make: string | null;
-  model: string | null;
-}
-
-interface DailyChallenge {
-  id: number;
-  date: string;
-  imageIds: string[];
-  images: ChallengeImage[];
-  isPublished: boolean;
-  curatedBy: string | null;
-  generatedAt: string;
-}
+import ChallengeImageCard from "./ChallengeImageCard";
+import type { DailyChallenge } from "./challenge-types";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -128,6 +112,10 @@ export default function DailyChallengePanel() {
       });
   }
 
+  function handleChallengeUpdate(updated: DailyChallenge) {
+    setChallengeMap((prev) => ({ ...prev, [updated.date]: updated }));
+  }
+
   const today = new Date().toISOString().slice(0, 10);
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
@@ -139,6 +127,7 @@ export default function DailyChallengePanel() {
   while (cells.length % 7 !== 0) cells.push(null);
 
   const selectedChallenge = selectedDate ? challengeMap[selectedDate] ?? null : null;
+  const isFutureChallenge = selectedDate !== null && selectedDate > today;
 
   return (
     <div className="flex h-full">
@@ -192,7 +181,10 @@ export default function DailyChallengePanel() {
                 return (
                   <button
                     key={dateStr}
-                    onClick={() => setSelectedDate(dateStr)}
+                    onClick={() => {
+                      if (!challenge) handleStartDateChange(dateStr);
+                      setSelectedDate(dateStr);
+                    }}
                     aria-label={`${dateStr}${challenge ? " — challenge exists" : " — no challenge"}`}
                     className={`aspect-square flex items-center justify-center text-xs font-medium rounded transition-colors ${cls}`}
                   >
@@ -268,7 +260,6 @@ export default function DailyChallengePanel() {
               <h2 className="text-lg font-bold text-gray-900">
                 {new Date(`${selectedChallenge.date}T00:00:00.000Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}
               </h2>
-
               {selectedChallenge.isPublished && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Published</span>
               )}
@@ -289,25 +280,13 @@ export default function DailyChallengePanel() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {selectedChallenge.images.map((img) => (
-                <div key={img.id} className="rounded-xl overflow-hidden bg-gray-100">
-                  {img.url ? (
-                    <div className="relative aspect-video">
-                      <Image
-                        src={img.url}
-                        alt={`${img.make ?? ""} ${img.model ?? ""}`.trim()}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 50vw, 33vw"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-video bg-gray-200" />
-                  )}
-                  <div className="px-2 py-1.5">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider">{img.make ?? "—"}</p>
-                    <p className="text-sm font-semibold text-gray-900 truncate">{img.model ?? "—"}</p>
-                  </div>
-                </div>
+                <ChallengeImageCard
+                  key={img.id}
+                  img={img}
+                  challengeId={selectedChallenge.id}
+                  isFutureChallenge={isFutureChallenge}
+                  onUpdate={handleChallengeUpdate}
+                />
               ))}
             </div>
           </div>
