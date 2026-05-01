@@ -113,7 +113,6 @@ export default function ImagesPanel() {
   const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
 
   const fetchImages = useCallback(() => {
-    setLoading(true);
     fetch("/api/admin/images")
       .then((r) => r.json())
       .then((data) => {
