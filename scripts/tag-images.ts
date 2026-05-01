@@ -117,34 +117,9 @@ class QuotaExceededError extends Error {
   }
 }
 
-<<<<<<< Updated upstream
-function isQuotaError(err: unknown): boolean {
-  if (!err) return false;
-  
-  // Handle standard Error objects
-  if (err instanceof Error) {
-    const msg = err.message.toLowerCase();
-    if (msg.includes("429") || msg.includes("resource_exhausted") || msg.includes("quota") || msg.includes("too many requests")) {
-      return true;
-    }
-  }
-
-  // Handle SDK-specific error objects if they have a status or code
-  const errorObj = err as any;
-  if (errorObj.status === 429 || errorObj.code === 429 || errorObj.status === "RESOURCE_EXHAUSTED") {
-    return true;
-  }
-
-  return false;
-||||||| Stash base
-function isQuotaError(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  const msg = err.message.toLowerCase();
-  return msg.includes("429") || msg.includes("resource_exhausted") || msg.includes("quota");
-=======
 function shouldRotateKey(err: unknown): boolean {
   if (!err) return false;
-  
+
   const msg = err instanceof Error ? err.message.toLowerCase() : "";
   const errorObj = err as any;
   const status = errorObj.status || errorObj.code;
@@ -155,7 +130,6 @@ function shouldRotateKey(err: unknown): boolean {
   const isRetryableMessage = msg.includes("429") || msg.includes("503") || msg.includes("quota") || msg.includes("high demand") || msg.includes("resource_exhausted") || msg.includes("unavailable");
 
   return isRetryableStatus || isRetryableMessage;
->>>>>>> Stashed changes
 }
 
 // ── Gemini prompt ─────────────────────────────────────────────────────────────
@@ -242,20 +216,9 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
 
   let result;
   try {
-<<<<<<< Updated upstream
-    // Correct model name to gemini-1.5-flash
-||||||| Stash base
-=======
     const modelName = usePro ? "gemini-2.5-pro" : "gemini-2.5-flash";
->>>>>>> Stashed changes
     result = await ai.models.generateContent({
-<<<<<<< Updated upstream
-      model: "gemini-1.5-flash",
-||||||| Stash base
-      model: "gemini-2.5-flash",
-=======
       model: modelName,
->>>>>>> Stashed changes
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
@@ -271,18 +234,9 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
       ],
     });
   } catch (err) {
-<<<<<<< Updated upstream
-    if (isQuotaError(err)) throw new QuotaExceededError();
-    console.error(`  Error calling Gemini for ${cloudinaryPublicId}:`, err);
-    return null;
-||||||| Stash base
-    if (isQuotaError(err)) throw new QuotaExceededError();
-    throw err;
-=======
     if (shouldRotateKey(err)) throw new QuotaExceededError();
     console.error(`  Error calling Gemini for ${cloudinaryPublicId}:`, err);
     return null;
->>>>>>> Stashed changes
   }
 
   const text = result.text ?? "";
