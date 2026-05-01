@@ -10,6 +10,7 @@ const HARD_MODES: GameMode[] = [GameMode.Standard, GameMode.Hardcore, GameMode.T
 const CHOICE_MODES: GameMode[] = [GameMode.Easy, GameMode.Practice, GameMode.Custom];
 
 const PROMPT_LABELS: Record<GameMode, string> = {
+  [GameMode.Daily]: "Choose the correct make & model",
   [GameMode.Easy]: "Choose the correct make & model",
   [GameMode.Custom]: "Choose the correct make & model",
   [GameMode.Standard]: "Type make, model & year exactly",

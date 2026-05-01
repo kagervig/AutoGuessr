@@ -15,6 +15,7 @@ const MAX_MULTIPLIERS: Record<GameMode, number> = {
   [GameMode.Hardcore]: 2.2,
   [GameMode.TimeAttack]: 2.0,
   [GameMode.Practice]: 1.0,
+  [GameMode.Daily]: 1.7,
 };
 
 // A single retry absorbs transient network blips (mobile handoff, Wi-Fi reconnect).

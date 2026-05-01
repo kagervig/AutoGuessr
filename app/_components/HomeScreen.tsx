@@ -6,6 +6,7 @@ import Image from "next/image";
 import Script from "next/script";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  CalendarDays,
   ShieldCheck,
   Settings2,
   Keyboard,
@@ -22,6 +23,7 @@ import { FilterGroup } from "@/app/components/ui/FilterGroup";
 import { cn } from "@/app/lib/utils";
 
 const MODE_ICONS: Record<GameMode, React.ReactNode> = {
+  [GameMode.Daily]: <CalendarDays className="w-6 h-6" />,
   [GameMode.Easy]: <ShieldCheck className="w-6 h-6" />,
   [GameMode.Custom]: <Settings2 className="w-6 h-6" />,
   [GameMode.Standard]: <Keyboard className="w-6 h-6" />,
