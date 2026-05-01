@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Users, TrendingUp } from "lucide-react";
+import { Users, TrendingUp } from "lucide-react";
 
 interface RankData {
   rank: number;
