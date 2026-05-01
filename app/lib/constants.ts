@@ -12,7 +12,7 @@ export const ERAS = ["classic", "retro", "modern", "contemporary"] as const;
 export const RARITIES = ["common", "uncommon", "rare", "ultra_rare"] as const;
 
 export const GameMode = {
-  Daily: "daily_challenge",
+  Daily: "daily",
   Easy: "easy",
   Standard: "standard",
   Hardcore: "hardcore",
