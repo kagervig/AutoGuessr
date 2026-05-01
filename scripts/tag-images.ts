@@ -26,7 +26,7 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../app/generated/prisma/client";
+import { PrismaClient, Prisma } from "../app/generated/prisma/client";
 import { lookupMakeOrigin } from "./lib/make-origins";
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -39,7 +39,16 @@ const STATE_FILE = path.join(process.cwd(), ".gemini-key-state.json");
 
 const args = process.argv.slice(2);
 const limitArg = args.indexOf("--limit");
-const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : undefined;
+const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : 10;
+
+const force = args.includes("--force");
+const usePro = args.includes("--pro");
+const resetKeys = args.includes("--reset-keys");
+const minConfidenceArg = args.indexOf("--min-confidence");
+const minConfidence = minConfidenceArg !== -1 ? parseFloat(args[minConfidenceArg + 1]) : undefined;
+
+// Flash: 15 RPM (4.5s), Pro: 2 RPM (30.5s)
+const effectiveRateLimit = usePro ? 30500 : RATE_LIMIT_MS;
 
 // ── API key management ────────────────────────────────────────────────────────
 
@@ -108,10 +117,19 @@ class QuotaExceededError extends Error {
   }
 }
 
-function isQuotaError(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  const msg = err.message.toLowerCase();
-  return msg.includes("429") || msg.includes("resource_exhausted") || msg.includes("quota");
+function shouldRotateKey(err: unknown): boolean {
+  if (!err) return false;
+
+  const msg = err instanceof Error ? err.message.toLowerCase() : "";
+  const errorObj = err as { status?: number | string; code?: number | string };
+  const status = errorObj.status || errorObj.code;
+
+  // 429: Quota exceeded
+  // 503: High demand / Service Unavailable
+  const isRetryableStatus = status === 429 || status === 503 || status === "RESOURCE_EXHAUSTED" || status === "UNAVAILABLE";
+  const isRetryableMessage = msg.includes("429") || msg.includes("503") || msg.includes("quota") || msg.includes("high demand") || msg.includes("resource_exhausted") || msg.includes("unavailable");
+
+  return isRetryableStatus || isRetryableMessage;
 }
 
 // ── Gemini prompt ─────────────────────────────────────────────────────────────
@@ -130,6 +148,7 @@ const SYSTEM_INSTRUCTION = `You are a car identification expert. Given a photo, 
   "has_multiple_vehicles": boolean — true if two or more distinct vehicles appear in the image,
   "is_face_visible": boolean — true if any human face is visible in the image,
   "is_vehicle_unmodified": boolean — true if the vehicle appears to be stock/unmodified; false if clearly modified (body kit, custom paint, aftermarket wheels, roll cage, racing livery, etc.),
+  "categories": ["array of applicable slugs from: classic, muscle, supercar, exotic, rare, sports, european, family, compact, race, rally, jdm, luxury, electric, concept, sea, china — pick all that apply, or empty array if none fit"],
   "notes": "string — anything uncertain or worth flagging for manual review, otherwise empty string"
 }
 
@@ -155,6 +174,7 @@ interface GeminiTag {
   has_multiple_vehicles: boolean;
   is_face_visible: boolean;
   is_vehicle_unmodified: boolean;
+  categories: string[];
   notes: string;
 }
 
@@ -198,8 +218,9 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
 
   let result;
   try {
+    const modelName = usePro ? "gemini-2.5-pro" : "gemini-2.5-flash";
     result = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: modelName,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
@@ -215,22 +236,23 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
       ],
     });
   } catch (err) {
-    if (isQuotaError(err)) throw new QuotaExceededError();
-    throw err;
+    if (shouldRotateKey(err)) throw new QuotaExceededError();
+    console.error(`  Error calling Gemini for ${cloudinaryPublicId}:`, err);
+    return null;
   }
 
   const text = result.text ?? "";
 
   if (!text) {
     const reason = result.candidates?.[0]?.finishReason ?? "unknown";
-    console.warn(`  Empty response (finishReason: ${reason})`);
+    console.warn(`  Empty response (finishReason: ${reason}) for ${cloudinaryPublicId}`);
     return null;
   }
 
   try {
     return JSON.parse(text) as GeminiTag;
   } catch {
-    console.warn(`  Could not parse response:`, text.slice(0, 300));
+    console.warn(`  Could not parse response for ${cloudinaryPublicId}:`, text.slice(0, 300));
     return null;
   }
 }
@@ -279,6 +301,17 @@ async function autopublish(prisma: PrismaClient, stagingId: string, tag: GeminiT
       rarity: "common",
     },
   });
+
+  if (tag.categories?.length) {
+    const matchedCategories = await prisma.category.findMany({
+      where: { slug: { in: tag.categories } },
+    });
+    if (matchedCategories.length > 0) {
+      await prisma.vehicleCategory.createMany({
+        data: matchedCategories.map((c) => ({ vehicleId: vehicle.id, categoryId: c.id })),
+      });
+    }
+  }
 
   const image = await prisma.image.create({
     data: {
@@ -331,6 +364,13 @@ async function autopublish(prisma: PrismaClient, stagingId: string, tag: GeminiT
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
+  if (resetKeys) {
+    if (fs.existsSync(STATE_FILE)) {
+      fs.unlinkSync(STATE_FILE);
+      console.log("Key state reset. All keys are now available.");
+    }
+  }
+
   if (!process.env.CLOUDINARY_CLOUD_NAME) {
     console.error("Missing CLOUDINARY_CLOUD_NAME — add it to your .env file");
     process.exit(1);
@@ -354,8 +394,21 @@ async function main(): Promise<void> {
   const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
+  const queryWhere: Prisma.StagingImageWhereInput = {
+    status: { in: ["PENDING_REVIEW", "COMMUNITY_REVIEW", "READY"] }
+  };
+
+  if (!force) {
+    queryWhere.aiTaggedAt = null;
+  } else if (minConfidence !== undefined) {
+    queryWhere.OR = [
+      { aiTaggedAt: null },
+      { aiConfidence: { lt: minConfidence } }
+    ];
+  }
+
   const untagged = await prisma.stagingImage.findMany({
-    where: { aiTaggedAt: null },
+    where: queryWhere,
     orderBy: { createdAt: "asc" },
     ...(limit ? { take: limit } : {}),
   });
@@ -367,28 +420,32 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log(`Tagging ${untagged.length} image(s)...`);
+  console.log(`Tagging up to ${untagged.length} image(s)...`);
 
   let keyIndex = 0;
   let ai = new GoogleGenAI({ apiKey: availableKeys[keyIndex].key });
-  console.log(`Using key ${availableKeys[keyIndex].id}`);
+  console.log(`Using key GEMINI_API_KEY_${availableKeys[keyIndex].id}`);
 
   let tagged = 0;
   let failed = 0;
 
   for (let i = 0; i < untagged.length; i++) {
     const record = untagged[i];
-    console.log(`[${i + 1}/${untagged.length}] ${record.filename}`);
+    console.log(`[${i + 1}/${untagged.length}] Processing ${record.filename} (${record.cloudinaryPublicId})`);
 
     let tag: GeminiTag | null = null;
 
     try {
       tag = await tagImage(ai, record.cloudinaryPublicId);
     } catch (err) {
-      if (!(err instanceof QuotaExceededError)) throw err;
+      if (!(err instanceof QuotaExceededError)) {
+        console.error(`  Unexpected error processing ${record.filename}:`, err);
+        failed++;
+        continue;
+      }
 
       markKeyUsed(availableKeys[keyIndex].id);
-      console.warn(`  Key ${availableKeys[keyIndex].id} quota exceeded.`);
+      console.warn(`  Key GEMINI_API_KEY_${availableKeys[keyIndex].id} quota exceeded.`);
       keyIndex++;
 
       if (keyIndex >= availableKeys.length) {
@@ -398,56 +455,59 @@ async function main(): Promise<void> {
       }
 
       ai = new GoogleGenAI({ apiKey: availableKeys[keyIndex].key });
-      console.log(`  Switched to key ${availableKeys[keyIndex].id} — retrying image.`);
-
-      try {
-        tag = await tagImage(ai, record.cloudinaryPublicId);
-      } catch (retryErr) {
-        if (retryErr instanceof QuotaExceededError) {
-          // Let the next iteration handle further key rotation
-          i--;
-          continue;
-        }
-        throw retryErr;
-      }
+      console.log(`  Switched to key GEMINI_API_KEY_${availableKeys[keyIndex].id} — retrying image.`);
+      
+      // Retry this same image with the new key
+      i--;
+      continue;
     }
 
     if (!tag) {
+      console.warn(`  Failed to tag image ${record.filename}`);
       failed++;
     } else {
-      await prisma.stagingImage.update({
-        where: { id: record.id },
-        data: {
-          aiMake:       tag.make || null,
-          aiModel:      tag.model || null,
-          aiYear:       tag.year,
-          aiBodyStyle:  tag.body_style || null,
-          aiConfidence: tag.confidence,
-          aiTaggedAt:   new Date(),
-          // Boolean flags: only set when admin hasn't already reviewed them
-          ...(record.adminIsLogoVisible        === null ? { adminIsLogoVisible:        tag.is_logo_visible        } : {}),
-          ...(record.adminIsModelNameVisible   === null ? { adminIsModelNameVisible:   tag.is_model_name_visible  } : {}),
-          ...(record.adminHasMultipleVehicles  === null ? { adminHasMultipleVehicles:  tag.has_multiple_vehicles  } : {}),
-          ...(record.adminIsFaceVisible        === null ? { adminIsFaceVisible:        tag.is_face_visible        } : {}),
-          ...(record.adminIsVehicleUnmodified  === null ? { adminIsVehicleUnmodified:  tag.is_vehicle_unmodified  } : {}),
-          // Store notes in adminNotes only if it's empty — don't overwrite human edits
-          ...(record.adminNotes === null && tag.notes
-            ? { adminNotes: `[AI] ${tag.notes}` }
-            : {}),
-        },
-      });
+      try {
+        await prisma.stagingImage.update({
+          where: { id: record.id },
+          data: {
+            aiMake:       tag.make || null,
+            aiModel:      tag.model || null,
+            aiYear:       tag.year,
+            aiBodyStyle:  tag.body_style || null,
+            aiConfidence: tag.confidence,
+            aiTaggedAt:   new Date(),
+            // Boolean flags: only set when admin hasn't already reviewed them
+            ...(record.adminIsLogoVisible        === null ? { adminIsLogoVisible:        tag.is_logo_visible        } : {}),
+            ...(record.adminIsModelNameVisible   === null ? { adminIsModelNameVisible:   tag.is_model_name_visible  } : {}),
+            ...(record.adminHasMultipleVehicles  === null ? { adminHasMultipleVehicles:  tag.has_multiple_vehicles  } : {}),
+            ...(record.adminIsFaceVisible        === null ? { adminIsFaceVisible:        tag.is_face_visible        } : {}),
+            ...(record.adminIsVehicleUnmodified  === null ? { adminIsVehicleUnmodified:  tag.is_vehicle_unmodified  } : {}),
+            // Don't overwrite human edits on categories or notes
+            ...(record.adminCategories.length === 0 && tag.categories?.length
+              ? { adminCategories: tag.categories }
+              : {}),
+            ...(record.adminNotes === null && tag.notes
+              ? { adminNotes: `[AI] ${tag.notes}` }
+              : {}),
+          },
+        });
 
-      const yearStr = tag.year ? String(tag.year) : "?";
-      console.log(`  → ${tag.make} ${tag.model} ${yearStr} (confidence: ${tag.confidence})${tag.notes ? ` — ${tag.notes}` : ""}`);
-      tagged++;
+        const yearStr = tag.year ? String(tag.year) : "?";
+        console.log(`  → ${tag.make} ${tag.model} ${yearStr} (confidence: ${tag.confidence})${tag.notes ? ` — ${tag.notes}` : ""}`);
+        console.log(`  Tagged image: ${record.filename}`); // Keyword for GA summary
+        tagged++;
 
-      if (tag.confidence >= AUTOPUBLISH_CONFIDENCE_THRESHOLD) {
-        await autopublish(prisma, record.id, tag);
+        if (tag.confidence >= AUTOPUBLISH_CONFIDENCE_THRESHOLD) {
+          await autopublish(prisma, record.id, tag);
+        }
+      } catch (dbErr) {
+        console.error(`  Database error updating ${record.filename}:`, dbErr);
+        failed++;
       }
     }
 
     if (i < untagged.length - 1) {
-      await sleep(RATE_LIMIT_MS);
+      await sleep(effectiveRateLimit);
     }
   }
 

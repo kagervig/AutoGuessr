@@ -3,7 +3,7 @@ name: Tag Images
 on:
   schedule:
     - cron: '0 2 * * *'
-   workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   tag:
@@ -21,7 +21,7 @@ jobs:
         run: npm ci
 
       - name: Run tagger
-        run: npm run tag-images 2>&1 | tee output.log
+        run: npm run tag-images -- --limit 10 2>&1 | tee output.log
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
