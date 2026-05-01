@@ -192,6 +192,7 @@ export function scoreRound({
       : 0;
 
   const multipliers: Record<GameMode, number> = {
+    [GameMode.Daily]: 1.7,
     [GameMode.Easy]: 1.0,
     [GameMode.Custom]: 1.0,
     [GameMode.Standard]: 1.7,
@@ -232,6 +233,7 @@ export function proLevelBonus(correctGuesses: number, incorrectGuesses: number):
 }
 
 export const TIME_LIMITS: Record<GameMode, number> = {
+  [GameMode.Daily]: 30_000,
   [GameMode.Easy]: 30_000,
   [GameMode.Custom]: 30_000,
   [GameMode.Standard]: 30_000,
