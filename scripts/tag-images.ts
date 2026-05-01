@@ -39,15 +39,6 @@ const STATE_FILE = path.join(process.cwd(), ".gemini-key-state.json");
 
 const args = process.argv.slice(2);
 const limitArg = args.indexOf("--limit");
-<<<<<<< Updated upstream
-const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : 10;
-
-const force = args.includes("--force");
-const minConfidenceArg = args.indexOf("--min-confidence");
-const minConfidence = minConfidenceArg !== -1 ? parseFloat(args[minConfidenceArg + 1]) : undefined;
-||||||| Stash base
-const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : undefined;
-=======
 const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : 10;
 
 const force = args.includes("--force");
@@ -58,7 +49,6 @@ const minConfidence = minConfidenceArg !== -1 ? parseFloat(args[minConfidenceArg
 
 // Flash: 15 RPM (4.5s), Pro: 2 RPM (30.5s)
 const effectiveRateLimit = usePro ? 30500 : RATE_LIMIT_MS;
->>>>>>> Stashed changes
 
 // ── API key management ────────────────────────────────────────────────────────
 
