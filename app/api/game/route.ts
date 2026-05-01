@@ -6,6 +6,7 @@ import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, proLev
 import { ROUNDS_PER_GAME, GameMode } from "@/app/lib/constants";
 import { selectTieredImages } from "@/app/lib/image-selection";
 import { getOrCreateTodaysFeatured } from "@/app/lib/car-of-the-day";
+import { getOrCreateTodaysChallenge } from "@/app/lib/daily-challenge";
 
 const VALID_MODES = Object.values(GameMode);
 type Mode = GameMode;
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
   const mode = searchParams.get("mode") as Mode | null;
   const filterRaw = searchParams.get("filter");
   const cfToken = searchParams.get("cf_token");
+  const playerId = searchParams.get("playerId");
 
   if (!mode || !VALID_MODES.includes(mode)) {
     return Response.json({ error: "Invalid or missing mode" }, { status: 400 });
@@ -79,8 +81,48 @@ export async function GET(request: NextRequest) {
 
   let selected: SelectableImage[];
   let makes: string[] | undefined;
+  let dailyChallengeId: number | undefined;
 
-  if (mode === GameMode.Easy || mode === GameMode.Standard || mode === GameMode.Hardcore) {
+  if (mode === GameMode.Daily) {
+    const challenge = await getOrCreateTodaysChallenge();
+    dailyChallengeId = challenge.id;
+
+    // Check if player has already played today
+    if (playerId) {
+      const existing = await prisma.gameSession.findFirst({
+        where: { dailyChallengeId: challenge.id, playerId },
+        select: { id: true, endedAt: true },
+      });
+      if (existing) {
+        return Response.json({
+          error: "You have already played today's challenge.",
+          existingGameId: existing.id,
+          isComplete: !!existing.endedAt,
+        }, { status: 403 });
+      }
+    }
+
+    const images = await prisma.image.findMany({
+      where: { id: { in: challenge.imageIds } },
+      include: {
+        vehicle: {
+          select: { id: true, make: true, model: true, year: true, era: true },
+        },
+      },
+    });
+
+    // Maintain the order defined in the challenge imageIds array
+    const imageMap = new Map(images.map((img) => [img.id, img]));
+    selected = challenge.imageIds
+      .map((id) => imageMap.get(id))
+      .filter((img): img is NonNullable<typeof img> => !!img);
+
+    [makes] = await Promise.all([
+      prisma.vehicle
+        .findMany({ select: { make: true }, distinct: ["make"], orderBy: { make: "asc" } })
+        .then((rows) => rows.map((v) => v.make)),
+    ]);
+  } else if (mode === GameMode.Easy || mode === GameMode.Standard || mode === GameMode.Hardcore) {
     try {
       if (mode === GameMode.Easy) {
         selected = await selectTieredImages(mode, vehicleFilters);
@@ -151,6 +193,8 @@ export async function GET(request: NextRequest) {
       filterConfig: filterConfig as object,
       sessionToken,
       featuredVehicleIdAtStart,
+      dailyChallengeId,
+      playerId,
     },
   });
 

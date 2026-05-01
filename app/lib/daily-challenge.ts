@@ -89,3 +89,20 @@ export async function generateChallengesForRange(
 
   return { created, skipped };
 }
+
+export async function getOrCreateTodaysChallenge(): Promise<DailyChallenge> {
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+  const existing = await prisma.dailyChallenge.findUnique({ where: { date: today } });
+  if (existing) return existing;
+
+  const { created } = await generateChallengesForRange(today, today);
+  if (created.length === 0) {
+    // This could happen if another request created it between the findUnique and generate call
+    const race = await prisma.dailyChallenge.findUnique({ where: { date: today } });
+    if (!race) throw new Error("Failed to get or create daily challenge");
+    return race;
+  }
+  return created[0];
+}
