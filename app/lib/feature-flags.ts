@@ -33,6 +33,7 @@ export const FEATURE_FLAGS: FeatureFlagDefinition[] = [
 ];
 
 export const GAME_MODE_FLAG: Record<GameMode, FeatureFlagKey> = {
+  [GameMode.Daily]:      FEATURE_FLAG_KEY.DailyChallenge,
   [GameMode.Easy]:       FEATURE_FLAG_KEY.ModeEasy,
   [GameMode.Standard]:   FEATURE_FLAG_KEY.ModeStandard,
   [GameMode.Hardcore]:   FEATURE_FLAG_KEY.ModeHardcore,
