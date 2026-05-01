@@ -12,6 +12,7 @@ export const ERAS = ["classic", "retro", "modern", "contemporary"] as const;
 export const RARITIES = ["common", "uncommon", "rare", "ultra_rare"] as const;
 
 export const GameMode = {
+  Daily: "daily_challenge",
   Easy: "easy",
   Standard: "standard",
   Hardcore: "hardcore",
@@ -21,6 +22,11 @@ export const GameMode = {
 } as const;
 export type GameMode = (typeof GameMode)[keyof typeof GameMode];
 export const MODES = [
+  {
+    id: GameMode.Daily,
+    label: "Daily Challenge",
+    description: "One challenge, every day. Shared with the world.",
+  },
   {
     id: GameMode.Easy,
     label: "Rookie",
