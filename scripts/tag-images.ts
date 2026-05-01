@@ -148,6 +148,7 @@ const SYSTEM_INSTRUCTION = `You are a car identification expert. Given a photo, 
   "has_multiple_vehicles": boolean — true if two or more distinct vehicles appear in the image,
   "is_face_visible": boolean — true if any human face is visible in the image,
   "is_vehicle_unmodified": boolean — true if the vehicle appears to be stock/unmodified; false if clearly modified (body kit, custom paint, aftermarket wheels, roll cage, racing livery, etc.),
+  "categories": ["array of applicable slugs from: classic, muscle, supercar, exotic, rare, sports, european, family, compact, race, rally, jdm, luxury, electric, concept, sea, china — pick all that apply, or empty array if none fit"],
   "notes": "string — anything uncertain or worth flagging for manual review, otherwise empty string"
 }
 
@@ -173,6 +174,7 @@ interface GeminiTag {
   has_multiple_vehicles: boolean;
   is_face_visible: boolean;
   is_vehicle_unmodified: boolean;
+  categories: string[];
   notes: string;
 }
 
@@ -299,6 +301,17 @@ async function autopublish(prisma: PrismaClient, stagingId: string, tag: GeminiT
       rarity: "common",
     },
   });
+
+  if (tag.categories?.length) {
+    const matchedCategories = await prisma.category.findMany({
+      where: { slug: { in: tag.categories } },
+    });
+    if (matchedCategories.length > 0) {
+      await prisma.vehicleCategory.createMany({
+        data: matchedCategories.map((c) => ({ vehicleId: vehicle.id, categoryId: c.id })),
+      });
+    }
+  }
 
   const image = await prisma.image.create({
     data: {
@@ -469,7 +482,10 @@ async function main(): Promise<void> {
             ...(record.adminHasMultipleVehicles  === null ? { adminHasMultipleVehicles:  tag.has_multiple_vehicles  } : {}),
             ...(record.adminIsFaceVisible        === null ? { adminIsFaceVisible:        tag.is_face_visible        } : {}),
             ...(record.adminIsVehicleUnmodified  === null ? { adminIsVehicleUnmodified:  tag.is_vehicle_unmodified  } : {}),
-            // Store notes in adminNotes only if it's empty — don't overwrite human edits
+            // Don't overwrite human edits on categories or notes
+            ...(record.adminCategories.length === 0 && tag.categories?.length
+              ? { adminCategories: tag.categories }
+              : {}),
             ...(record.adminNotes === null && tag.notes
               ? { adminNotes: `[AI] ${tag.notes}` }
               : {}),
