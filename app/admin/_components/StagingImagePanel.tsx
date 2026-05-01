@@ -74,6 +74,7 @@ export default function StagingImagePanel() {
   const [modelFilter, setModelFilter] = useState("");
   const [filterAiTagged, setFilterAiTagged] = useState(false);
   const [filterIncomplete, setFilterIncomplete] = useState(false);
+  const [missingFieldFilter, setMissingFieldFilter] = useState("");
   const [deletingUnused, setDeletingUnused] = useState(false);
   const [deleteResult, setDeleteResult] = useState<string | null>(null);
 
@@ -83,13 +84,13 @@ export default function StagingImagePanel() {
     const res = await fetch("/api/admin/staging/auto-update", { method: "POST" });
     setAutoUpdating(false);
     if (res.ok) {
-      const { updated, skipped } = await res.json();
-      setAutoUpdateResult(
-        updated === 0
-          ? "Nothing to update."
-          : `Updated ${updated} image${updated !== 1 ? "s" : ""}${skipped > 0 ? `, ${skipped} skipped (unknown make)` : ""}.`
-      );
-      if (updated > 0) fetchImages();
+      const { updated, skipped, vehicleUpdated } = await res.json();
+      const parts: string[] = [];
+      if (updated > 0) parts.push(`Updated ${updated} image${updated !== 1 ? "s" : ""}`);
+      if (vehicleUpdated > 0) parts.push(`filled fields for ${vehicleUpdated} from existing vehicles`);
+      if (skipped > 0) parts.push(`${skipped} skipped (unknown make)`);
+      setAutoUpdateResult(parts.length > 0 ? parts.join(", ") + "." : "Nothing to update.");
+      if (updated > 0 || vehicleUpdated > 0) fetchImages();
     } else {
       setAutoUpdateResult("Auto update failed.");
     }
@@ -325,6 +326,19 @@ export default function StagingImagePanel() {
     return img.ai.make !== null;
   }
 
+  function isMissingField(img: StagingImage, field: string): boolean {
+    switch (field) {
+      case "categories": return img.admin.categories.length === 0;
+      case "make": return !img.admin.make && !img.confirmed.make && !img.ai.make;
+      case "model": return !img.admin.model && !img.confirmed.model && !img.ai.model;
+      case "year": return !img.admin.year && !img.confirmed.year && !img.ai.year;
+      case "era": return !img.admin.era;
+      case "region": return !img.admin.regionSlug;
+      case "country": return !img.admin.countryOfOrigin;
+      default: return false;
+    }
+  }
+
   function isIncomplete(img: StagingImage) {
     const hasSomeData = !!(
       img.ai.make || img.ai.model || img.ai.year ||
@@ -351,6 +365,7 @@ export default function StagingImagePanel() {
     if (modelFilter && stagingModel(img) !== modelFilter) return false;
     if (filterAiTagged && !isAiTagged(img)) return false;
     if (filterIncomplete && !isIncomplete(img)) return false;
+    if (missingFieldFilter && !isMissingField(img, missingFieldFilter)) return false;
     return true;
   });
 
@@ -470,6 +485,24 @@ export default function StagingImagePanel() {
           >
             Incomplete
           </button>
+          <select
+            value={missingFieldFilter}
+            onChange={(e) => { setMissingFieldFilter(e.target.value); setSelectedIds([]); }}
+            className={`text-xs border rounded px-2 py-1 bg-white focus:outline-none focus:border-gray-400 ${
+              missingFieldFilter
+                ? "border-orange-300 text-orange-700"
+                : "border-gray-200 text-gray-600 hover:border-gray-400"
+            }`}
+          >
+            <option value="">Missing field…</option>
+            <option value="categories">Missing categories</option>
+            <option value="make">Missing make</option>
+            <option value="model">Missing model</option>
+            <option value="year">Missing year</option>
+            <option value="era">Missing era</option>
+            <option value="region">Missing region</option>
+            <option value="country">Missing country</option>
+          </select>
           <select
             value={makeFilter}
             onChange={(e) => {
