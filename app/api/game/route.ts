@@ -6,7 +6,8 @@ import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, proLev
 import { ROUNDS_PER_GAME, GameMode } from "@/app/lib/constants";
 import { selectTieredImages } from "@/app/lib/image-selection";
 import { getOrCreateTodaysFeatured } from "@/app/lib/car-of-the-day";
-import { getOrCreateTodaysChallenge } from "@/app/lib/daily-challenge";
+import { getOrCreateTodaysChallenge, getChallengeByDate } from "@/app/lib/daily-challenge";
+import type { DailyChallenge } from "@/app/generated/prisma/client";
 
 const VALID_MODES = Object.values(GameMode);
 type Mode = GameMode;
@@ -33,7 +34,18 @@ export async function GET(request: NextRequest) {
   const mode = searchParams.get("mode") as Mode | null;
   const filterRaw = searchParams.get("filter");
   const cfToken = searchParams.get("cf_token");
-  const playerId = searchParams.get("playerId");
+  let playerId = searchParams.get("playerId");
+  const requestedDate = searchParams.get("date"); // YYYY-MM-DD
+
+  if (playerId) {
+    const player = await prisma.player.findUnique({
+      where: { id: playerId },
+      select: { id: true },
+    });
+    if (!player) {
+      playerId = null;
+    }
+  }
 
   if (!mode || !VALID_MODES.includes(mode)) {
     return Response.json({ error: "Invalid or missing mode" }, { status: 400 });
@@ -84,10 +96,29 @@ export async function GET(request: NextRequest) {
   let dailyChallengeId: number | undefined;
 
   if (mode === GameMode.Daily) {
-    const challenge = await getOrCreateTodaysChallenge();
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const dateToPlay = requestedDate || todayStr;
+
+    // Strict UTC check: Cannot play future challenges
+    if (dateToPlay > todayStr) {
+      return Response.json({ error: "This challenge is not yet available." }, { status: 403 });
+    }
+
+    let challenge: DailyChallenge | null;
+    if (dateToPlay === todayStr) {
+      challenge = await getOrCreateTodaysChallenge();
+    } else {
+      challenge = await getChallengeByDate(dateToPlay);
+    }
+
+    if (!challenge) {
+      return Response.json({ error: "Daily challenge not found for this date." }, { status: 404 });
+    }
+
     dailyChallengeId = challenge.id;
 
-    // Check if player has already played today
+    // Check if player has already played this specific challenge
     if (playerId) {
       const existing = await prisma.gameSession.findFirst({
         where: { dailyChallengeId: challenge.id, playerId },
@@ -95,7 +126,7 @@ export async function GET(request: NextRequest) {
       });
       if (existing) {
         return Response.json({
-          error: "You have already played today's challenge.",
+          error: "You have already played this challenge.",
           existingGameId: existing.id,
           isComplete: !!existing.endedAt,
         }, { status: 403 });
@@ -134,11 +165,14 @@ export async function GET(request: NextRequest) {
             .then((rows) => rows.map((v) => v.make)),
         ]);
       }
-    } catch {
-      return Response.json(
-        { error: "Not enough cars match this filter. Try broadening your selection." },
-        { status: 400 }
-      );
+    } catch (err) {
+      if (err instanceof Error && err.message === "Not enough images match this filter") {
+        return Response.json(
+          { error: "Not enough cars match this filter. Try broadening your selection." },
+          { status: 400 }
+        );
+      }
+      throw err;
     }
   } else {
     // custom, practice, time_attack: existing shuffle-and-slice path
