@@ -26,7 +26,7 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../app/generated/prisma/client";
+import { PrismaClient, Prisma } from "../app/generated/prisma/client";
 import { lookupMakeOrigin } from "./lib/make-origins";
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ function shouldRotateKey(err: unknown): boolean {
   if (!err) return false;
 
   const msg = err instanceof Error ? err.message.toLowerCase() : "";
-  const errorObj = err as any;
+  const errorObj = err as { status?: number | string; code?: number | string };
   const status = errorObj.status || errorObj.code;
 
   // 429: Quota exceeded
@@ -381,7 +381,7 @@ async function main(): Promise<void> {
   const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
-  const queryWhere: any = {
+  const queryWhere: Prisma.StagingImageWhereInput = {
     status: { in: ["PENDING_REVIEW", "COMMUNITY_REVIEW", "READY"] }
   };
 
