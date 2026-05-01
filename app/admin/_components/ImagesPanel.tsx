@@ -113,13 +113,13 @@ export default function ImagesPanel() {
   const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
 
   const fetchImages = useCallback(() => {
-    setLoading(true);
     fetch("/api/admin/images")
       .then((r) => r.json())
       .then((data) => {
         setImages(data.items);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -137,7 +137,10 @@ export default function ImagesPanel() {
       if (updated > 0) parts.push(`Filled categories for ${updated} vehicle${updated !== 1 ? "s" : ""}`);
       if (skipped > 0) parts.push(`${skipped} skipped (no matching model)`);
       setAutoUpdateResult(parts.length > 0 ? parts.join(", ") + "." : "Nothing to update.");
-      if (updated > 0) fetchImages();
+      if (updated > 0) {
+        setLoading(true);
+        fetchImages();
+      }
     } else {
       setAutoUpdateResult("Auto update failed.");
     }

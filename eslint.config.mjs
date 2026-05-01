@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Generated coverage output — not source code
     "coverage/**",
+    "tmp/**",
   ]),
 ]);
 

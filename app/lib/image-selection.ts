@@ -265,6 +265,28 @@ export function selectHardcoreImages(pool: ScoredImage[]): SelectedImage[] {
     selected.push(...pickWeighted(excl(pool), 10 - selected.length));
   }
 
+  // Final constraint: at most 2 images with isModelNameVisible across ALL slots
+  const allModelVisible = selected.filter((img) => img.isModelNameVisible);
+  if (allModelVisible.length > 2) {
+    const excess = allModelVisible.length - 2;
+    // Sort by selectionWeight ascending to replace the "least valuable" images first
+    const toReplace = allModelVisible
+      .sort((a, b) => a.selectionWeight - b.selectionWeight)
+      .slice(0, excess);
+
+    const replacementPool = hardcorePool.filter((img) => !img.isModelNameVisible);
+
+    for (const img of toReplace) {
+      const replacements = pickWeighted(excl(replacementPool), 1);
+      if (replacements.length > 0) {
+        const idx = selected.indexOf(img);
+        if (idx !== -1) {
+          selected.splice(idx, 1, replacements[0]);
+        }
+      }
+    }
+  }
+
   return shuffle(selected) as SelectedImage[];
 }
 
