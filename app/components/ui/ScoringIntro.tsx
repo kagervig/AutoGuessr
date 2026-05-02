@@ -39,6 +39,20 @@ interface ModeIntroConfig {
 const ROW_ICON_CLASS = "w-5 h-5 shrink-0 text-white/50";
 
 const MODE_INTROS: Record<string, ModeIntroConfig> = {
+  daily: {
+    heading: "Daily Challenge",
+    icon: <Calendar className="w-8 h-8 text-purple-400" />,
+    description: "Multiple-choice answers. Same game for everyone — one shot per day.",
+    difficulty: 3,
+    difficultyLabel: "Advanced",
+    rows: [
+      { icon: <CheckCircle2 className={ROW_ICON_CLASS} />, label: "Correct make",          value: "+300 pts" },
+      { icon: <Target       className={ROW_ICON_CLASS} />, label: "Correct model",         value: "+400 pts" },
+      { icon: <Clock        className={ROW_ICON_CLASS} />, label: "Speed bonus",           value: "up to +100 pts" },
+      { icon: <Star         className={ROW_ICON_CLASS} />, label: "Difficulty multiplier", value: "×1.7" },
+    ],
+    tip: "Some images are obscured — look for body lines and proportions before committing.",
+  },
   easy: {
     heading: "Easy Mode",
     icon: <ShieldCheck className="w-8 h-8 text-green-400" />,
