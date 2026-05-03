@@ -32,7 +32,7 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, Prisma } from "../app/generated/prisma/client";
+import { PrismaClient, Prisma, StagingStatus } from "../app/generated/prisma/client";
 import { lookupMakeOrigin } from "./lib/make-origins";
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -415,7 +415,7 @@ async function main(): Promise<void> {
   const prisma = new PrismaClient({ adapter });
 
   const queryWhere: Prisma.StagingImageWhereInput = {
-    status: status ? (status as any) : { in: ["PENDING_REVIEW", "COMMUNITY_REVIEW", "READY"] }
+    status: status ? (status as StagingStatus) : { in: ["PENDING_REVIEW", "COMMUNITY_REVIEW", "READY"] }
   };
 
   if (review) {
