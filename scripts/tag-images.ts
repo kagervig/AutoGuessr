@@ -10,10 +10,16 @@
  * next available key. Key usage is tracked in .gemini-key-state.json (per-day).
  *
  * Usage:
- *   npx tsx scripts/tag-images.ts [--limit N]
+ *   npx tsx scripts/tag-images.ts [--limit N] [--review] [--min-confidence X] [--status S]
  *
  * Flags:
- *   --limit N   Process only N images (useful for testing)
+ *   --limit N          Process only N images (useful for testing)
+ *   --review           Review already-tagged images (where aiTaggedAt is set)
+ *   --min-confidence X Only process images where current AI confidence is < X
+ *   --status S         Filter by status (e.g. PENDING_REVIEW, READY)
+ *   --force            Re-tag even if already tagged (normally skipped)
+ *   --pro              Use Gemini 1.5 Pro instead of Flash
+ *   --reset-keys       Clear the key usage state file
  *
  * Required env:
  *   DATABASE_URL, CLOUDINARY_CLOUD_NAME
@@ -26,7 +32,7 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, Prisma } from "../app/generated/prisma/client";
+import { PrismaClient, Prisma, StagingStatus } from "../app/generated/prisma/client";
 import { lookupMakeOrigin } from "./lib/make-origins";
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -42,10 +48,13 @@ const limitArg = args.indexOf("--limit");
 const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : 10;
 
 const force = args.includes("--force");
+const review = args.includes("--review");
 const usePro = args.includes("--pro");
 const resetKeys = args.includes("--reset-keys");
 const minConfidenceArg = args.indexOf("--min-confidence");
 const minConfidence = minConfidenceArg !== -1 ? parseFloat(args[minConfidenceArg + 1]) : undefined;
+const statusArg = args.indexOf("--status");
+const status = statusArg !== -1 ? args[statusArg + 1] : undefined;
 
 // Flash: 15 RPM (4.5s), Pro: 2 RPM (30.5s)
 const effectiveRateLimit = usePro ? 30500 : RATE_LIMIT_MS;
@@ -160,6 +169,17 @@ Rules:
 - If less than 40% of the car body is visible in the frame (e.g. heavily cropped, partially obscured, or a very distant shot), reduce your confidence by at least 0.2 from what you would otherwise assign.
 - Cars manufactured before 1960 are rare and easy to misidentify. If the car appears to be from before 1960, reduce your confidence by at least 0.15 from what you would otherwise assign.`;
 
+const REVIEW_INSTRUCTION = `${SYSTEM_INSTRUCTION}
+
+IMPORTANT: This is a SECOND OPINION review. A previous AI scan may have misidentified this car. 
+Be extremely careful. Pay close attention to:
+- Distinctive badges, emblems, or text on the body.
+- Headlight and taillight shapes.
+- Wheel designs (if they look like stock wheels).
+- The overall silhouette and proportions.
+- Any details mentioned in the 'notes' field of the previous scan if provided.
+If you are unsure, provide a low confidence score. If you are certain it is different from a common misidentification, explain why in the 'notes'.`;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface GeminiTag {
@@ -211,7 +231,7 @@ async function imageToBase64(cloudinaryPublicId: string): Promise<{ base64: stri
 
 // ── Gemini call ───────────────────────────────────────────────────────────────
 
-async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<GeminiTag | null> {
+async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string, isReview: boolean = false): Promise<GeminiTag | null> {
   const image = await imageToBase64(cloudinaryPublicId);
   if (!image) return null;
   const { base64, mimeType } = image;
@@ -222,7 +242,7 @@ async function tagImage(ai: GoogleGenAI, cloudinaryPublicId: string): Promise<Ge
     result = await ai.models.generateContent({
       model: modelName,
       config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
+        systemInstruction: isReview ? REVIEW_INSTRUCTION : SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
       },
       contents: [
@@ -395,10 +415,23 @@ async function main(): Promise<void> {
   const prisma = new PrismaClient({ adapter });
 
   const queryWhere: Prisma.StagingImageWhereInput = {
-    status: { in: ["PENDING_REVIEW", "COMMUNITY_REVIEW", "READY"] }
+    status: status ? (status as StagingStatus) : { in: ["PENDING_REVIEW", "COMMUNITY_REVIEW", "READY"] }
   };
 
-  if (!force) {
+  if (review) {
+    // Review mode: target images that ARE already tagged
+    // and haven't been manually reviewed yet by an admin
+    queryWhere.aiTaggedAt = { not: null };
+    queryWhere.reviewedAt = null;
+    queryWhere.adminMake = null;
+    
+    if (minConfidence !== undefined) {
+      queryWhere.aiConfidence = { lt: minConfidence };
+      console.log(`Review mode: getting a second opinion for images with AI confidence < ${minConfidence}...`);
+    } else {
+      console.log("Review mode: getting a second opinion for already-tagged images...");
+    }
+  } else if (!force) {
     queryWhere.aiTaggedAt = null;
   } else if (minConfidence !== undefined) {
     queryWhere.OR = [
@@ -414,7 +447,9 @@ async function main(): Promise<void> {
   });
 
   if (untagged.length === 0) {
-    console.log("No untagged staging images found. Run stage-images.ts first, or all images are already tagged.");
+    console.log(review 
+      ? "No images found for review." 
+      : "No untagged staging images found. Run stage-images.ts first, or all images are already tagged.");
     await prisma.$disconnect();
     await pool.end();
     return;
@@ -436,7 +471,7 @@ async function main(): Promise<void> {
     let tag: GeminiTag | null = null;
 
     try {
-      tag = await tagImage(ai, record.cloudinaryPublicId);
+      tag = await tagImage(ai, record.cloudinaryPublicId, review);
     } catch (err) {
       if (!(err instanceof QuotaExceededError)) {
         console.error(`  Unexpected error processing ${record.filename}:`, err);
@@ -467,6 +502,25 @@ async function main(): Promise<void> {
       failed++;
     } else {
       try {
+        const isDifferent = record.aiMake !== tag.make || record.aiModel !== tag.model || record.aiYear !== tag.year;
+        
+        if (review) {
+          if (isDifferent) {
+            console.log(`  [CHANGE] Previously: ${record.aiMake} ${record.aiModel} ${record.aiYear || "?"} (conf: ${record.aiConfidence})`);
+            console.log(`           Now:        ${tag.make} ${tag.model} ${tag.year || "?"} (conf: ${tag.confidence})`);
+          } else {
+            console.log(`  [SAME] Confirmed as ${tag.make} ${tag.model} ${tag.year || "?"} (old conf: ${record.aiConfidence}, new conf: ${tag.confidence})`);
+          }
+        }
+
+        let newAdminNotes = record.adminNotes;
+        if (review && isDifferent) {
+          const changeNote = `[AI Review] Changed from ${record.aiMake} ${record.aiModel} (${record.aiYear}) to ${tag.make} ${tag.model} (${tag.year}). Previous confidence: ${record.aiConfidence}`;
+          newAdminNotes = record.adminNotes ? `${record.adminNotes}\n${changeNote}` : changeNote;
+        } else if (!review && record.adminNotes === null && tag.notes) {
+          newAdminNotes = `[AI] ${tag.notes}`;
+        }
+
         await prisma.stagingImage.update({
           where: { id: record.id },
           data: {
@@ -486,14 +540,14 @@ async function main(): Promise<void> {
             ...(record.adminCategories.length === 0 && tag.categories?.length
               ? { adminCategories: tag.categories }
               : {}),
-            ...(record.adminNotes === null && tag.notes
-              ? { adminNotes: `[AI] ${tag.notes}` }
-              : {}),
+            adminNotes: newAdminNotes,
           },
         });
 
         const yearStr = tag.year ? String(tag.year) : "?";
-        console.log(`  → ${tag.make} ${tag.model} ${yearStr} (confidence: ${tag.confidence})${tag.notes ? ` — ${tag.notes}` : ""}`);
+        if (!review) {
+          console.log(`  → ${tag.make} ${tag.model} ${yearStr} (confidence: ${tag.confidence})${tag.notes ? ` — ${tag.notes}` : ""}`);
+        }
         console.log(`  Tagged image: ${record.filename}`); // Keyword for GA summary
         tagged++;
 
