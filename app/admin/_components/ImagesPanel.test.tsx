@@ -80,8 +80,8 @@ function defaultFetchImpl(url: string, init?: RequestInit): Promise<Response> {
   if (url.startsWith("/api/admin/autocomplete?field=copyright_holder")) {
     return Promise.resolve({ ok: true, json: () => Promise.resolve(["Wikimedia"]) } as Response);
   }
-  if (url === "/api/filters") {
-    return Promise.resolve({ ok: true, json: () => Promise.resolve({ regions: [{ slug: "japan" }, { slug: "usa" }] }) } as Response);
+  if (url === "/api/admin/regions") {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: "r-1", slug: "japan", label: "Japan", vehicleCount: 339 }, { id: "r-2", slug: "usa", label: "USA", vehicleCount: 500 }]) } as Response);
   }
   if (url === "/api/admin/categories") {
     return Promise.resolve({ ok: true, json: () => Promise.resolve([{ slug: "sports", label: "Sports" }]) } as Response);
