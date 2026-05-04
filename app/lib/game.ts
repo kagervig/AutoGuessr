@@ -138,9 +138,18 @@ export function vehicleLabel(vehicle: Pick<Vehicle, "make" | "model">): string {
   return `${vehicle.make} ${vehicle.model}`;
 }
 
-export function imageUrl(filename: string, vehicleId: string): string {
-  if (process.env.CLOUDINARY_CLOUD_NAME) {
-    return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${filename}`;
+export function imageUrl(filename: string, vehicleId: string, signature?: string | null): string {
+  if (process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    
+    // If we have a signature, use the signed transformation path
+    if (signature) {
+      const transformation = "if_ar_lt_1.0/c_fill,g_auto:coco_v2_car,ar_16:9,w_1280/if_end/f_auto,q_auto";
+      return `https://res.cloudinary.com/${cloudName}/image/upload/${signature}/${transformation}/${filename}`;
+    }
+
+    // Default unsigned optimization
+    return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${filename}`;
   }
   // Stable placeholder per vehicle during local development
   return `https://picsum.photos/seed/${vehicleId}/800/600`;

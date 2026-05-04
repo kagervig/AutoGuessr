@@ -216,3 +216,32 @@ The answer-choice selection logic also deduplicates by `make+model` at query tim
 ## Admin panel
 
 Available at `/admin`. HTTP Basic Auth — username `admin`, password is `ADMIN_PASSWORD` from your environment.
+
+## Cloudinary Image Delivery & Signing
+
+The game uses a **Conditional AI-Cropping** strategy to ensure all images (landscape or portrait) fit the 16:9 game viewer without cutting off the car.
+
+### Transformation Logic
+We use the `coco_v2_car` model, but only trigger it for "tall" (portrait) images to save AI credits:
+`if_ar_lt_1.0/c_fill,g_auto:coco_v2_car,ar_16:9,w_1280/if_end/f_auto,q_auto`
+
+- **Landscape images:** Served via standard optimization (0 AI credits).
+- **Portrait images:** AI identifies the car and re-crops to 16:9 (1 AI credit per image).
+
+### Signed URLs
+To bypass Cloudinary security restrictions and allow access to AI add-ons without opening your account to unsigned transformations, all game images use **Signed URLs**.
+
+**1. Generate/Refresh Signatures**
+Signatures are pre-calculated and stored in the database. If you rotate your Cloudinary API Secret, you must re-run this script:
+```bash
+npx tsx scripts/update-image-signatures.ts
+```
+
+**2. Frontend Usage**
+The `imageUrl` helper in `app/lib/game.ts` automatically handles the construction of the signed URL if a `transformationSignature` is provided from the database:
+```typescript
+const url = imageUrl(image.filename, image.vehicleId, image.transformationSignature);
+```
+
+### Testing Transformations
+A dedicated test page is available at `/test-cropping`. It allows you to compare 5 different cropping modes side-by-side, including the "Conditional COCO v2" mode used in the game. It generates signatures on-the-fly for the test set using server-side credentials.

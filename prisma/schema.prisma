@@ -129,6 +129,7 @@ model Image {
   uploadedAt           DateTime    @default(now())
   isActive             Boolean     @default(true)
   isHardcoreEligible   Boolean     @default(false)
+  transformationSignature String?
   vehicle              Vehicle     @relation(fields: [vehicleId], references: [id])
   stats                ImageStats?
   rounds               Round[]
