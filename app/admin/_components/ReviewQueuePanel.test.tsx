@@ -91,10 +91,10 @@ function defaultFetchImpl(url: string, init?: RequestInit): Promise<Response> {
   if (url.startsWith("/api/admin/autocomplete?field=make_defaults")) {
     return Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
   }
-  if (url === "/api/filters") {
+  if (url === "/api/admin/regions") {
     return Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({ regions: [{ slug: "japan" }, { slug: "usa" }] }),
+      json: () => Promise.resolve([{ id: "r-1", slug: "japan", label: "Japan", vehicleCount: 339 }, { id: "r-2", slug: "usa", label: "USA", vehicleCount: 500 }]),
     } as Response);
   }
   if (url === "/api/admin/categories") {
