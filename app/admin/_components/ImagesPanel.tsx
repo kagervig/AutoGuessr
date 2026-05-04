@@ -158,13 +158,13 @@ export default function ImagesPanel() {
     fetch("/api/admin/autocomplete?field=copyright_holder")
       .then(safeJson)
       .then((d) => d && setCopyrightHolderOptions(d));
-    fetch("/api/filters")
+    fetch("/api/admin/regions")
       .then(safeJson)
       .then(
         (d) =>
           d &&
           setRegionOptions(
-            (d.regions ?? []).map((r: { slug: string }) => r.slug),
+            (d ?? []).map((r: { slug: string }) => r.slug),
           ),
       );
     fetch("/api/admin/categories")

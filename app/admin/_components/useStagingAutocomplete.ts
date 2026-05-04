@@ -41,9 +41,9 @@ export function useStagingAutocomplete(
       .then(safeJson).then((d) => d && setMakeDefaults(d));
     fetch("/api/admin/autocomplete?field=copyright_holder")
       .then(safeJson).then((d) => d && setCopyrightHolderOptions(d));
-    fetch("/api/filters")
+    fetch("/api/admin/regions")
       .then(safeJson)
-      .then((d) => d && setRegionOptions((d.regions ?? []).map((r: { slug: string }) => r.slug)));
+      .then((d) => d && setRegionOptions((d ?? []).map((r: { slug: string }) => r.slug)));
     fetch("/api/admin/categories")
       .then(safeJson)
       .then((d) => d && setCategoryOptions(d.map((c: { slug: string; label: string }) => ({ slug: c.slug, label: c.label }))));
