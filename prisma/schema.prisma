@@ -60,6 +60,12 @@ enum AliasType {
   nickname
 }
 
+enum CropMethod {
+  standard
+  subject
+  conditional
+}
+
 model Region {
   id       String    @id @default(cuid())
   slug     String    @unique
@@ -129,6 +135,8 @@ model Image {
   uploadedAt           DateTime    @default(now())
   isActive             Boolean     @default(true)
   isHardcoreEligible   Boolean     @default(false)
+  transformationSignature String?
+  cropMethod           CropMethod  @default(conditional)
   vehicle              Vehicle     @relation(fields: [vehicleId], references: [id])
   stats                ImageStats?
   rounds               Round[]
