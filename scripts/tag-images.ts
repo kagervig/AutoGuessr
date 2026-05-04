@@ -10,10 +10,11 @@
  * next available key. Key usage is tracked in .gemini-key-state.json (per-day).
  *
  * Usage:
- *   npx tsx scripts/tag-images.ts [--limit N] [--review] [--min-confidence X] [--status S]
+ *   npx tsx scripts/tag-images.ts [--limit N] [--skip M] [--review] [--min-confidence X] [--status S]
  *
  * Flags:
  *   --limit N          Process only N images (useful for testing)
+ *   --skip M           Skip the first M images (useful for resuming)
  *   --review           Review already-tagged images (where aiTaggedAt is set)
  *   --min-confidence X Only process images where current AI confidence is < X
  *   --status S         Filter by status (e.g. PENDING_REVIEW, READY)
@@ -46,6 +47,9 @@ const STATE_FILE = path.join(process.cwd(), ".gemini-key-state.json");
 const args = process.argv.slice(2);
 const limitArg = args.indexOf("--limit");
 const limit = limitArg !== -1 ? parseInt(args[limitArg + 1], 10) : 10;
+
+const skipArg = args.indexOf("--skip");
+const skip = skipArg !== -1 ? parseInt(args[skipArg + 1], 10) : 0;
 
 const force = args.includes("--force");
 const review = args.includes("--review");
@@ -444,6 +448,7 @@ async function main(): Promise<void> {
     where: queryWhere,
     orderBy: { createdAt: "asc" },
     ...(limit ? { take: limit } : {}),
+    ...(skip ? { skip: skip } : {}),
   });
 
   if (untagged.length === 0) {
@@ -455,7 +460,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log(`Tagging up to ${untagged.length} image(s)...`);
+  console.log(`Tagging up to ${untagged.length} image(s)${skip ? ` (skipping first ${skip})` : ""}...`);
 
   let keyIndex = 0;
   let ai = new GoogleGenAI({ apiKey: availableKeys[keyIndex].key });
