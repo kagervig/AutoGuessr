@@ -245,3 +245,14 @@ const url = imageUrl(image.filename, image.vehicleId, image.transformationSignat
 
 ### Testing Transformations
 A dedicated test page is available at `/test-cropping`. It allows you to compare 5 different cropping modes side-by-side, including the "Conditional COCO v2" mode used in the game. It generates signatures on-the-fly for the test set using server-side credentials.
+
+### Crop Review Tool
+Located in the Admin Panel under the **Crop Review** tab. This tool is used to audit published images to ensure they crop correctly for the 16:9 game viewer.
+
+- **Purpose:** Specifically identifies "problem" images (usually portraits) where the car is cropped out of frame.
+- **Features:**
+  - **Comparison View:** Compare the original frame against three cropping methods: Standard (Center), AI-Subject, and Conditional COCO-v2.
+  - **Selection:** Admins can select the optimal `cropMethod` for each image, which is saved to the database.
+  - **Rejection:** Images that cannot be cropped effectively can be deactivated/rejected directly from the tool.
+  - **Persistence:** Progress is saved in `localStorage`, allowing admins to resume where they left off.
+- **Conditional COCO-v2:** Note that the COCO-v2 AI model is only triggered for portrait images (AR < 1) in production to conserve AI credits.
