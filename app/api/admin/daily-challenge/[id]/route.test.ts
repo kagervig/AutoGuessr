@@ -19,6 +19,7 @@ vi.mock("@/app/lib/prisma", () => ({
 
 vi.mock("@/app/lib/daily-challenge", () => ({
   pickImageIdsForChallenge: vi.fn(),
+  isChallengeAccessible: vi.fn().mockReturnValue(false),
 }));
 
 vi.mock("@/app/lib/game", () => ({

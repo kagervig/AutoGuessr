@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import type { CropMethod } from "@/app/generated/prisma/client";
 
 interface ImageItem {
@@ -24,26 +24,21 @@ export default function CropReviewPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const fetchImages = useCallback(async () => {
-    setLoading(true);
-    const res = await fetch("/api/admin/images/review");
-    const data = await res.json();
-    setImages(data.items || []);
-    
-    // Resume from localStorage
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = parseInt(saved, 10);
-      if (parsed < (data.items?.length || 0)) {
-        setIndex(parsed);
-      }
-    }
-    setLoading(false);
-  }, []);
-
   useEffect(() => {
-    fetchImages();
-  }, [fetchImages]);
+    (async () => {
+      setLoading(true);
+      const res = await fetch("/api/admin/images/review");
+      const data = await res.json();
+      setImages(data.items || []);
+
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (parsed < (data.items?.length || 0)) setIndex(parsed);
+      }
+      setLoading(false);
+    })();
+  }, []);
 
   const advance = (newIndex: number) => {
     setIndex(newIndex);

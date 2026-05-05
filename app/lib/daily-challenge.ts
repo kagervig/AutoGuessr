@@ -3,7 +3,6 @@
 import { Prisma } from "../generated/prisma/client";
 import { prisma } from "./prisma";
 import type { DailyChallenge } from "../generated/prisma/client";
-import { ROUNDS_PER_GAME } from "./constants";
 
 // Daily challenges are always exactly 10 rounds regardless of the DAILY_CHALLENGE_ROUNDS env var.
 const DAILY_CHALLENGE_ROUNDS = 10;
@@ -12,6 +11,31 @@ export type GenerateResult = {
   created: DailyChallenge[];
   skipped: string[]; // YYYY-MM-DD dates that already had a challenge
 };
+
+export function startOfTodayUTC(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+export function isChallengeAccessible(challenge: Pick<DailyChallenge, "date">): boolean {
+  return challenge.date <= startOfTodayUTC();
+}
+
+export async function getAccessibleChallengeByDate(date: Date): Promise<DailyChallenge | null> {
+  const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const challenge = await prisma.dailyChallenge.findUnique({ where: { date: target } });
+  if (!challenge || !isChallengeAccessible(challenge)) return null;
+  return challenge;
+}
+
+export async function assertNotAlreadyPlayed(playerId: string, challengeId: number): Promise<void> {
+  const existing = await prisma.gameSession.findFirst({
+    where: { playerId, dailyChallengeId: challengeId, endedAt: { not: null } },
+  });
+  if (existing) {
+    throw new Error(`Player ${playerId} has already completed challenge ${challengeId}`);
+  }
+}
 
 
 // Picks `count` random active image IDs, optionally excluding a list of IDs.

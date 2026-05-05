@@ -22,8 +22,6 @@ async function updateSignatures() {
   for (const image of images) {
     // cloudinary.utils.api_sign_request generates the hash for the signature component
     // We need to pass the transformation and public_id
-    const timestamp = Math.round(new Date().getTime() / 1000);
-    
     // Cloudinary signatures for URLs are specifically 's--' + 8 chars + '--'
     // The SDK's sign_url logic produces the full URL, from which we can extract the signature.
     const signedUrl = cloudinary.url(image.filename, {
