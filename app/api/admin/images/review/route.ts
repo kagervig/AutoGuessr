@@ -1,35 +1,42 @@
+import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 
-// Returns all active images for the review tool
-export async function GET() {
-  const images = await prisma.image.findMany({
-    where: { isActive: true },
-    orderBy: { uploadedAt: "asc" }, // Review from oldest to newest
-    include: {
-      vehicle: true,
-    },
-  });
+// Returns a single active image by offset index, plus the total count.
+export async function GET(request: NextRequest) {
+  const index = parseInt(request.nextUrl.searchParams.get("index") ?? "0", 10);
 
-  const items = images.map((img) => ({
+  const [total, images] = await Promise.all([
+    prisma.image.count({ where: { isActive: true } }),
+    prisma.image.findMany({
+      where: { isActive: true },
+      orderBy: { uploadedAt: "asc" },
+      skip: index,
+      take: 1,
+      include: { vehicle: true },
+    }),
+  ]);
+
+  const img = images[0];
+  if (!img) return Response.json({ item: null, total });
+
+  const item = {
     id: img.id,
     filename: img.filename,
-    transformationSignature: img.transformationSignature,
     cropMethod: img.cropMethod,
     vehicleLabel: `${img.vehicle.make} ${img.vehicle.model} (${img.vehicle.year})`,
-    // We include standard, subject, and conditional URLs for previewing in the tool
     urls: {
       standard: imageUrl(img.filename, img.vehicle.id, null, "standard"),
       subject: imageUrl(img.filename, img.vehicle.id, null, "subject"),
       conditional: imageUrl(img.filename, img.vehicle.id, img.transformationSignature, "conditional"),
-      original: `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto/${img.filename}`
-    }
-  }));
+      original: `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto/${img.filename}`,
+    },
+  };
 
-  return Response.json({ items });
+  return Response.json({ item, total });
 }
 
-// Update an image's crop method or deactivate it
+// Update an image's crop method or deactivate it.
 export async function POST(request: Request) {
   const { id, cropMethod, isActive } = await request.json();
 
