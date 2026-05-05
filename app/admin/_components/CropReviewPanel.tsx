@@ -31,7 +31,6 @@ export default function CropReviewPanel() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
     fetch(`/api/admin/images/review?index=${index}`)
       .then((r) => r.json())
       .then((data) => {
@@ -56,6 +55,7 @@ export default function CropReviewPanel() {
   }, [index]);
 
   const advance = (newIndex: number) => {
+    setLoading(true);
     setIndex(newIndex);
     localStorage.setItem(STORAGE_KEY, newIndex.toString());
   };
