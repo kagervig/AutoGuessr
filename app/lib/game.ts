@@ -138,11 +138,13 @@ export function vehicleLabel(vehicle: Pick<Vehicle, "make" | "model">): string {
   return `${vehicle.make} ${vehicle.model}`;
 }
 
+// Builds a Cloudinary URL for a game image, applying the stored crop method.
+// The conditional method uses a signed AI crop only for portrait images to stay within Cloudinary's monthly AI credit limit.
 export function imageUrl(
   filename: string,
   vehicleId: string,
   signature?: string | null,
-  method: CropMethod = "conditional"
+  method: CropMethod = "standard"
 ): string {
   if (process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;

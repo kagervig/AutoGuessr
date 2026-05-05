@@ -136,7 +136,7 @@ model Image {
   isActive             Boolean     @default(true)
   isHardcoreEligible   Boolean     @default(false)
   transformationSignature String?
-  cropMethod           CropMethod  @default(conditional)
+  cropMethod           CropMethod  @default(standard)
   vehicle              Vehicle     @relation(fields: [vehicleId], references: [id])
   stats                ImageStats?
   rounds               Round[]
