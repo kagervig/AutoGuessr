@@ -27,7 +27,7 @@ vi.mock("@/app/lib/game", () => ({
 }));
 
 import { prisma } from "@/app/lib/prisma";
-import { pickImageIdsForChallenge } from "@/app/lib/daily-challenge";
+import { pickImageIdsForChallenge, isChallengeAccessible } from "@/app/lib/daily-challenge";
 
 const DB_CHALLENGE = { id: 1, date: new Date("2025-06-01"), imageIds: [], generatedAt: new Date() };
 
@@ -206,6 +206,7 @@ describe("PATCH /api/admin/daily-challenge/[id]", () => {
 
   it("returns 403 when the challenge date is in the past", async () => {
     vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(PAST_CHALLENGE as never);
+    vi.mocked(isChallengeAccessible).mockReturnValue(true);
     const { req, params } = makeRequest("1", { replaceImageId: "img-1" });
     const res = await PATCH(req, { params });
     expect(res.status).toBe(403);

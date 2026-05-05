@@ -15,7 +15,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
   if (!challenge) return Response.json({ error: "Not found" }, { status: 404 });
 
   if (isChallengeAccessible(challenge)) {
-    return Response.json({ error: "Cannot modify a past or live challenge" }, { status: 409 });
+    return Response.json({ error: "Cannot modify a past or live challenge" }, { status: 403 });
   }
 
   try {
@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (!challenge) return Response.json({ error: "Not found" }, { status: 404 });
 
   if (isChallengeAccessible(challenge)) {
-    return Response.json({ error: "Cannot modify a past or live challenge" }, { status: 409 });
+    return Response.json({ error: "Cannot modify a past or live challenge" }, { status: 403 });
   }
 
   if (!challenge.imageIds.includes(replaceImageId)) {
