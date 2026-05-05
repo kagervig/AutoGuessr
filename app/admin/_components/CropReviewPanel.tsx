@@ -38,6 +38,19 @@ export default function CropReviewPanel() {
         setCurrent(data.item ?? null);
         setTotal(data.total ?? 0);
         setLoading(false);
+
+        // Prefetch next image's URLs so Cloudinary has time to compute transforms.
+        if (data.item && index + 1 < data.total) {
+          fetch(`/api/admin/images/review?index=${index + 1}`)
+            .then((r) => r.json())
+            .then((next) => {
+              if (!next.item) return;
+              Object.values(next.item.urls).forEach((url) => {
+                const img = new Image();
+                img.src = url as string;
+              });
+            });
+        }
       })
       .catch(() => setLoading(false));
   }, [index]);

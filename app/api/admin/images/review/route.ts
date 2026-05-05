@@ -5,17 +5,19 @@ import { imageUrl } from "@/app/lib/game";
 // Returns a single active image by offset index, plus the total count.
 export async function GET(request: NextRequest) {
   const index = parseInt(request.nextUrl.searchParams.get("index") ?? "0", 10);
+  const t0 = Date.now();
 
   const [total, images] = await Promise.all([
     prisma.image.count({ where: { isActive: true } }),
     prisma.image.findMany({
       where: { isActive: true },
-      orderBy: { uploadedAt: "asc" },
+      orderBy: { uploadedAt: "desc" },
       skip: index,
       take: 1,
       include: { vehicle: true },
     }),
   ]);
+  console.log(`[review] db query: ${Date.now() - t0}ms`);
 
   const img = images[0];
   if (!img) return Response.json({ item: null, total });
