@@ -2,20 +2,21 @@ import { prisma } from "../app/lib/prisma";
 import { cloudinary } from "../app/lib/cloudinary";
 
 /**
- * Script to pre-calculate and store Cloudinary signatures for the 
+ * Script to pre-calculate and store Cloudinary signatures for the
  * primary game transformation logic.
  */
 async function updateSignatures() {
   console.log("Fetching images...");
   const images = await prisma.image.findMany({
     where: { isActive: true },
-    select: { id: true, filename: true }
+    select: { id: true, filename: true },
   });
 
   console.log(`Found ${images.length} images. Generating signatures...`);
 
   // Our chosen "Standard" game transformation
-  const transformation = "if_ar_lt_1.0/c_fill,g_auto:coco_v2_car,ar_16:9,w_1280/if_end/f_auto,q_auto";
+  const transformation =
+    "if_ar_lt_1.0/c_fill,g_auto:coco_v2_car,ar_16:9,w_1280/if_end/f_auto,q_auto";
 
   let updatedCount = 0;
 
@@ -27,7 +28,7 @@ async function updateSignatures() {
     const signedUrl = cloudinary.url(image.filename, {
       sign_url: true,
       raw_transformation: transformation,
-      secure: true
+      secure: true,
     });
 
     // Extract the signature part: /s--[SIGNATURE]--/
@@ -37,7 +38,7 @@ async function updateSignatures() {
     if (signature) {
       await prisma.image.update({
         where: { id: image.id },
-        data: { transformationSignature: `s--${signature}--` }
+        data: { transformationSignature: `s--${signature}--` },
       });
       updatedCount++;
     }

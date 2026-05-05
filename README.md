@@ -234,8 +234,10 @@ To bypass Cloudinary security restrictions and allow access to AI add-ons withou
 **1. Generate/Refresh Signatures**
 Signatures are pre-calculated and stored in the database. If you rotate your Cloudinary API Secret, you must re-run this script:
 ```bash
-npx tsx scripts/update-image-signatures.ts
+npx dotenv-cli --override -e .env.local -- tsx scripts/update-image-signatures.ts
 ```
+
+> `--override` is required because `dotenv-cli` will not replace a `DATABASE_URL` that is already set in your shell session (e.g. from a previous `export` command). Without it the script silently uses the stale value.
 
 **2. Frontend Usage**
 The `imageUrl` helper in `app/lib/game.ts` automatically handles the construction of the signed URL if a `transformationSignature` is provided from the database:
