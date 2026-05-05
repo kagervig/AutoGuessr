@@ -13,6 +13,7 @@ import FlagsPanel from "./FlagsPanel";
 import CoveragePanel from "./CoveragePanel";
 import StagingEditFields from "./StagingEditFields";
 import ReviewQueuePanel from "./ReviewQueuePanel";
+import CropReviewPanel from "./CropReviewPanel";
 import CarOfTheDayPanel from "./CarOfTheDayPanel";
 import DailyChallengePanel from "./DailyChallengePanel";
 import FeatureFlagsPanel from "./FeatureFlagsPanel";
@@ -380,6 +381,7 @@ export default function StagingImagePanel() {
                 ["images", "Images"],
                 ["staging", "Staging"],
                 ["review", "Review"],
+                ["crop-review", "Crop Review"],
                 ["makes-models", "Makes & Models"],
                 ["categories", "Categories"],
                 ["regions", "Regions"],
@@ -414,6 +416,7 @@ export default function StagingImagePanel() {
 
       {activePage === "images" && <ImagesPanel />}
       {activePage === "review" && <ReviewQueuePanel />}
+      {activePage === "crop-review" && <CropReviewPanel />}
       {activePage === "makes-models" && <MakesModelsPanel />}
       {activePage === "categories" && <CategoriesPanel />}
       {activePage === "regions" && <RegionsPanel />}

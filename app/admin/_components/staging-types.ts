@@ -4,6 +4,7 @@ export type AdminPage =
   | "images"
   | "staging"
   | "review"
+  | "crop-review"
   | "makes-models"
   | "categories"
   | "regions"

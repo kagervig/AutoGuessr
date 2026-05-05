@@ -146,6 +146,7 @@ export default function ImagesPanel() {
     }
   }
 
+
   // Load autocomplete options once on mount
   useEffect(() => {
     const safeJson = (r: Response) => r.json().catch(() => null);
