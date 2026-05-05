@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 
 export async function GET() {
+  try {
   const images = await prisma.image.findMany({
     orderBy: { uploadedAt: "desc" },
     include: {
@@ -45,4 +46,9 @@ export async function GET() {
   }));
 
   return Response.json({ items });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[admin/images GET]", err);
+    return Response.json({ error: message }, { status: 500 });
+  }
 }
