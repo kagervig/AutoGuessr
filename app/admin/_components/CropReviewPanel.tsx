@@ -1,7 +1,7 @@
 "use client";
 
 // Admin tool for reviewing and selecting the best crop method per image.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CropMethod } from "@/app/generated/prisma/client";
 
 interface ImageItem {
@@ -29,6 +29,8 @@ export default function CropReviewPanel() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+  const originalImgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     fetch(`/api/admin/images/review?index=${index}`)
@@ -36,7 +38,9 @@ export default function CropReviewPanel() {
       .then((data) => {
         setCurrent(data.item ?? null);
         setTotal(data.total ?? 0);
+        setAspectRatio(null);
         setLoading(false);
+
 
         // Prefetch next image's URLs so Cloudinary has time to compute transforms.
         if (data.item && index + 1 < data.total) {
@@ -53,6 +57,20 @@ export default function CropReviewPanel() {
       })
       .catch(() => setLoading(false));
   }, [index]);
+
+  useEffect(() => {
+    const img = originalImgRef.current;
+    if (!img) return;
+    const update = () => {
+      if (img.naturalWidth > 0) setAspectRatio(img.naturalWidth / img.naturalHeight);
+    };
+    if (img.complete) {
+      update();
+    } else {
+      img.addEventListener("load", update);
+      return () => img.removeEventListener("load", update);
+    }
+  }, [current]);
 
   const advance = (newIndex: number) => {
     setLoading(true);
@@ -167,10 +185,15 @@ export default function CropReviewPanel() {
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-8">
           <div className="flex items-center gap-6">
             <div className="h-32 w-auto bg-black rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 shadow-sm">
-              <img src={current.urls.original} alt="Original" className="h-full w-auto object-contain" /> {/* eslint-disable-line @next/next/no-img-element */}
+              <img ref={originalImgRef} src={current.urls.original} alt="Original" className="h-full w-auto object-contain" /> {/* eslint-disable-line @next/next/no-img-element */}
             </div>
             <div>
               <h4 className="text-[10px] uppercase font-bold tracking-widest text-gray-400 mb-1">Original Image</h4>
+              {aspectRatio !== null && (
+                <p className={`text-xs font-mono font-bold ${aspectRatio < 1 ? "text-red-500" : "text-blue-500"}`}>
+                  AR {aspectRatio.toFixed(2)} — COCO v2 {aspectRatio < 1 ? "triggered" : "not triggered"}
+                </p>
+              )}
               <p className="text-xs text-gray-500 max-w-xs">Use this as reference for the full context of the photograph before it was cropped.</p>
             </div>
           </div>

@@ -1,6 +1,9 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
+import { cloudinary } from "@/app/lib/cloudinary";
+
+const CONDITIONAL_TRANSFORMATION = "if_ar_lt_1.0/c_fill,ar_16:9,g_auto:coco_v2_car,w_1280/if_end/f_auto,q_auto";
 
 // Returns a single active image by offset index, plus the total count.
 export async function GET(request: NextRequest) {
@@ -30,7 +33,7 @@ export async function GET(request: NextRequest) {
     urls: {
       standard: imageUrl(img.filename, img.vehicle.id, null, "standard"),
       subject: imageUrl(img.filename, img.vehicle.id, null, "subject"),
-      conditional: imageUrl(img.filename, img.vehicle.id, img.transformationSignature, "conditional"),
+      conditional: cloudinary.url(img.filename, { sign_url: true, raw_transformation: CONDITIONAL_TRANSFORMATION, secure: true }),
       original: `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto/${img.filename}`,
     },
   };
