@@ -7,13 +7,44 @@ import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const statusParam = searchParams.get("status") as StagingStatus | null;
+  const page = parseInt(searchParams.get("page") ?? "1");
+  const limit = parseInt(searchParams.get("limit") ?? "50");
+  const make = searchParams.get("make");
+  const model = searchParams.get("model");
 
-  const [images, countRows] = await Promise.all([
+  const where: any = {};
+  if (statusParam && statusParam !== "ALL") {
+    where.status = statusParam;
+  }
+  if (make) {
+    where.OR = [
+      { adminMake: make },
+      { confirmedMake: make },
+      { aiMake: make }
+    ];
+  }
+  if (model) {
+    // If we have a make filter, model usually belongs to it. 
+    // This is a bit complex due to the 3-tier structure.
+    where.AND = where.AND || [];
+    where.AND.push({
+      OR: [
+        { adminModel: model },
+        { confirmedModel: model },
+        { aiModel: model }
+      ]
+    });
+  }
+
+  const [images, totalCount, countRows] = await Promise.all([
     prisma.stagingImage.findMany({
-      where: statusParam ? { status: statusParam } : undefined,
+      where,
       include: { suggestions: true },
       orderBy: { createdAt: "asc" },
+      skip: (page - 1) * limit,
+      take: limit,
     }),
+    prisma.stagingImage.count({ where }),
     prisma.stagingImage.groupBy({
       by: ["status"],
       _count: { _all: true },
@@ -58,6 +89,7 @@ export async function GET(request: NextRequest) {
         isModelNameVisible: img.adminIsModelNameVisible,
         hasMultipleVehicles: img.adminHasMultipleVehicles,
         isFaceVisible: img.adminIsFaceVisible,
+        isVehicleUnmodified: img.adminIsVehicleUnmodified,
       },
       confirmed: {
         make: img.confirmedMake,
@@ -75,5 +107,11 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return Response.json({ items, counts });
+  return Response.json({
+    items,
+    counts,
+    totalCount,
+    page,
+    totalPages: Math.ceil(totalCount / limit)
+  });
 }
