@@ -183,7 +183,6 @@ export default function ImagesPanel() {
     }
   }
 
-
   // Load autocomplete options once on mount
   useEffect(() => {
     const safeJson = (r: Response) => r.json().catch(() => null);
@@ -358,7 +357,6 @@ export default function ImagesPanel() {
     }
   }
 
-  // Frontend filtering is only for missing fields now, others are server-side
   const filteredImages = images.filter((img) => {
     if (missingFieldFilter && !isMissingField(img, missingFieldFilter)) return false;
     return true;
