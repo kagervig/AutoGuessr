@@ -6,6 +6,7 @@
 .env.production
 coverage/
 !app/**/coverage/
+railway.zip
 
 # Prisma
 app/generated/
