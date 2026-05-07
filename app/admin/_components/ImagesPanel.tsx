@@ -126,6 +126,19 @@ export default function ImagesPanel() {
     fetchImages();
   }, [fetchImages]);
 
+
+  function loadAllVisible() {
+    setLoadedImageIds(new Set(images.map((img) => img.id)));
+  }
+
+  function loadImage(id: string) {
+    setLoadedImageIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }
+
   async function autoUpdate() {
     setAutoUpdating(true);
     setAutoUpdateResult(null);
