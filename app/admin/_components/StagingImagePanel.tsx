@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import Image from "next/image";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import ImagesPanel from "./ImagesPanel";
 import MakesModelsPanel from "./MakesModelsPanel";
@@ -18,7 +17,6 @@ import CropReviewPanel from "./CropReviewPanel";
 import CarOfTheDayPanel from "./CarOfTheDayPanel";
 import DailyChallengePanel from "./DailyChallengePanel";
 import FeatureFlagsPanel from "./FeatureFlagsPanel";
-import Pagination from "./Pagination";
 import { useStagingAutocomplete } from "./useStagingAutocomplete";
 import {
   emptyForm,
@@ -69,6 +67,8 @@ export default function StagingImagePanel() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [repairing, setRepairing] = useState(false);
+  const [repairResult, setRepairResult] = useState<string | null>(null);
   const [autoUpdating, setAutoUpdating] = useState(false);
   const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
   const [makeFilter, setMakeFilter] = useState("");
@@ -78,13 +78,6 @@ export default function StagingImagePanel() {
   const [missingFieldFilter, setMissingFieldFilter] = useState("");
   const [deletingUnused, setDeletingUnused] = useState(false);
   const [deleteResult, setDeleteResult] = useState<string | null>(null);
-
-  // Pagination & On-demand state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [pageSize] = useState(50);
-  const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
 
   async function autoUpdate() {
     setAutoUpdating(true);
@@ -101,6 +94,20 @@ export default function StagingImagePanel() {
       if (updated > 0 || vehicleUpdated > 0) fetchImages();
     } else {
       setAutoUpdateResult("Auto update failed.");
+    }
+  }
+
+  async function repairStatuses() {
+    setRepairing(true);
+    setRepairResult(null);
+    const res = await fetch("/api/admin/staging/repair", { method: "POST" });
+    setRepairing(false);
+    if (res.ok) {
+      const { fixed } = await res.json();
+      setRepairResult(fixed === 0 ? "No issues found." : `Fixed ${fixed} image${fixed !== 1 ? "s" : ""}.`);
+      if (fixed > 0) fetchImages();
+    } else {
+      setRepairResult("Repair failed.");
     }
   }
 
@@ -126,44 +133,17 @@ export default function StagingImagePanel() {
 
   const fetchImages = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({
-      page: String(currentPage),
-      limit: String(pageSize),
-      status: statusFilter,
-    });
-    if (makeFilter) params.append("make", makeFilter);
-    if (modelFilter) params.append("model", modelFilter);
-
-    const res = await fetch(`/api/admin/staging?${params.toString()}`);
+    const qs = statusFilter !== "ALL" ? `?status=${statusFilter}` : "";
+    const res = await fetch(`/api/admin/staging${qs}`);
     const data = await res.json();
     setImages(data.items);
     setCounts(data.counts);
-    setTotalCount(data.totalCount);
-    setTotalPages(data.totalPages);
     setLoading(false);
-  }, [currentPage, pageSize, statusFilter, makeFilter, modelFilter]);
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchImages();
   }, [fetchImages]);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-    setLoadedImageIds(new Set());
-  }, [statusFilter, makeFilter, modelFilter, filterAiTagged, filterIncomplete, missingFieldFilter]);
-
-  function loadAllVisible() {
-    setLoadedImageIds(new Set(images.map((img) => img.id)));
-  }
-
-  function loadImage(id: string) {
-    setLoadedImageIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  }
 
   function handleImageClick(img: StagingImage, shiftKey: boolean) {
     const idx = images.findIndex((i) => i.id === img.id);
@@ -244,6 +224,7 @@ export default function StagingImagePanel() {
         if (!img) continue;
 
         // Flags always apply across all selected images.
+        // Text fields only apply if the image has no existing admin value for that field.
         const payload: Record<string, unknown> = {
           isHardcoreEligible: editForm.isHardcoreEligible,
           isCropped: editForm.isCropped,
@@ -339,6 +320,9 @@ export default function StagingImagePanel() {
   const selected = selectedIds.length === 1 ? (images.find((img) => img.id === selectedIds[0]) ?? null) : null;
   const isPublished = selected?.status === "PUBLISHED";
 
+  const stagingMake = (img: StagingImage) => img.admin.make ?? img.confirmed.make ?? img.ai.make ?? "";
+  const stagingModel = (img: StagingImage) => img.admin.model ?? img.confirmed.model ?? img.ai.model ?? "";
+
   function isAiTagged(img: StagingImage) {
     return img.ai.make !== null;
   }
@@ -369,12 +353,17 @@ export default function StagingImagePanel() {
     return hasSomeData && missingRequired;
   }
 
-  // Dropdown options should come from autocomplete or be derived from full data if possible.
-  // For now, we use the autocomplete options.
-  const filterMakeOptions = useMemo(() => autocomplete.makeOptions.sort(), [autocomplete.makeOptions]);
-  const filterModelOptions = useMemo(() => autocomplete.modelOptions.sort(), [autocomplete.modelOptions]);
+  const uniqueMakes = [...new Set(images.map(stagingMake).filter(Boolean))].sort();
+  const uniqueModels = [...new Set(
+    images
+      .filter((img) => !makeFilter || stagingMake(img) === makeFilter)
+      .map(stagingModel)
+      .filter(Boolean),
+  )].sort();
 
   const displayedImages = images.filter((img) => {
+    if (makeFilter && stagingMake(img) !== makeFilter) return false;
+    if (modelFilter && stagingModel(img) !== modelFilter) return false;
     if (filterAiTagged && !isAiTagged(img)) return false;
     if (filterIncomplete && !isIncomplete(img)) return false;
     if (missingFieldFilter && !isMissingField(img, missingFieldFilter)) return false;
@@ -466,14 +455,7 @@ export default function StagingImagePanel() {
             </button>
           ))}
         </nav>
-        <div className="flex items-center gap-3 ml-auto py-2">
-          <button
-            onClick={loadAllVisible}
-            disabled={images.length === 0}
-            className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"
-          >
-            Load {images.length} images on page
-          </button>
+        <div className="flex items-center gap-3 ml-auto">
           {statusFilter === "REJECTED" && (
             <div className="flex items-center gap-2">
               <button
@@ -534,7 +516,7 @@ export default function StagingImagePanel() {
             className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400"
           >
             <option value="">All makes</option>
-            {filterMakeOptions.map((make) => (
+            {uniqueMakes.map((make) => (
               <option key={make} value={make}>{make}</option>
             ))}
           </select>
@@ -545,7 +527,7 @@ export default function StagingImagePanel() {
             className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400 disabled:opacity-40"
           >
             <option value="">All models</option>
-            {filterModelOptions.map((model) => (
+            {uniqueModels.map((model) => (
               <option key={model} value={model}>{model}</option>
             ))}
           </select>
@@ -559,291 +541,266 @@ export default function StagingImagePanel() {
           >
             {autoUpdating ? "Updating…" : "Auto update"}
           </button>
+          {repairResult && (
+            <span className="text-xs text-gray-500">{repairResult}</span>
+          )}
+          <button
+            onClick={repairStatuses}
+            disabled={repairing}
+            className="text-xs px-2.5 py-1.5 border border-gray-200 rounded text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50"
+          >
+            {repairing ? "Checking…" : "Repair statuses"}
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-col h-[calc(100vh-96px)]">
-        <div className="flex-1 flex min-h-0">
-          {/* Image grid */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {loading ? (
-              <p className="text-sm text-gray-400 p-4">Loading…</p>
-            ) : displayedImages.length === 0 ? (
-              <p className="text-sm text-gray-400 p-4">No images.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {displayedImages.map((img) => (
-                  <div
-                    key={img.id}
-                    className={`group relative rounded-lg overflow-hidden border-2 text-left transition-all cursor-pointer ${
-                      selectedIds.includes(img.id)
-                        ? "border-gray-900 shadow-md"
-                        : "border-transparent hover:border-gray-300"
-                    }`}
-                  >
-                    {/* Checkbox for multi-select — large hit area covers top-left corner */}
-                    <div
-                      className="absolute top-0 left-0 z-10 w-10 h-10 flex items-start justify-start p-2 cursor-pointer"
-                      onClick={(e) => { e.stopPropagation(); toggleImageSelection(img.id); }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(img.id)}
-                        onChange={() => {}}
-                        className="w-4 h-4 rounded cursor-pointer accent-gray-900 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                        style={selectedIds.includes(img.id) ? { opacity: 1 } : {}}
-                      />
-                    </div>
-                    {loadedImageIds.has(img.id) ? (
-                      <div
-                        className="relative w-full aspect-[4/3] bg-gray-100 select-none"
-                        onClick={(e) => { if (e.shiftKey) e.preventDefault(); handleImageClick(img, e.shiftKey); }}
-                      >
-                        <Image
-                          fill
-                          src={img.imageUrl}
-                          alt={img.filename}
-                          className="object-cover"
-                          sizes="(max-width: 768px) 50vw, 25vw"
-                        />
-                      </div>
-                    ) : (
-                      <div 
-                        className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center p-4 select-none"
-                        onClick={(e) => { if (e.shiftKey) e.preventDefault(); handleImageClick(img, e.shiftKey); }}
-                      >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            loadImage(img.id);
-                          }}
-                          className="text-[10px] px-2 py-1 bg-white border border-gray-200 rounded shadow-sm hover:bg-gray-50 text-gray-600"
-                        >
-                          Load Image
-                        </button>
-                      </div>
-                    )}
-                    <div className="p-1.5 bg-white select-none" onClick={(e) => { if (e.shiftKey) e.preventDefault(); handleImageClick(img, e.shiftKey); }}>
-                      <span
-                        className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLOURS[img.status]}`}
-                      >
-                        {STATUS_LABELS[img.status]}
-                      </span>
-                      {(img.admin.make || img.confirmed.make || img.ai.make) && (
-                        <p className="text-[11px] text-gray-600 mt-0.5 truncate">
-                          {img.admin.make ?? img.confirmed.make ?? img.ai.make}{" "}
-                          {img.admin.model ?? img.confirmed.model ?? img.ai.model}
-                        </p>
-                      )}
-                      {img.suggestionCount > 0 && (
-                        <p className="text-[10px] text-blue-500">
-                          {img.suggestionCount} suggestion{img.suggestionCount !== 1 ? "s" : ""}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Detail panel */}
-          {(selected || isMultiSelect) && (
-            <div className="w-96 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0">
-              <div className="p-4 space-y-4">
-                {/* Multi-select header */}
-                {isMultiSelect && (
-                  <div className="bg-blue-50 rounded-lg px-3 py-2.5 space-y-2">
-                    <div>
-                      <p className="text-sm font-medium text-blue-900">{selectedIds.length} images selected</p>
-                      <p className="text-xs text-blue-600 mt-0.5">Changes will be applied to all selected images.</p>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedIds.map((id) => {
-                        const img = images.find((i) => i.id === id);
-                        if (!img) return null;
-                        return (
-                          <div key={id} className="relative group/thumb">
-                            <Image
-                              width={64}
-                              height={48}
-                              src={img.imageUrl}
-                              alt={img.filename}
-                              className="object-cover rounded border border-blue-200"
-                            />
-                            <button
-                              onClick={() => toggleImageSelection(id)}
-                              className="absolute -top-1 -right-1 w-4 h-4 bg-gray-900 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity"
-                              aria-label="Deselect"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Image preview — single select only */}
-                {selected && (
-                  <>
-                <div className="relative w-full aspect-[4/3] rounded-lg bg-gray-100 overflow-hidden">
-                  <Image
-                    fill
-                    src={selected.imageUrl}
-                    alt={selected.filename}
-                    className="object-cover"
-                    sizes="384px"
-                  />
-                </div>
-
-                {/* AI suggestions */}
-                {(selected.ai.make || selected.ai.model) && (
-                  <div className="text-xs bg-purple-50 rounded-lg p-3">
-                    <p className="font-medium text-purple-700 mb-1">AI suggestion</p>
-                    <p className="text-purple-600">
-                      {[selected.ai.year, selected.ai.make, selected.ai.model]
-                        .filter(Boolean)
-                        .join(" ")}
-                      {selected.ai.confidence != null && (
-                        <span className="ml-1 text-purple-400">
-                          ({Math.round(selected.ai.confidence * 100)}%)
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                )}
-
-                {/* Community agreements */}
-                {selected.suggestionCount > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Community ({selected.suggestionCount} suggestion
-                      {selected.suggestionCount !== 1 ? "s" : ""})
-                    </p>
-                    {selected.agreements.make.value && (
-                      <div>
-                        <p className="text-xs text-gray-600 mb-1">
-                          {selected.agreements.make.value} {selected.agreements.model.value}
-                        </p>
-                        <AgreementBar
-                          label="Make"
-                          count={selected.agreements.make.count}
-                          confirmed={selected.agreements.make.confirmed}
-                        />
-                        {selected.agreements.model.value && (
-                          <AgreementBar
-                            label="Model"
-                            count={selected.agreements.model.count}
-                            confirmed={selected.agreements.model.confirmed}
-                          />
-                        )}
-                        {selected.agreements.year.value && (
-                          <AgreementBar
-                            label="Year"
-                            count={selected.agreements.year.count}
-                            confirmed={selected.agreements.year.confirmed}
-                          />
-                        )}
-                        {selected.agreements.trim.value && (
-                          <AgreementBar
-                            label="Trim"
-                            count={selected.agreements.trim.count}
-                            confirmed={selected.agreements.trim.confirmed}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-                  </>
-                )}
-
-                {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
-
-                {isPublished && (
-                  <p className="text-sm text-amber-700 bg-amber-50 rounded px-3 py-2">
-                    This image is published. Edit it directly from the Images tab.
-                  </p>
-                )}
-
-                <StagingEditFields
-                  form={editForm}
-                  setForm={setEditForm}
-                  makeOptions={autocomplete.makeOptions}
-                  modelOptions={autocomplete.modelOptions}
-                  trimOptions={autocomplete.trimOptions}
-                  countryOptions={autocomplete.countryOptions}
-                  regionOptions={autocomplete.regionOptions}
-                  copyrightHolderOptions={autocomplete.copyrightHolderOptions}
-                  categoryOptions={autocomplete.categoryOptions}
-                  disabled={isPublished}
-                />
-
-                <button
-                  onClick={() => isMultiSelect ? saveMultiple() : saveEdit(selected!.id)}
-                  disabled={saving || publishing}
-                  className="w-full text-sm bg-gray-900 text-white rounded px-3 py-2 hover:bg-gray-700 disabled:opacity-50"
+      <div className="flex h-[calc(100vh-96px)]">
+        {/* Image grid */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {loading ? (
+            <p className="text-sm text-gray-400 p-4">Loading…</p>
+          ) : displayedImages.length === 0 ? (
+            <p className="text-sm text-gray-400 p-4">No images.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {displayedImages.map((img) => (
+                <div
+                  key={img.id}
+                  className={`group relative rounded-lg overflow-hidden border-2 text-left transition-all cursor-pointer ${
+                    selectedIds.includes(img.id)
+                      ? "border-gray-900 shadow-md"
+                      : "border-transparent hover:border-gray-300"
+                  }`}
                 >
-                  {saving ? "Saving…" : isMultiSelect ? `Apply to ${selectedIds.length} images` : "Save changes"}
-                </button>
-
-                {/* Actions — single select only */}
-                {selected && (
-                <div className="space-y-2 pt-2 border-t border-gray-100">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Actions</p>
-                  {selected.status !== "COMMUNITY_REVIEW" && (
-                    <button
-                      onClick={() => setStatus(selected.id, "COMMUNITY_REVIEW")}
-                      disabled={saving || publishing}
-                      className="w-full text-sm border border-blue-200 text-blue-700 rounded px-3 py-2 hover:bg-blue-50 disabled:opacity-50"
+                  {/* Checkbox for multi-select — large hit area covers top-left corner */}
+                  <div
+                    className="absolute top-0 left-0 z-10 w-10 h-10 flex items-start justify-start p-2 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); toggleImageSelection(img.id); }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(img.id)}
+                      onChange={() => {}}
+                      className="w-4 h-4 rounded cursor-pointer accent-gray-900 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                      style={selectedIds.includes(img.id) ? { opacity: 1 } : {}}
+                    />
+                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.imageUrl}
+                    alt={img.filename}
+                    onClick={(e) => { if (e.shiftKey) e.preventDefault(); handleImageClick(img, e.shiftKey); }}
+                    className="w-full aspect-[4/3] object-cover bg-gray-100 select-none"
+                  />
+                  <div className="p-1.5 bg-white select-none" onClick={(e) => { if (e.shiftKey) e.preventDefault(); handleImageClick(img, e.shiftKey); }}>
+                    <span
+                      className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLOURS[img.status]}`}
                     >
-                      Send to community
-                    </button>
-                  )}
-                  {selected.status !== "PENDING_REVIEW" &&
-                    selected.status !== "PUBLISHED" &&
-                    selected.status !== "REJECTED" && (
-                      <button
-                        onClick={() => setStatus(selected.id, "PENDING_REVIEW")}
-                        disabled={saving || publishing}
-                        className="w-full text-sm border border-gray-200 text-gray-600 rounded px-3 py-2 hover:bg-gray-50 disabled:opacity-50"
-                      >
-                        Back to pending
-                      </button>
+                      {STATUS_LABELS[img.status]}
+                    </span>
+                    {(img.admin.make || img.confirmed.make || img.ai.make) && (
+                      <p className="text-[11px] text-gray-600 mt-0.5 truncate">
+                        {img.admin.make ?? img.confirmed.make ?? img.ai.make}{" "}
+                        {img.admin.model ?? img.confirmed.model ?? img.ai.model}
+                      </p>
                     )}
-                  {selected.status !== "PUBLISHED" && selected.status !== "REJECTED" && (
-                    <button
-                      onClick={() => publish(selected.id)}
-                      disabled={saving || publishing}
-                      className="w-full text-sm bg-green-600 text-white rounded px-3 py-2 hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {publishing ? "Publishing…" : "Approve & publish"}
-                    </button>
-                  )}
-                  {selected.status !== "REJECTED" && (
-                    <button
-                      onClick={() => setStatus(selected.id, "REJECTED")}
-                      disabled={saving || publishing}
-                      className="w-full text-sm border border-red-200 text-red-600 rounded px-3 py-2 hover:bg-red-50 disabled:opacity-50"
-                    >
-                      Reject
-                    </button>
-                  )}
+                    {img.suggestionCount > 0 && (
+                      <p className="text-[10px] text-blue-500">
+                        {img.suggestionCount} suggestion{img.suggestionCount !== 1 ? "s" : ""}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                )}
-              </div>
+              ))}
             </div>
           )}
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-        />
+
+        {/* Detail panel */}
+        {(selected || isMultiSelect) && (
+          <div className="w-96 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0">
+            <div className="p-4 space-y-4">
+              {/* Multi-select header */}
+              {isMultiSelect && (
+                <div className="bg-blue-50 rounded-lg px-3 py-2.5 space-y-2">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">{selectedIds.length} images selected</p>
+                    <p className="text-xs text-blue-600 mt-0.5">Changes will be applied to all selected images.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedIds.map((id) => {
+                      const img = images.find((i) => i.id === id);
+                      if (!img) return null;
+                      return (
+                        <div key={id} className="relative group/thumb">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={img.imageUrl}
+                            alt={img.filename}
+                            className="w-16 h-12 object-cover rounded border border-blue-200"
+                          />
+                          <button
+                            onClick={() => toggleImageSelection(id)}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-gray-900 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                            aria-label="Deselect"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Image preview — single select only */}
+              {selected && (
+                <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selected.imageUrl}
+                alt={selected.filename}
+                className="w-full aspect-[4/3] object-cover rounded-lg bg-gray-100"
+              />
+
+              {/* AI suggestions */}
+              {(selected.ai.make || selected.ai.model) && (
+                <div className="text-xs bg-purple-50 rounded-lg p-3">
+                  <p className="font-medium text-purple-700 mb-1">AI suggestion</p>
+                  <p className="text-purple-600">
+                    {[selected.ai.year, selected.ai.make, selected.ai.model]
+                      .filter(Boolean)
+                      .join(" ")}
+                    {selected.ai.confidence != null && (
+                      <span className="ml-1 text-purple-400">
+                        ({Math.round(selected.ai.confidence * 100)}%)
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {/* Community agreements */}
+              {selected.suggestionCount > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Community ({selected.suggestionCount} suggestion
+                    {selected.suggestionCount !== 1 ? "s" : ""})
+                  </p>
+                  {selected.agreements.make.value && (
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">
+                        {selected.agreements.make.value} {selected.agreements.model.value}
+                      </p>
+                      <AgreementBar
+                        label="Make"
+                        count={selected.agreements.make.count}
+                        confirmed={selected.agreements.make.confirmed}
+                      />
+                      {selected.agreements.model.value && (
+                        <AgreementBar
+                          label="Model"
+                          count={selected.agreements.model.count}
+                          confirmed={selected.agreements.model.confirmed}
+                        />
+                      )}
+                      {selected.agreements.year.value && (
+                        <AgreementBar
+                          label="Year"
+                          count={selected.agreements.year.count}
+                          confirmed={selected.agreements.year.confirmed}
+                        />
+                      )}
+                      {selected.agreements.trim.value && (
+                        <AgreementBar
+                          label="Trim"
+                          count={selected.agreements.trim.count}
+                          confirmed={selected.agreements.trim.confirmed}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+                </>
+              )}
+
+              {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
+
+              {isPublished && (
+                <p className="text-sm text-amber-700 bg-amber-50 rounded px-3 py-2">
+                  This image is published. Edit it directly from the Images tab.
+                </p>
+              )}
+
+              <StagingEditFields
+                form={editForm}
+                setForm={setEditForm}
+                makeOptions={autocomplete.makeOptions}
+                modelOptions={autocomplete.modelOptions}
+                trimOptions={autocomplete.trimOptions}
+                countryOptions={autocomplete.countryOptions}
+                regionOptions={autocomplete.regionOptions}
+                copyrightHolderOptions={autocomplete.copyrightHolderOptions}
+                categoryOptions={autocomplete.categoryOptions}
+                disabled={isPublished}
+              />
+
+              <button
+                onClick={() => isMultiSelect ? saveMultiple() : saveEdit(selected!.id)}
+                disabled={saving || publishing}
+                className="w-full text-sm bg-gray-900 text-white rounded px-3 py-2 hover:bg-gray-700 disabled:opacity-50"
+              >
+                {saving ? "Saving…" : isMultiSelect ? `Apply to ${selectedIds.length} images` : "Save changes"}
+              </button>
+
+              {/* Actions — single select only */}
+              {selected && (
+              <div className="space-y-2 pt-2 border-t border-gray-100">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Actions</p>
+                {selected.status !== "COMMUNITY_REVIEW" && (
+                  <button
+                    onClick={() => setStatus(selected.id, "COMMUNITY_REVIEW")}
+                    disabled={saving || publishing}
+                    className="w-full text-sm border border-blue-200 text-blue-700 rounded px-3 py-2 hover:bg-blue-50 disabled:opacity-50"
+                  >
+                    Send to community
+                  </button>
+                )}
+                {selected.status !== "PENDING_REVIEW" &&
+                  selected.status !== "PUBLISHED" &&
+                  selected.status !== "REJECTED" && (
+                    <button
+                      onClick={() => setStatus(selected.id, "PENDING_REVIEW")}
+                      disabled={saving || publishing}
+                      className="w-full text-sm border border-gray-200 text-gray-600 rounded px-3 py-2 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Back to pending
+                    </button>
+                  )}
+                {selected.status !== "PUBLISHED" && selected.status !== "REJECTED" && (
+                  <button
+                    onClick={() => publish(selected.id)}
+                    disabled={saving || publishing}
+                    className="w-full text-sm bg-green-600 text-white rounded px-3 py-2 hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {publishing ? "Publishing…" : "Approve & publish"}
+                  </button>
+                )}
+                {selected.status !== "REJECTED" && (
+                  <button
+                    onClick={() => setStatus(selected.id, "REJECTED")}
+                    disabled={saving || publishing}
+                    className="w-full text-sm border border-red-200 text-red-600 rounded px-3 py-2 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Reject
+                  </button>
+                )}
+              </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       </>
       )}

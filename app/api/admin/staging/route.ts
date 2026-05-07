@@ -1,47 +1,19 @@
 import type { NextRequest } from "next/server";
-import type { Prisma, StagingStatus } from "../../../generated/prisma/client";
+import type { StagingStatus } from "../../../generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const statusParam = searchParams.get("status") as StagingStatus | "ALL" | null;
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const limit = parseInt(searchParams.get("limit") ?? "50");
-  const make = searchParams.get("make");
-  const model = searchParams.get("model");
+  const statusParam = searchParams.get("status") as StagingStatus | null;
 
-  const where: Prisma.StagingImageWhereInput = {};
-  if (statusParam && statusParam !== "ALL") {
-    where.status = statusParam;
-  }
-  if (make) {
-    where.OR = [
-      { adminMake: make },
-      { confirmedMake: make },
-      { aiMake: make }
-    ];
-  }
-  if (model) {
-    where.AND = [{
-      OR: [
-        { adminModel: model },
-        { confirmedModel: model },
-        { aiModel: model }
-      ]
-    }];
-  }
-
-  const [images, totalCount, countRows] = await Promise.all([
+  const [images, countRows] = await Promise.all([
     prisma.stagingImage.findMany({
-      where,
+      where: statusParam ? { status: statusParam } : undefined,
       include: { suggestions: true },
       orderBy: { createdAt: "asc" },
-      skip: (page - 1) * limit,
-      take: limit,
     }),
-    prisma.stagingImage.count({ where }),
     prisma.stagingImage.groupBy({
       by: ["status"],
       _count: { _all: true },
@@ -86,7 +58,6 @@ export async function GET(request: NextRequest) {
         isModelNameVisible: img.adminIsModelNameVisible,
         hasMultipleVehicles: img.adminHasMultipleVehicles,
         isFaceVisible: img.adminIsFaceVisible,
-        isVehicleUnmodified: img.adminIsVehicleUnmodified,
       },
       confirmed: {
         make: img.confirmedMake,
@@ -104,11 +75,5 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return Response.json({
-    items,
-    counts,
-    totalCount,
-    page,
-    totalPages: Math.ceil(totalCount / limit)
-  });
+  return Response.json({ items, counts });
 }

@@ -2,10 +2,8 @@
 // Admin panel for browsing and editing published images and their vehicle data.
 
 import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
 import Combobox from "@/app/_components/Combobox";
 import CheckboxField from "./CheckboxField";
-import Pagination from "./Pagination";
 import { BODY_STYLES, ERAS, RARITIES } from "@/app/lib/constants";
 
 interface ImageItem {
@@ -91,13 +89,6 @@ export default function ImagesPanel() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination & On-demand state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [pageSize] = useState(50);
-  const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
-
   const [makeOptions, setMakeOptions] = useState<string[]>([]);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [trimOptions] = useState<string[]>([]);
@@ -122,40 +113,18 @@ export default function ImagesPanel() {
   const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
 
   const fetchImages = useCallback(() => {
-    const params = new URLSearchParams({
-      page: String(currentPage),
-      limit: String(pageSize),
-      isActive: activeFilter,
-    });
-    if (makeFilter) params.append("make", makeFilter);
-    if (modelFilter) params.append("model", modelFilter);
-
-    fetch(`/api/admin/images?${params.toString()}`)
+    fetch("/api/admin/images")
       .then((r) => r.json())
       .then((data) => {
         setImages(data.items);
-        setTotalCount(data.totalCount);
-        setTotalPages(data.totalPages);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [currentPage, pageSize, activeFilter, makeFilter, modelFilter]);
+  }, []);
 
   useEffect(() => {
     fetchImages();
   }, [fetchImages]);
-
-  function loadAllVisible() {
-    setLoadedImageIds(new Set(images.map((img) => img.id)));
-  }
-
-  function loadImage(id: string) {
-    setLoadedImageIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  }
 
   async function autoUpdate() {
     setAutoUpdating(true);
@@ -177,6 +146,7 @@ export default function ImagesPanel() {
     }
   }
 
+
   // Load autocomplete options once on mount
   useEffect(() => {
     const safeJson = (r: Response) => r.json().catch(() => null);
@@ -186,7 +156,7 @@ export default function ImagesPanel() {
     fetch("/api/admin/autocomplete?field=country")
       .then(safeJson)
       .then((d) => d && setCountryOptions(d));
-    fetch("/api/admin/copyright-holders")
+    fetch("/api/admin/autocomplete?field=copyright_holder")
       .then(safeJson)
       .then((d) => d && setCopyrightHolderOptions(d));
     fetch("/api/admin/regions")
@@ -338,6 +308,14 @@ export default function ImagesPanel() {
     ? (images.find((img) => img.id === selectedId) ?? null)
     : null;
 
+  const uniqueMakes = [...new Set(images.map((img) => img.vehicle.make).filter(Boolean))].sort();
+  const uniqueModels = [...new Set(
+    images
+      .filter((img) => !makeFilter || img.vehicle.make === makeFilter)
+      .map((img) => img.vehicle.model)
+      .filter(Boolean),
+  )].sort();
+
   function isMissingField(img: ImageItem, field: string): boolean {
     switch (field) {
       case "categories": return img.vehicle.categories.length === 0;
@@ -352,9 +330,16 @@ export default function ImagesPanel() {
   }
 
   const filteredImages = images.filter((img) => {
+    if (activeFilter === "active" && !img.isActive) return false;
+    if (activeFilter === "inactive" && img.isActive) return false;
+    if (makeFilter && img.vehicle.make !== makeFilter) return false;
+    if (modelFilter && img.vehicle.model !== modelFilter) return false;
     if (missingFieldFilter && !isMissingField(img, missingFieldFilter)) return false;
     return true;
   });
+
+  const activeCount = images.filter((img) => img.isActive).length;
+  const inactiveCount = images.filter((img) => !img.isActive).length;
 
   return (
     <div className="flex flex-col h-[calc(100vh-48px)]">
@@ -363,9 +348,9 @@ export default function ImagesPanel() {
         <nav className="flex gap-1 -mb-px">
           {(
             [
-              ["ALL", "All"],
-              ["active", "Active"],
-              ["inactive", "Inactive"],
+              ["ALL", `All (${images.length})`],
+              ["active", `Active (${activeCount})`],
+              ["inactive", `Inactive (${inactiveCount})`],
             ] as const
           ).map(([filter, label]) => (
             <button
@@ -373,9 +358,6 @@ export default function ImagesPanel() {
               onClick={() => {
                 setActiveFilter(filter);
                 setSelectedId(null);
-                setCurrentPage(1);
-                setLoadedImageIds(new Set());
-                setLoading(true);
               }}
               className={`px-3 py-2.5 text-sm border-b-2 transition-colors ${
                 activeFilter === filter
@@ -383,23 +365,16 @@ export default function ImagesPanel() {
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
-              {label} {activeFilter === filter && `(${totalCount})`}
+              {label}
             </button>
           ))}
         </nav>
         <div className="flex items-center gap-2 py-2">
-          <button
-            onClick={loadAllVisible}
-            disabled={images.length === 0}
-            className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"
-          >
-            Load {images.length} images on page
-          </button>
           {activeFilter === "inactive" && (
             <div className="flex items-center gap-2">
               <button
                 onClick={deleteUnusedInactive}
-                disabled={deletingUnused || totalCount === 0}
+                disabled={deletingUnused || inactiveCount === 0}
                 className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {deletingUnused ? "Deleting…" : "Delete unused inactive"}
@@ -413,25 +388,22 @@ export default function ImagesPanel() {
               setMakeFilter(e.target.value);
               setModelFilter("");
               setSelectedId(null);
-              setCurrentPage(1);
-              setLoadedImageIds(new Set());
-              setLoading(true);
             }}
             className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400"
           >
             <option value="">All makes</option>
-            {makeOptions.sort().map((make) => (
+            {uniqueMakes.map((make) => (
               <option key={make} value={make}>{make}</option>
             ))}
           </select>
           <select
             value={modelFilter}
-            onChange={(e) => { setModelFilter(e.target.value); setSelectedId(null); setCurrentPage(1); setLoadedImageIds(new Set()); setLoading(true); }}
+            onChange={(e) => { setModelFilter(e.target.value); setSelectedId(null); }}
             disabled={!makeFilter}
             className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400 disabled:opacity-40"
           >
             <option value="">All models</option>
-            {modelOptions.sort().map((model) => (
+            {uniqueModels.map((model) => (
               <option key={model} value={model}>{model}</option>
             ))}
           </select>
@@ -467,92 +439,63 @@ export default function ImagesPanel() {
       </div>
 
       <div className="flex flex-1 min-h-0">
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-y-auto p-4">
-            {loading ? (
-              <p className="text-sm text-gray-400 p-4">Loading…</p>
-            ) : filteredImages.length === 0 ? (
-              <p className="text-sm text-gray-400 p-4">No images.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {filteredImages.map((img) => (
-                  <div
-                    key={img.id}
-                    className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
-                      selectedId === img.id
-                        ? "border-gray-900 shadow-md"
-                        : "border-transparent hover:border-gray-300"
-                    }`}
-                  >
-                    <div onClick={() => handleImageClick(img)}>
-                      {loadedImageIds.has(img.id) ? (
-                        <div className="relative w-full aspect-[4/3] bg-gray-100">
-                          <Image
-                            fill
-                            src={img.imageUrl}
-                            alt={img.filename}
-                            className="object-cover"
-                            sizes="(max-width: 768px) 50vw, 25vw"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center p-4">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              loadImage(img.id);
-                            }}
-                            className="text-[10px] px-2 py-1 bg-white border border-gray-200 rounded shadow-sm hover:bg-gray-50 text-gray-600"
-                          >
-                            Load Image
-                          </button>
-                        </div>
-                      )}
-                      <div className="p-1.5 bg-white">
-                        <span
-                          className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                            img.isActive
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-600"
-                          }`}
-                        >
-                          {img.isActive ? "Active" : "Inactive"}
-                        </span>
-                        <p className="text-[11px] text-gray-600 mt-0.5 truncate">
-                          {img.vehicle.make} {img.vehicle.model}
-                        </p>
-                        <p className="text-[10px] text-gray-400">
-                          {img.vehicle.year}
-                        </p>
-                      </div>
-                    </div>
+        {/* Image grid */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {loading ? (
+            <p className="text-sm text-gray-400 p-4">Loading…</p>
+          ) : filteredImages.length === 0 ? (
+            <p className="text-sm text-gray-400 p-4">No images.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {filteredImages.map((img) => (
+                <div
+                  key={img.id}
+                  onClick={() => handleImageClick(img)}
+                  className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                    selectedId === img.id
+                      ? "border-gray-900 shadow-md"
+                      : "border-transparent hover:border-gray-300"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.imageUrl}
+                    alt={img.filename}
+                    className="w-full aspect-[4/3] object-cover bg-gray-100"
+                  />
+                  <div className="p-1.5 bg-white">
+                    <span
+                      className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                        img.isActive
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-600"
+                      }`}
+                    >
+                      {img.isActive ? "Active" : "Inactive"}
+                    </span>
+                    <p className="text-[11px] text-gray-600 mt-0.5 truncate">
+                      {img.vehicle.make} {img.vehicle.model}
+                    </p>
+                    <p className="text-[10px] text-gray-400">
+                      {img.vehicle.year}
+                    </p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalCount={totalCount}
-            pageSize={pageSize}
-            onPageChange={(page) => { setCurrentPage(page); setLoading(true); }}
-          />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Detail panel */}
         {selected && editForm && (
           <div className="w-96 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0">
             <div className="p-4 space-y-4">
-              <div className="relative w-full aspect-[4/3] rounded-lg bg-gray-100 overflow-hidden">
-                <Image
-                  fill
-                  src={selected.imageUrl}
-                  alt={selected.filename}
-                  className="object-cover"
-                  sizes="384px"
-                />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selected.imageUrl}
+                alt={selected.filename}
+                className="w-full aspect-[4/3] object-cover rounded-lg bg-gray-100"
+              />
 
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">
