@@ -20,6 +20,7 @@ vi.mock("@/app/lib/game", () => ({
 
 vi.mock("@/app/lib/prisma", () => ({
   prisma: {
+    player: { findUnique: vi.fn() },
     dailyChallengeSession: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -31,6 +32,7 @@ vi.mock("@/app/lib/prisma", () => ({
 
 import { GET } from "./route";
 import { prisma } from "@/app/lib/prisma";
+
 import { getChallengeByDate, getOrCreateTodaysChallenge } from "@/app/lib/daily-challenge";
 import { getOrCreateTodaysFeatured } from "@/app/lib/car-of-the-day";
 import { selectDistractors } from "@/app/lib/game";
@@ -88,6 +90,7 @@ beforeEach(() => {
   vi.mocked(getChallengeByDate).mockResolvedValue(CHALLENGE as never);
   vi.mocked(getOrCreateTodaysChallenge).mockResolvedValue(CHALLENGE as never);
   vi.mocked(getOrCreateTodaysFeatured).mockResolvedValue({ vehicleId: "v-cotd" } as never);
+  vi.mocked(prisma.player.findUnique).mockResolvedValue({ id: "player-1" } as never);
   vi.mocked(prisma.dailyChallengeSession.findUnique).mockResolvedValue(null);
   vi.mocked(prisma.dailyChallengeSession.create).mockResolvedValue({ id: "session-uuid" } as never);
   vi.mocked(prisma.image.findMany).mockResolvedValue([IMAGE_1] as never);

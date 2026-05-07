@@ -17,7 +17,15 @@ import { getOrCreateTodaysFeatured } from "@/app/lib/car-of-the-day";
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const dateParam = searchParams.get("date");
-  const playerId = searchParams.get("playerId") ?? null;
+  let playerId = searchParams.get("playerId") ?? null;
+
+  if (playerId) {
+    const player = await prisma.player.findUnique({
+      where: { id: playerId },
+      select: { id: true },
+    });
+    if (!player) playerId = null;
+  }
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const targetDate = dateParam ?? todayStr;
