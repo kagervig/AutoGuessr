@@ -145,10 +145,6 @@ export default function ImagesPanel() {
     fetchImages();
   }, [fetchImages]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-    setLoadedImageIds(new Set());
-  }, [activeFilter, makeFilter, modelFilter]);
 
   function loadAllVisible() {
     setLoadedImageIds(new Set(images.map((img) => img.id)));
