@@ -135,9 +135,9 @@ export default function StagingImagePanel() {
     setLoading(true);
     const qs = statusFilter !== "ALL" ? `?status=${statusFilter}` : "";
     const res = await fetch(`/api/admin/staging${qs}`);
-    const data = await res.json();
-    setImages(data.items);
-    setCounts(data.counts);
+    const data = await res.json().catch(() => ({}));
+    setImages(data.items ?? []);
+    setCounts(data.counts ?? {});
     setLoading(false);
   }, [statusFilter]);
 

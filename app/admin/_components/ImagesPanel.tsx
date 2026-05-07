@@ -117,7 +117,7 @@ export default function ImagesPanel() {
     fetch("/api/admin/images")
       .then((r) => r.json())
       .then((data) => {
-        setImages(data.items);
+        setImages(data.items ?? []);
         setLoading(false);
       })
       .catch(() => setLoading(false));

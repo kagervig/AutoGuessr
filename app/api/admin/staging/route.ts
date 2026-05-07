@@ -5,6 +5,7 @@ import { imageUrl } from "@/app/lib/game";
 import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
 
 export async function GET(request: NextRequest) {
+  try {
   const { searchParams } = request.nextUrl;
   const statusParam = searchParams.get("status") as StagingStatus | null;
 
@@ -76,4 +77,9 @@ export async function GET(request: NextRequest) {
   });
 
   return Response.json({ items, counts });
+  } catch (err) {
+    console.error("[admin/staging GET]", err);
+    const message = err instanceof Error ? err.message : String(err);
+    return Response.json({ error: message }, { status: 500 });
+  }
 }

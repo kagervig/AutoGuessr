@@ -246,12 +246,12 @@ describe("ImagesPanel", () => {
       await userEvent.click(screen.getByAltText("cars/img1"));
       await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
-      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
-      const putCall = calls.find(([url, init]: [string, RequestInit]) =>
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls as [string, RequestInit?][];
+      const putCall = calls.find(([url, init]) =>
         url === "/api/admin/images/img-1" && init?.method === "PUT"
       );
       expect(putCall).toBeDefined();
-      const body = JSON.parse(putCall[1].body as string);
+      const body = JSON.parse(putCall![1]!.body as string);
       expect(body.make).toBe("Toyota");
       expect(body.model).toBe("Supra");
       expect(body.year).toBe("1994");
@@ -349,12 +349,12 @@ describe("ImagesPanel", () => {
       await userEvent.click(screen.getByAltText("cars/img1"));
       await userEvent.click(screen.getByRole("button", { name: "Deactivate" }));
 
-      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
-      const putCall = calls.find(([url, init]: [string, RequestInit]) =>
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls as [string, RequestInit?][];
+      const putCall = calls.find(([url, init]) =>
         url === "/api/admin/images/img-1" && init?.method === "PUT"
       );
       expect(putCall).toBeDefined();
-      expect(JSON.parse(putCall[1].body as string)).toEqual({ isActive: false });
+      expect(JSON.parse(putCall![1]!.body as string)).toEqual({ isActive: false });
     });
 
     it("updates the image card to Inactive after deactivation", async () => {
