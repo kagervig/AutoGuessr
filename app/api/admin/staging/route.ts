@@ -6,7 +6,7 @@ import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const statusParam = searchParams.get("status") as StagingStatus | null;
+  const statusParam = searchParams.get("status") as StagingStatus | "ALL" | null;
   const page = parseInt(searchParams.get("page") ?? "1");
   const limit = parseInt(searchParams.get("limit") ?? "50");
   const make = searchParams.get("make");
