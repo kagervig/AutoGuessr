@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import type { StagingStatus } from "../../../generated/prisma/client";
+import type { Prisma, StagingStatus } from "../../../generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 import { computeAgreements, CONFIRMATION_THRESHOLD } from "@/app/lib/staging";
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const make = searchParams.get("make");
   const model = searchParams.get("model");
 
-  const where: any = {};
+  const where: Prisma.StagingImageWhereInput = {};
   if (statusParam && statusParam !== "ALL") {
     where.status = statusParam;
   }
@@ -24,16 +24,13 @@ export async function GET(request: NextRequest) {
     ];
   }
   if (model) {
-    // If we have a make filter, model usually belongs to it. 
-    // This is a bit complex due to the 3-tier structure.
-    where.AND = where.AND || [];
-    where.AND.push({
+    where.AND = [{
       OR: [
         { adminModel: model },
         { confirmedModel: model },
         { aiModel: model }
       ]
-    });
+    }];
   }
 
   const [images, totalCount, countRows] = await Promise.all([

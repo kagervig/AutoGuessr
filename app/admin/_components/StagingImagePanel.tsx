@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import ImagesPanel from "./ImagesPanel";
 import MakesModelsPanel from "./MakesModelsPanel";
@@ -68,8 +69,6 @@ export default function StagingImagePanel() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [repairing, setRepairing] = useState(false);
-  const [repairResult, setRepairResult] = useState<string | null>(null);
   const [autoUpdating, setAutoUpdating] = useState(false);
   const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
   const [makeFilter, setMakeFilter] = useState("");
@@ -102,20 +101,6 @@ export default function StagingImagePanel() {
       if (updated > 0 || vehicleUpdated > 0) fetchImages();
     } else {
       setAutoUpdateResult("Auto update failed.");
-    }
-  }
-
-  async function repairStatuses() {
-    setRepairing(true);
-    setRepairResult(null);
-    const res = await fetch("/api/admin/staging/repair", { method: "POST" });
-    setRepairing(false);
-    if (res.ok) {
-      const { fixed } = await res.json();
-      setRepairResult(fixed === 0 ? "No issues found." : `Fixed ${fixed} image${fixed !== 1 ? "s" : ""}.`);
-      if (fixed > 0) fetchImages();
-    } else {
-      setRepairResult("Repair failed.");
     }
   }
 
@@ -353,9 +338,6 @@ export default function StagingImagePanel() {
   const isMultiSelect = selectedIds.length > 1;
   const selected = selectedIds.length === 1 ? (images.find((img) => img.id === selectedIds[0]) ?? null) : null;
   const isPublished = selected?.status === "PUBLISHED";
-
-  const stagingMake = (img: StagingImage) => img.admin.make ?? img.confirmed.make ?? img.ai.make ?? "";
-  const stagingModel = (img: StagingImage) => img.admin.model ?? img.confirmed.model ?? img.ai.model ?? "";
 
   function isAiTagged(img: StagingImage) {
     return img.ai.make !== null;
@@ -613,12 +595,18 @@ export default function StagingImagePanel() {
                       />
                     </div>
                     {loadedImageIds.has(img.id) ? (
-                      <img
-                        src={img.imageUrl}
-                        alt={img.filename}
+                      <div
+                        className="relative w-full aspect-[4/3] bg-gray-100 select-none"
                         onClick={(e) => { if (e.shiftKey) e.preventDefault(); handleImageClick(img, e.shiftKey); }}
-                        className="w-full aspect-[4/3] object-cover bg-gray-100 select-none"
-                      />
+                      >
+                        <Image
+                          fill
+                          src={img.imageUrl}
+                          alt={img.filename}
+                          className="object-cover"
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                        />
+                      </div>
                     ) : (
                       <div 
                         className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center p-4 select-none"
@@ -676,10 +664,12 @@ export default function StagingImagePanel() {
                         if (!img) return null;
                         return (
                           <div key={id} className="relative group/thumb">
-                            <img
+                            <Image
+                              width={64}
+                              height={48}
                               src={img.imageUrl}
                               alt={img.filename}
-                              className="w-16 h-12 object-cover rounded border border-blue-200"
+                              className="object-cover rounded border border-blue-200"
                             />
                             <button
                               onClick={() => toggleImageSelection(id)}
@@ -698,11 +688,15 @@ export default function StagingImagePanel() {
                 {/* Image preview — single select only */}
                 {selected && (
                   <>
-                <img
-                  src={selected.imageUrl}
-                  alt={selected.filename}
-                  className="w-full aspect-[4/3] object-cover rounded-lg bg-gray-100"
-                />
+                <div className="relative w-full aspect-[4/3] rounded-lg bg-gray-100 overflow-hidden">
+                  <Image
+                    fill
+                    src={selected.imageUrl}
+                    alt={selected.filename}
+                    className="object-cover"
+                    sizes="384px"
+                  />
+                </div>
 
                 {/* AI suggestions */}
                 {(selected.ai.make || selected.ai.model) && (
