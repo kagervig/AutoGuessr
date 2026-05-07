@@ -91,6 +91,9 @@ function defaultFetchImpl(url: string, init?: RequestInit): Promise<Response> {
   if (path === "/api/admin/categories") {
     return Promise.resolve({ ok: true, json: () => Promise.resolve([{ slug: "sports", label: "Sports" }]) } as Response);
   }
+  if (path === "/api/admin/copyright-holders") {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(["Wikimedia"]) } as Response);
+  }
   if (path.startsWith("/api/admin/images/") && init?.method === "PUT") {
     return Promise.resolve({ ok: true, json: () => Promise.resolve({ ...ACTIVE_IMAGE, vehicle: ACTIVE_IMAGE.vehicle }) } as Response);
   }
