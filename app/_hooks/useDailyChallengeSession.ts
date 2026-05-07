@@ -1,6 +1,6 @@
 "use client";
 // Manages round state and guess submission for a daily challenge session.
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DailyChallengeData, DailyChallengeRound } from "./useDailyChallengeLoader";
 
 export interface DailyChallengeReveal {
@@ -42,7 +42,11 @@ export function useDailyChallengeSession({ data, currentIndex, setCurrentIndex }
   const [reveal, setReveal] = useState<DailyChallengeReveal | null>(null);
   const [networkError, setNetworkError] = useState(false);
   const hasSubmittedRef = useRef(false);
-  const roundStartRef = useRef(Date.now());
+  const roundStartRef = useRef<number>(0);
+
+  useEffect(() => {
+    roundStartRef.current = Date.now();
+  }, [currentIndex]);
 
   const round = data?.rounds[currentIndex] ?? null;
 

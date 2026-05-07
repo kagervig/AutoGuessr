@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, X, ChevronRight, Trophy, Zap, Flag, ThumbsUp, ThumbsDown, ArrowLeft, Flame, Star } from "lucide-react";
+import { Check, X, ChevronRight, Trophy, Flag, ThumbsUp, ThumbsDown, ArrowLeft, Flame, Star } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { GameHeader } from "./GameScreen/GameHeader";
 import { RoundImage } from "./GameScreen/RoundImage";
