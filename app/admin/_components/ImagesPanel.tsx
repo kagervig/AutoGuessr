@@ -145,6 +145,7 @@ export default function ImagesPanel() {
     fetchImages();
   }, [fetchImages]);
 
+
   function loadAllVisible() {
     setLoadedImageIds(new Set(images.map((img) => img.id)));
   }
