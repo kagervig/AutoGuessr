@@ -1,7 +1,8 @@
 "use client";
 // Admin panel for browsing and editing published images and their vehicle data.
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import Combobox from "@/app/_components/Combobox";
 import CheckboxField from "./CheckboxField";
 import Pagination from "./Pagination";
@@ -121,7 +122,6 @@ export default function ImagesPanel() {
   const [autoUpdateResult, setAutoUpdateResult] = useState<string | null>(null);
 
   const fetchImages = useCallback(() => {
-    setLoading(true);
     const params = new URLSearchParams({
       page: String(currentPage),
       limit: String(pageSize),
@@ -144,12 +144,6 @@ export default function ImagesPanel() {
   useEffect(() => {
     fetchImages();
   }, [fetchImages]);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-    setLoadedImageIds(new Set());
-  }, [activeFilter, makeFilter, modelFilter]);
 
   function loadAllVisible() {
     setLoadedImageIds(new Set(images.map((img) => img.id)));
@@ -379,6 +373,9 @@ export default function ImagesPanel() {
               onClick={() => {
                 setActiveFilter(filter);
                 setSelectedId(null);
+                setCurrentPage(1);
+                setLoadedImageIds(new Set());
+                setLoading(true);
               }}
               className={`px-3 py-2.5 text-sm border-b-2 transition-colors ${
                 activeFilter === filter
@@ -416,6 +413,9 @@ export default function ImagesPanel() {
               setMakeFilter(e.target.value);
               setModelFilter("");
               setSelectedId(null);
+              setCurrentPage(1);
+              setLoadedImageIds(new Set());
+              setLoading(true);
             }}
             className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400"
           >
@@ -426,7 +426,7 @@ export default function ImagesPanel() {
           </select>
           <select
             value={modelFilter}
-            onChange={(e) => { setModelFilter(e.target.value); setSelectedId(null); }}
+            onChange={(e) => { setModelFilter(e.target.value); setSelectedId(null); setCurrentPage(1); setLoadedImageIds(new Set()); setLoading(true); }}
             disabled={!makeFilter}
             className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white focus:outline-none focus:border-gray-400 disabled:opacity-40"
           >
@@ -486,11 +486,15 @@ export default function ImagesPanel() {
                   >
                     <div onClick={() => handleImageClick(img)}>
                       {loadedImageIds.has(img.id) ? (
-                        <img
-                          src={img.imageUrl}
-                          alt={img.filename}
-                          className="w-full aspect-[4/3] object-cover bg-gray-100"
-                        />
+                        <div className="relative w-full aspect-[4/3] bg-gray-100">
+                          <Image
+                            fill
+                            src={img.imageUrl}
+                            alt={img.filename}
+                            className="object-cover"
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                          />
+                        </div>
                       ) : (
                         <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center p-4">
                           <button
@@ -532,7 +536,7 @@ export default function ImagesPanel() {
             totalPages={totalPages}
             totalCount={totalCount}
             pageSize={pageSize}
-            onPageChange={setCurrentPage}
+            onPageChange={(page) => { setCurrentPage(page); setLoading(true); }}
           />
         </div>
 
@@ -540,11 +544,15 @@ export default function ImagesPanel() {
         {selected && editForm && (
           <div className="w-96 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0">
             <div className="p-4 space-y-4">
-              <img
-                src={selected.imageUrl}
-                alt={selected.filename}
-                className="w-full aspect-[4/3] object-cover rounded-lg bg-gray-100"
-              />
+              <div className="relative w-full aspect-[4/3] rounded-lg bg-gray-100 overflow-hidden">
+                <Image
+                  fill
+                  src={selected.imageUrl}
+                  alt={selected.filename}
+                  className="object-cover"
+                  sizes="384px"
+                />
+              </div>
 
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">

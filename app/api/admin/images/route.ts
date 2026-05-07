@@ -1,5 +1,6 @@
 // GET handler for the admin Images tab — returns all published images with vehicle data.
 import type { NextRequest } from "next/server";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 
@@ -12,11 +13,12 @@ export async function GET(request: NextRequest) {
     const model = searchParams.get("model");
     const isActive = searchParams.get("isActive");
 
-    const where: any = {};
+    const where: Prisma.ImageWhereInput = {};
     if (make || model) {
-      where.vehicle = {};
-      if (make) where.vehicle.make = make;
-      if (model) where.vehicle.model = model;
+      const vehicleFilter: Prisma.VehicleWhereInput = {};
+      if (make) vehicleFilter.make = make;
+      if (model) vehicleFilter.model = model;
+      where.vehicle = vehicleFilter;
     }
     if (isActive !== null && isActive !== undefined && isActive !== "ALL") {
       where.isActive = isActive === "true";
