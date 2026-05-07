@@ -77,12 +77,16 @@ const DISTRACTORS = [
   { id: "v-4", make: "Mazda", model: "RX-7", era: "modern", categorySlugs: [] },
 ];
 
-function makeRequest(params?: Record<string, string>) {
+function makeRequest(params?: Record<string, string>, cookies?: Record<string, string>) {
   const url = new URL("http://localhost/api/daily-challenge/session");
   if (params) {
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   }
-  return new NextRequest(url);
+  const headers: Record<string, string> = {};
+  if (cookies) {
+    headers["Cookie"] = Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join("; ");
+  }
+  return new NextRequest(url, { headers });
 }
 
 beforeEach(() => {
@@ -196,9 +200,27 @@ describe("GET /api/daily-challenge/session", () => {
     );
   });
 
-  it("skips play-once check when no playerId is provided", async () => {
+  it("skips DB play-once check when no playerId is provided", async () => {
     await GET(makeRequest({ date: "2025-01-01" }));
     expect(vi.mocked(prisma.dailyChallengeSession.findUnique)).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when the played cookie is set for this challenge", async () => {
+    const res = await GET(makeRequest(
+      { date: "2025-01-01" },
+      { [`dc_played_${CHALLENGE.id}`]: "existing-session-id" },
+    ));
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.existingSessionId).toBe("existing-session-id");
+  });
+
+  it("sets the played cookie on successful session creation", async () => {
+    const res = await GET(makeRequest({ date: "2025-01-01" }));
+    expect(res.status).toBe(200);
+    const setCookie = res.headers.get("Set-Cookie");
+    expect(setCookie).toContain(`dc_played_${CHALLENGE.id}=`);
+    expect(setCookie).toContain("HttpOnly");
   });
 
   it("isCotd is false when COTD lookup fails", async () => {

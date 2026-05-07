@@ -1,5 +1,11 @@
 // Endpoint for bootstrapping a daily challenge game session.
 import type { NextRequest } from "next/server";
+
+const PLAYED_COOKIE_MAX_AGE = 60 * 60 * 24 * 366; // 366 days
+
+function playedCookieName(challengeId: number) {
+  return `dc_played_${challengeId}`;
+}
 import { prisma } from "@/app/lib/prisma";
 import {
   shuffle,
@@ -43,6 +49,17 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: "Daily challenge not found for this date." }, { status: 404 });
   }
 
+  // Cookie-based play-once check — works for all users including anonymous.
+  const cookieName = playedCookieName(challenge.id);
+  const existingCookie = request.cookies.get(cookieName)?.value;
+  if (existingCookie) {
+    return Response.json(
+      { error: "You have already played this challenge.", existingSessionId: existingCookie },
+      { status: 403 }
+    );
+  }
+
+  // DB-based play-once check — cross-device enforcement for registered players.
   if (playerId) {
     const existing = await prisma.dailyChallengeSession.findUnique({
       where: { playerId_challengeId: { playerId, challengeId: challenge.id } },
@@ -140,5 +157,11 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  return Response.json({ sessionId, rounds });
+  const isProduction = process.env.NODE_ENV === "production";
+  const response = Response.json({ sessionId, rounds });
+  response.headers.set(
+    "Set-Cookie",
+    `${cookieName}=${sessionId}; HttpOnly; SameSite=Strict; Max-Age=${PLAYED_COOKIE_MAX_AGE}; Path=/${isProduction ? "; Secure" : ""}`,
+  );
+  return response;
 }
