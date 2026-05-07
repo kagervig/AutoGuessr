@@ -135,11 +135,18 @@ export default function StagingImagePanel() {
     if (modelFilter) params.append("model", modelFilter);
 
     const res = await fetch(`/api/admin/staging?${params.toString()}`);
-    const data = await res.json();
-    setImages(data.items);
-    setCounts(data.counts);
-    setTotalCount(data.totalCount);
-    setTotalPages(data.totalPages);
+    const text = await res.text();
+    if (!text) {
+      setLoading(false);
+      return;
+    }
+    const data = JSON.parse(text);
+    if (data.items) {
+      setImages(data.items);
+      setCounts(data.counts);
+      setTotalCount(data.totalCount);
+      setTotalPages(data.totalPages);
+    }
     setLoading(false);
   }, [currentPage, pageSize, statusFilter, makeFilter, modelFilter]);
 

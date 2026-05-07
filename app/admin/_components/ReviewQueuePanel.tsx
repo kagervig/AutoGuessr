@@ -55,7 +55,12 @@ export default function ReviewQueuePanel() {
   const fetchQueue = useCallback(async (status: StagingStatus) => {
     setLoading(true);
     const res = await fetch(`/api/admin/staging?status=${status}`);
-    const data = await res.json();
+    const text = await res.text();
+    if (!text) {
+      setLoading(false);
+      return;
+    }
+    const data = JSON.parse(text);
     const items = data.items ?? [];
     setQueue(items);
     setIndex(0);
