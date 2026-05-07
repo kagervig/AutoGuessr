@@ -169,9 +169,10 @@ model Player {
   username       String                 @unique
   createdAt      DateTime               @default(now())
   lastSeenAt     DateTime               @default(now())
-  stats          PlayerStats?
-  dimensionStats PlayerDimensionStats[]
-  sessions       GameSession[]
+  stats                  PlayerStats?
+  dimensionStats         PlayerDimensionStats[]
+  sessions               GameSession[]
+  dailyChallengeSessions DailyChallengeSession[]
 }
 
 model PlayerStats {
@@ -373,13 +374,33 @@ model VehicleTrivia {
 }
 
 model DailyChallenge {
-  id              Int           @id @default(autoincrement())
-  date            DateTime      @unique
-  imageIds        String[]
-  isPublished     Boolean       @default(false)
-  curatedBy       String?
-  generatedAt     DateTime      @default(now())
-  sessions        GameSession[]
+  id                     Int                    @id @default(autoincrement())
+  date                   DateTime               @unique
+  imageIds               String[]
+  isPublished            Boolean                @default(false)
+  curatedBy              String?
+  generatedAt            DateTime               @default(now())
+  sessions               GameSession[]
+  dailyChallengeSessions DailyChallengeSession[]
+}
+
+model DailyChallengeSession {
+  id               String         @id @default(uuid())
+  playerId         String?
+  challengeId      Int
+  // correct vehicleId per round in play order; used for server-side grading
+  answerVehicleIds String[]
+  // { isHardcore, isCotd, isRareFind } per round
+  roundBonuses     Json
+  startedAt        DateTime       @default(now())
+  completedAt      DateTime?
+  roundScores      Int[]
+  totalScore       Int?
+  challenge        DailyChallenge @relation(fields: [challengeId], references: [id])
+  player           Player?        @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, challengeId])
+  @@index([challengeId])
 }
 
 model FeaturedVehicleOfDay {
