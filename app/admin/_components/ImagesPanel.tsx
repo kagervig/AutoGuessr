@@ -84,6 +84,7 @@ function formFromItem(item: ImageItem): EditForm {
 export default function ImagesPanel() {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [saving, setSaving] = useState(false);
