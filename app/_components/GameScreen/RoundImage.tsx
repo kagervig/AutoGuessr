@@ -1,6 +1,7 @@
 "use client";
 // Animated car image card with hardcore panel grid overlay and round label.
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 interface Props {
   imageUrl: string;
@@ -11,6 +12,10 @@ interface Props {
 }
 
 export function RoundImage({ imageUrl, currentIndex, isHardcore, roundState, visiblePanels }: Props) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => { setHasError(false); }, [imageUrl]);
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -28,11 +33,12 @@ export function RoundImage({ imageUrl, currentIndex, isHardcore, roundState, vis
           loading="eager"
           className="absolute inset-0 w-full h-full object-cover"
           draggable={false}
+          onError={() => setHasError(true)}
         />
 
         {/* Image fallback bg */}
         <div className="absolute inset-0 -z-10 flex items-center justify-center bg-card">
-          <span className="text-sm text-muted-foreground">Image unavailable</span>
+          {hasError && <span className="text-sm text-muted-foreground">Image unavailable</span>}
         </div>
 
         {/* Hardcore grid overlay — panels are removed every 5 seconds */}

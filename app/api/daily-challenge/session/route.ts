@@ -23,15 +23,6 @@ import { getOrCreateTodaysFeatured } from "@/app/lib/car-of-the-day";
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const dateParam = searchParams.get("date");
-  let playerId = searchParams.get("playerId") ?? null;
-
-  if (playerId) {
-    const player = await prisma.player.findUnique({
-      where: { id: playerId },
-      select: { id: true },
-    });
-    if (!player) playerId = null;
-  }
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const targetDate = dateParam ?? todayStr;
@@ -59,20 +50,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // DB-based play-once check — cross-device enforcement for registered players.
-  if (playerId) {
-    const existing = await prisma.dailyChallengeSession.findUnique({
-      where: { playerId_challengeId: { playerId, challengeId: challenge.id } },
-      select: { id: true },
-    });
-    if (existing) {
-      return Response.json(
-        { error: "You have already played this challenge.", existingSessionId: existing.id },
-        { status: 403 }
-      );
-    }
-  }
-
+  // Fetch all image data, the featured vehicle, and the full vehicle pool in parallel so we can
+  // build round choices without sequential round-trips.
   const [images, featured, allVehicles] = await Promise.all([
     prisma.image.findMany({
       where: { id: { in: challenge.imageIds } },
@@ -149,7 +128,6 @@ export async function GET(request: NextRequest) {
   await prisma.dailyChallengeSession.create({
     data: {
       id: sessionId,
-      playerId,
       challengeId: challenge.id,
       answerVehicleIds: orderedImages.map((img) => img.vehicleId),
       roundBonuses: rounds.map((r) => r.bonusFlags),
