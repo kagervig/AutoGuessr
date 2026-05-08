@@ -140,7 +140,7 @@ export default function DailyChallengeScreen({ username = "", date }: Props) {
   }
 
   // Game level loaded successfully.
-  if (!round) return null;
+  if (!round) return <DailyChallengeErrorState error="Something went wrong." onBack={() => router.push("/")} />;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
