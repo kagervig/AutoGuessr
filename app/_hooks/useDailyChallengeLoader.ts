@@ -25,6 +25,7 @@ interface Result {
   error: string | null;
 }
 
+// Fetches the daily challenge session (round images, distractor choices, bonus flags) and prefetches subsequent round images in the background.
 export function useDailyChallengeLoader({ date, playerId }: Params): Result {
   const [data, setData] = useState<DailyChallengeData | null>(null);
   const [loading, setLoading] = useState(true);
