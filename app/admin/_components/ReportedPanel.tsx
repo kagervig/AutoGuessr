@@ -63,6 +63,7 @@ function ReportRow({
 }) {
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   const diffs = VEHICLE_FIELDS.filter(({ key }) => {
     const suggested = report[key];
@@ -71,9 +72,15 @@ function ReportRow({
 
   async function handleApply() {
     setApplying(true);
-    await onApply(report.id);
-    setApplied(true);
-    setApplying(false);
+    setApplyError(null);
+    try {
+      await onApply(report.id);
+      setApplied(true);
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : "Apply failed");
+    } finally {
+      setApplying(false);
+    }
   }
 
   return (
@@ -92,6 +99,7 @@ function ReportRow({
             {applied ? "Applied" : applying ? "Applying…" : "Apply suggestions"}
           </button>
         )}
+        {applyError && <p className="text-xs text-red-500">{applyError}</p>}
       </div>
 
       {report.comment && (
@@ -133,26 +141,37 @@ function ReportedImageRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const label = `${item.vehicle.make} ${item.vehicle.model} ${item.vehicle.year}`;
 
   async function patch(body: Record<string, unknown>) {
     setBusy(true);
-    await fetch("/api/admin/reported", {
+    setActionError(null);
+    const res = await fetch("/api/admin/reported", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     setBusy(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setActionError((data as { error?: string }).error ?? `Request failed (${res.status})`);
+      return;
+    }
     onUpdate();
   }
 
   async function handleApply(reportId: string) {
-    await fetch("/api/admin/reported", {
+    const res = await fetch("/api/admin/reported", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "apply", imageId: item.id, reportId }),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error((data as { error?: string }).error ?? `Request failed (${res.status})`);
+    }
     onUpdate();
   }
 
@@ -209,6 +228,7 @@ function ReportedImageRow({
           </div>
 
           {/* Actions */}
+          {actionError && <p className="text-xs text-red-500">{actionError}</p>}
           <div className="flex gap-2 flex-wrap pt-1 border-t border-gray-100">
             <button
               onClick={() => patch({ action: "dismiss", imageId: item.id })}

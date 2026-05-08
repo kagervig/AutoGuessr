@@ -155,10 +155,10 @@ function RoundRow({ round, mode, returnTo }: { round: RoundData; mode: string; r
 interface Props {
   rounds: RoundData[];
   mode: string;
-  returnTo: string;
+  returnTo?: string;
 }
 
-export function RoundBreakdown({ rounds, mode, returnTo }: Props) {
+export function RoundBreakdown({ rounds, mode, returnTo = "" }: Props) {
   const [open, setOpen] = useState(true);
 
   return (
