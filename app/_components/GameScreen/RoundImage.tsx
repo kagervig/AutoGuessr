@@ -1,7 +1,7 @@
 "use client";
 // Animated car image card with hardcore panel grid overlay and round label.
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Props {
   imageUrl: string;
@@ -12,9 +12,13 @@ interface Props {
 }
 
 export function RoundImage({ imageUrl, currentIndex, isHardcore, roundState, visiblePanels }: Props) {
+  const [prevImageUrl, setPrevImageUrl] = useState(imageUrl);
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => { setHasError(false); }, [imageUrl]);
+  if (imageUrl !== prevImageUrl) {
+    setPrevImageUrl(imageUrl);
+    setHasError(false);
+  }
 
   return (
     <AnimatePresence mode="wait">
