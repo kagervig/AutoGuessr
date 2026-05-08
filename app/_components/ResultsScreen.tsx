@@ -186,7 +186,11 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
         {/* Scoring nudge */}
         {hasToken && <ScoringNudge mode={mode} score={score} />}
 
-        <RoundBreakdown rounds={session.rounds} mode={mode} />
+        <RoundBreakdown
+          rounds={session.rounds}
+          mode={mode}
+          returnTo={`/results?gameId=${gameId}&mode=${mode}${username ? `&username=${username}` : ""}`}
+        />
       </div>
     </div>
   );

@@ -8,9 +8,11 @@ export const metadata: Metadata = {
 
 interface Props {
   params: Promise<{ imageId: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 }
 
-export default async function ReportPage({ params }: Props) {
+export default async function ReportPage({ params, searchParams }: Props) {
   const { imageId } = await params;
-  return <ReportForm imageId={imageId} />;
+  const { returnTo } = await searchParams;
+  return <ReportForm imageId={imageId} returnTo={returnTo} />;
 }

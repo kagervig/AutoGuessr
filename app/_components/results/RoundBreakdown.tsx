@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, ChevronUp, Flag } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/app/lib/utils";
 import type { RoundData, GuessData } from "./types";
@@ -9,7 +10,7 @@ import { GameMode } from "@/app/lib/constants";
 
 const HARD_MODES: GameMode[] = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
 
-function RoundRow({ round, mode }: { round: RoundData; mode: string }) {
+function RoundRow({ round, mode, returnTo }: { round: RoundData; mode: string; returnTo: string }) {
   const v = round.image.vehicle;
   const label = `${v.make} ${v.model}`;
   const g: GuessData | null = round.guess;
@@ -103,15 +104,27 @@ function RoundRow({ round, mode }: { round: RoundData; mode: string }) {
     </div>
   );
 
+  const reportHref = `/report/${round.image.id}?returnTo=${encodeURIComponent(returnTo)}`;
+  const flagLink = (
+    <Link
+      href={reportHref}
+      title="Report a problem with this image"
+      className="absolute bottom-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded bg-black/40 text-white/50 hover:text-orange-400 hover:bg-black/60 transition-colors"
+    >
+      <Flag className="w-4 h-4" />
+    </Link>
+  );
+
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
 
       {/* Mobile: 2-row layout */}
       <div className="sm:hidden">
         <div className="flex">
-          <div className="aspect-video w-1/2 shrink-0">
+          <div className="relative aspect-video w-1/2 shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={round.imageUrl} alt={label} loading="lazy" className="w-full h-full object-cover" />
+            {flagLink}
           </div>
           <div className="flex-1 flex items-center justify-center p-3">
             {scoreEl}
@@ -124,9 +137,10 @@ function RoundRow({ round, mode }: { round: RoundData; mode: string }) {
 
       {/* Desktop: single row */}
       <div className="hidden sm:flex items-center">
-        <div className="aspect-video w-1/4 shrink-0">
+        <div className="relative aspect-video w-1/4 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={round.imageUrl} alt={label} loading="lazy" className="w-full h-full object-cover" />
+          {flagLink}
         </div>
         <div className="flex flex-1 items-center justify-between gap-2 px-5 py-3 min-w-0">
           {detailsEl}
@@ -141,9 +155,10 @@ function RoundRow({ round, mode }: { round: RoundData; mode: string }) {
 interface Props {
   rounds: RoundData[];
   mode: string;
+  returnTo: string;
 }
 
-export function RoundBreakdown({ rounds, mode }: Props) {
+export function RoundBreakdown({ rounds, mode, returnTo }: Props) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -168,7 +183,7 @@ export function RoundBreakdown({ rounds, mode }: Props) {
       {open && (
         <div className="border-t border-white/10 p-4 space-y-3">
           {rounds.map((round) => (
-            <RoundRow key={round.sequenceNumber} round={round} mode={mode} />
+            <RoundRow key={round.sequenceNumber} round={round} mode={mode} returnTo={returnTo} />
           ))}
         </div>
       )}

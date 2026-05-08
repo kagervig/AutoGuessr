@@ -10,6 +10,7 @@ import RegionsPanel from "./RegionsPanel";
 import StatsPanel from "./StatsPanel";
 import DuplicatesPanel from "./DuplicatesPanel";
 import ReportsPanel from "./ReportsPanel";
+import ReportedPanel from "./ReportedPanel";
 import FlagsPanel from "./FlagsPanel";
 import CoveragePanel from "./CoveragePanel";
 import StagingEditFields from "./StagingEditFields";
@@ -408,6 +409,7 @@ export default function StagingImagePanel() {
                 ["flags", "Flags"],
                 ["coverage", "Coverage"],
                 ["reports", "Reports"],
+                ["reported", "Reported"],
                 ["car-of-the-day", "Car of the Day"],
                 ["daily-challenge", "Daily Challenge"],
                 ["feature-flags", "Feature Flags"],
@@ -443,6 +445,7 @@ export default function StagingImagePanel() {
       {activePage === "flags" && <FlagsPanel />}
       {activePage === "coverage" && <CoveragePanel />}
       {activePage === "reports" && <ReportsPanel />}
+      {activePage === "reported" && <ReportedPanel />}
       {activePage === "car-of-the-day" && <CarOfTheDayPanel />}
       {activePage === "daily-challenge" && <DailyChallengePanel />}
       {activePage === "feature-flags" && <FeatureFlagsPanel />}

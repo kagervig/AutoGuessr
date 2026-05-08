@@ -1,6 +1,7 @@
 "use client";
 // Client-side report form for flagging image problems.
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
@@ -19,6 +20,7 @@ interface ImageData {
   id: string;
   filename: string;
   vehicleId: string;
+  imageUrl: string;
   vehicle: VehicleData;
 }
 
@@ -35,9 +37,11 @@ const SECTION_CLASS = "space-y-3";
 
 interface Props {
   imageId: string;
+  returnTo?: string;
 }
 
-export default function ReportForm({ imageId }: Props) {
+export default function ReportForm({ imageId, returnTo }: Props) {
+  const router = useRouter();
   const [imageData, setImageData] = useState<ImageData | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -133,6 +137,9 @@ export default function ReportForm({ imageId }: Props) {
         throw new Error((data as { error?: string }).error ?? "Submission failed");
       }
       setSubmitted(true);
+      if (returnTo) {
+        setTimeout(() => router.push(returnTo), 1500);
+      }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Submission failed");
     } finally {
@@ -143,7 +150,7 @@ export default function ReportForm({ imageId }: Props) {
   if (submitted) {
     return (
       <main className="min-h-screen bg-background flex items-center justify-center px-4">
-        <p className="text-white text-lg">Thank you — your report has been submitted.</p>
+        <p className="text-white text-lg">Thank you! Your report has been submitted and will be reviewed shortly.</p>
       </main>
     );
   }
@@ -154,8 +161,16 @@ export default function ReportForm({ imageId }: Props) {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-white">Report a Problem</h1>
-          <p className="text-sm text-white/50 mt-1">Help us keep AutoGuessr accurate.</p>
+          <p className="text-sm text-white mt-1">Help us keep AutoGuessr accurate. In the form below, please let us know what you believe the vehicle shown in the image to be. We review every report and will update the database if required.</p>
         </div>
+
+        {/* Image preview */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageData.imageUrl}
+          alt={`${imageData.vehicle.make} ${imageData.vehicle.model}`}
+          className="w-full rounded-xl object-cover aspect-video"
+        />
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Vehicle details */}
