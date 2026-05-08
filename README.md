@@ -96,7 +96,7 @@ npm run db:up
 npx prisma migrate deploy
 ```
 
-Copy `.env.test.example` to `.env.test` and set `DATABASE_URL` to the same value as in `.env.local`.
+Copy `.env.local.example` to `.env.local` and set `DATABASE_URL`.
 
 Run the full suite:
 
