@@ -1,4 +1,8 @@
-// Endpoint for submitting a guess in a daily challenge session.
+// POST /api/daily-challenge/guess
+// 1. Validates request body and session state
+// 2. Scores the round (base points + applicable bonuses)
+// 3A. Returns round score if not the final round
+// 3B. Calculates and returns final score including player rank and percentile
 import { after } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
@@ -23,6 +27,7 @@ export async function POST(request: NextRequest) {
 
   const { sessionId, roundIndex, vehicleId, timeTakenMs } = body;
 
+  // 1. Validate request
   if (!sessionId || roundIndex === undefined || roundIndex === null || !vehicleId) {
     return Response.json(
       { error: "sessionId, roundIndex, and vehicleId are required" },
@@ -62,6 +67,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Rounds must be guessed in order" }, { status: 400 });
   }
 
+  // 2. Score the round
   const correctVehicleId = session.answerVehicleIds[roundIndex];
   const bonusFlags = (session.roundBonuses as RoundBonus[])[roundIndex];
   const isCorrect = vehicleId === correctVehicleId;
@@ -125,10 +131,12 @@ export async function POST(request: NextRequest) {
       });
   });
 
+  // 3A. Return mid-game result
   if (!isFinal) {
     return Response.json({ correct: isCorrect, correctVehicleId, score, bonusesEarned, isFinal: false });
   }
 
+  // 3B. Calculate final score and leaderboard position
   const [higherCount, totalPlayers] = await Promise.all([
     prisma.dailyChallengeSession.count({
       where: {
