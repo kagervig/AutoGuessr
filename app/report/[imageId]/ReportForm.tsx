@@ -245,14 +245,7 @@ export default function ReportForm({ imageId, returnTo }: Props) {
               />
               <span className="text-sm text-white w-12 text-right">{certainty}%</span>
             </div>
-            {certainty >= 75 ? (
-              <p className="flex items-center gap-2 text-xs text-yellow-400 mt-1">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                Because you&apos;re highly certain, this image will be removed from gameplay pending review.
-              </p>
-            ) : (
-              <p className="text-xs text-white/40 mt-1">The image will remain active but will be flagged for review.</p>
-            )}
+            <p className="text-xs text-white/40 mt-1">The image will be flagged for review by our team.</p>
           </section>
 
           {submitError && <p className="text-sm text-red-400">{submitError}</p>}
