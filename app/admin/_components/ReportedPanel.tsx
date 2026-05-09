@@ -141,8 +141,13 @@ function ReportedImageRow({
 
       {expanded && (
         <div className="border-t border-gray-200 p-4 space-y-4">
-          <div className="relative w-full max-w-4xl mx-auto aspect-video rounded overflow-hidden bg-gray-100 max-h-[500px]">
-            <Image src={item.imageUrl} alt={label} fill className="object-contain" unoptimized />
+          <div className="flex justify-center bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={item.imageUrl}
+              alt={label}
+              className="max-h-[600px] w-auto h-auto object-contain shadow-sm"
+            />
           </div>
 
           <div className="space-y-2">
