@@ -2,6 +2,7 @@
 // PATCH actions: dismiss, reactivate, deactivate, apply (write report suggestions onto vehicle).
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
+import type { BodyStyle, Era, Rarity } from "@/app/generated/prisma/client";
 
 export async function GET() {
   const images = await prisma.image.findMany({
