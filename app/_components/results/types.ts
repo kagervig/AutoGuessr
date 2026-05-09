@@ -16,6 +16,7 @@ export interface RoundData {
   sequenceNumber: number;
   imageUrl: string;
   image: {
+    id: string;
     filename: string;
     vehicleId: string;
     vehicle: {

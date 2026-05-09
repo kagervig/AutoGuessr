@@ -1,0 +1,90 @@
+{
+  "tools": {
+    "allowed": [
+      "run_shell_command(pnpm lint *)",
+      "run_shell_command(pnpm --filter * lint *)",
+      "run_shell_command(pnpm test *)",
+      "run_shell_command(pnpm --filter * test *)",
+      "run_shell_command(pnpm build *)",
+      "run_shell_command(pnpm --filter * build *)",
+      "run_shell_command(pnpm --filter * exec tsc *)",
+      "run_shell_command(pnpm --filter backend migrate)",
+      "run_shell_command(git status)",
+      "run_shell_command(git diff *)",
+      "run_shell_command(git log *)",
+      "run_shell_command(git branch *)",
+      "run_shell_command(git stash *)",
+      "run_shell_command(git add *)",
+      "run_shell_command(git commit *)",
+      "run_shell_command(git fetch *)",
+      "run_shell_command(git checkout *)",
+      "run_shell_command(git switch *)",
+      "run_shell_command(gh pr *)",
+      "run_shell_command(gh issue *)",
+      "run_shell_command(gh run *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "name": "session-start",
+            "type": "command",
+            "command": "./.claude/hooks/session-start.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "matcher": "write_file|replace",
+        "hooks": [
+          {
+            "name": "protect-files",
+            "type": "command",
+            "command": "./.claude/hooks/protect-files.sh",
+            "timeout": 5000
+          },
+          {
+            "name": "warn-large-files",
+            "type": "command",
+            "command": "./.claude/hooks/warn-large-files.sh",
+            "timeout": 5000
+          },
+          {
+            "name": "scan-secrets",
+            "type": "command",
+            "command": "./.claude/hooks/scan-secrets.sh",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "run_shell_command",
+        "hooks": [
+          {
+            "name": "block-dangerous-commands",
+            "type": "command",
+            "command": "./.claude/hooks/block-dangerous-commands.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "matcher": "write_file|replace",
+        "hooks": [
+          {
+            "name": "format-on-save",
+            "type": "command",
+            "command": "./.claude/hooks/format-on-save.sh",
+            "timeout": 15000
+          }
+        ]
+      }
+    ]
+  }
+}
