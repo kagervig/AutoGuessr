@@ -1,6 +1,6 @@
 "use client";
 // Fetches game data and feature flags for a game session.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface RoundData {
@@ -47,9 +47,11 @@ export function useGameLoader({ mode, username, filter, cfToken, playerId }: Par
   const [mediumYearGuessing, setMediumYearGuessing] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [retrying, setRetrying] = useState(false);
+  const preloadRefs = useRef<HTMLImageElement[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
+    let cancelled = false;
     const params = new URLSearchParams({ mode });
     if (username) params.set("username", username);
     if (filter) params.set("filter", filter);
@@ -78,10 +80,34 @@ export function useGameLoader({ mode, username, filter, cfToken, playerId }: Par
             setLoading(false);
           }
         } else {
-          setRetrying(false);
-          setGameData(game);
-          setMediumYearGuessing(flags?.medium_year_guessing === true);
-          setLoading(false);
+          const firstUrl = game.rounds[0]?.imageUrl;
+
+          const reveal = () => {
+            if (cancelled) return;
+            setRetrying(false);
+            setGameData(game);
+            setMediumYearGuessing(flags?.medium_year_guessing === true);
+            setLoading(false);
+
+            // Kick off background preloads for rounds 2–N so images are cached by the time the player advances.
+            for (const round of game.rounds.slice(1)) {
+              if (cancelled) break;
+              const img = new Image();
+              preloadRefs.current.push(img);
+              img.src = round.imageUrl;
+            }
+          };
+
+          if (!firstUrl) {
+            reveal();
+            return;
+          }
+
+          const firstImg = new Image();
+          preloadRefs.current.push(firstImg);
+          firstImg.onload = reveal;
+          firstImg.onerror = reveal;
+          firstImg.src = firstUrl;
         }
       })
       .catch((err) => {
@@ -98,7 +124,12 @@ export function useGameLoader({ mode, username, filter, cfToken, playerId }: Par
         }
       });
 
-    return () => controller.abort();
+    return () => {
+      cancelled = true;
+      controller.abort();
+      preloadRefs.current.forEach((img) => { img.src = ""; });
+      preloadRefs.current = [];
+    };
     // NOTE: cfToken intentionally omitted — adding it would re-fetch and restart the game
     // after Turnstile verification. It is only needed on the initial load.
   }, [mode, username, filter, router, attempt]); // eslint-disable-line react-hooks/exhaustive-deps

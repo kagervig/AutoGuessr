@@ -109,11 +109,40 @@ const GAME_DATA_TWO_ROUNDS = {
 describe("GameScreen timer race condition", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+
+    // vi.useFakeTimers() corrupts happy-dom's localStorage — restore a working implementation.
+    const store: Record<string, string> = {};
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, val: string) => { store[key] = val; },
+      removeItem: (key: string) => { delete store[key]; },
+      clear: () => { Object.keys(store).forEach((k) => delete store[k]); },
+    });
+
+    // Auto-fire onload when src is set so useGameLoader's image preloading
+    // resolves immediately and the game UI renders in tests.
+    vi.stubGlobal(
+      "Image",
+      class {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        private _src = "";
+
+        get src() {
+          return this._src;
+        }
+        set src(val: string) {
+          this._src = val;
+          if (val) Promise.resolve().then(() => this.onload?.());
+        }
+      },
+    );
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("sends only one /api/guess request when the timer fires while a user answer is in flight", async () => {

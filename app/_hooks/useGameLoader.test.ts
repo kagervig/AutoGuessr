@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 // Tests for useGameLoader.
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useGameLoader } from "./useGameLoader";
 
@@ -26,6 +26,15 @@ const GAME_DATA = {
   ],
 };
 
+const MULTI_ROUND_GAME_DATA = {
+  gameId: "game-1",
+  rounds: [
+    { roundId: "round-1", sequenceNumber: 1, imageId: "img-1", imageUrl: "https://example.com/car1.jpg" },
+    { roundId: "round-2", sequenceNumber: 2, imageId: "img-2", imageUrl: "https://example.com/car2.jpg" },
+    { roundId: "round-3", sequenceNumber: 3, imageId: "img-3", imageUrl: "https://example.com/car3.jpg" },
+  ],
+};
+
 function mockFetch(game: unknown, flags: unknown = {}) {
   global.fetch = vi.fn().mockImplementation((url: string) => {
     if (url.startsWith("/api/game")) {
@@ -38,9 +47,36 @@ function mockFetch(game: unknown, flags: unknown = {}) {
   });
 }
 
+type MockImageInstance = { onload: (() => void) | null; onerror: (() => void) | null; src: string };
+const imageInstances: MockImageInstance[] = [];
+
 describe("useGameLoader", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.unstubAllGlobals();
+    imageInstances.length = 0;
+
+    // Auto-fires onload when src is set — keeps existing tests working without changes
+    vi.stubGlobal(
+      "Image",
+      class {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        private _src = "";
+
+        get src() {
+          return this._src;
+        }
+        set src(val: string) {
+          this._src = val;
+          if (val) Promise.resolve().then(() => this.onload?.());
+        }
+
+        constructor() {
+          imageInstances.push(this as unknown as MockImageInstance);
+        }
+      },
+    );
   });
 
   it("returns loading state before fetches resolve", () => {
@@ -139,5 +175,111 @@ describe("useGameLoader", () => {
       ([url]: string[]) => url.startsWith("/api/game"),
     );
     expect(fetchCall![0]).toContain("cf_token=abc123");
+  });
+
+  it("loading remains true until the first image fires onload", async () => {
+    // Paused mock — src setter does not auto-fire onload
+    imageInstances.length = 0;
+    vi.stubGlobal(
+      "Image",
+      class {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        src = "";
+        constructor() {
+          imageInstances.push(this as unknown as MockImageInstance);
+        }
+      },
+    );
+
+    mockFetch(GAME_DATA);
+    const { result } = renderHook(() =>
+      useGameLoader({ mode: "easy", username: "test", filter: "" }),
+    );
+
+    // Fetches resolved but first image is still pending
+    await waitFor(() => expect(imageInstances).toHaveLength(1));
+    expect(result.current.loading).toBe(true);
+    expect(result.current.gameData).toBeNull();
+
+    act(() => imageInstances[0].onload?.());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.gameData).toEqual(GAME_DATA);
+  });
+
+  it("loading becomes false even when the first image fails to load", async () => {
+    // Fires onerror instead of onload
+    imageInstances.length = 0;
+    vi.stubGlobal(
+      "Image",
+      class {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        private _src = "";
+
+        get src() {
+          return this._src;
+        }
+        set src(val: string) {
+          this._src = val;
+          if (val) Promise.resolve().then(() => this.onerror?.());
+        }
+
+        constructor() {
+          imageInstances.push(this as unknown as MockImageInstance);
+        }
+      },
+    );
+
+    mockFetch(GAME_DATA);
+    const { result } = renderHook(() =>
+      useGameLoader({ mode: "easy", username: "test", filter: "" }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.gameData).toEqual(GAME_DATA);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("background-loads remaining images after the first image loads", async () => {
+    mockFetch(MULTI_ROUND_GAME_DATA);
+    const { result } = renderHook(() =>
+      useGameLoader({ mode: "easy", username: "test", filter: "" }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(imageInstances).toHaveLength(3);
+    expect(imageInstances[1].src).toBe("https://example.com/car2.jpg");
+    expect(imageInstances[2].src).toBe("https://example.com/car3.jpg");
+  });
+
+  it("clears image preload refs on unmount", async () => {
+    // Paused mock — image stays pending until we unmount
+    imageInstances.length = 0;
+    vi.stubGlobal(
+      "Image",
+      class {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        src = "";
+        constructor() {
+          imageInstances.push(this as unknown as MockImageInstance);
+        }
+      },
+    );
+
+    mockFetch(GAME_DATA);
+    const { unmount } = renderHook(() =>
+      useGameLoader({ mode: "easy", username: "test", filter: "" }),
+    );
+
+    await waitFor(() => expect(imageInstances).toHaveLength(1));
+    expect(imageInstances[0].src).toBe("https://example.com/car.jpg");
+
+    unmount();
+    expect(imageInstances[0].src).toBe("");
+
+    // Firing onload after unmount should be a no-op due to the cancelled flag
+    expect(() => imageInstances[0].onload?.()).not.toThrow();
   });
 });
