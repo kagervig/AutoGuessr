@@ -134,7 +134,6 @@ model Image {
   isVehicleUnmodified  Boolean     @default(true)
   uploadedAt           DateTime    @default(now())
   isActive             Boolean     @default(true)
-  needsReview          Boolean     @default(false)
   isHardcoreEligible   Boolean     @default(false)
   transformationSignature String?
   cropMethod           CropMethod  @default(standard)

@@ -1,21 +1,21 @@
-// Returns all images flagged for review, with their full report history, for the admin panel.
+// Returns all images that have at least one report, with their full report history, for the admin panel.
 // PATCH actions: dismiss, reactivate, deactivate, apply (write report suggestions onto vehicle).
 import { prisma } from "@/app/lib/prisma";
 import { imageUrl } from "@/app/lib/game";
 
 export async function GET() {
+  const reports = await prisma.imageReport.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  const imageIds = [...new Set(reports.map((r) => r.imageId))];
+
   const images = await prisma.image.findMany({
-    where: { needsReview: true },
+    where: { id: { in: imageIds } },
     include: {
       vehicle: true,
       stats: true,
     },
-    orderBy: { uploadedAt: "desc" },
-  });
-
-  const reports = await prisma.imageReport.findMany({
-    where: { imageId: { in: images.map((img) => img.id) } },
-    orderBy: { createdAt: "desc" },
   });
 
   const items = images.map((image) => {
@@ -24,7 +24,6 @@ export async function GET() {
       id: image.id,
       filename: image.filename,
       isActive: image.isActive,
-      needsReview: image.needsReview,
       uploadedAt: image.uploadedAt,
       imageUrl: imageUrl(
         image.filename,
