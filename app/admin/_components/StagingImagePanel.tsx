@@ -10,6 +10,7 @@ import RegionsPanel from "./RegionsPanel";
 import StatsPanel from "./StatsPanel";
 import DuplicatesPanel from "./DuplicatesPanel";
 import ReportsPanel from "./ReportsPanel";
+import ReportedPanel from "./ReportedPanel";
 import FlagsPanel from "./FlagsPanel";
 import CoveragePanel from "./CoveragePanel";
 import StagingEditFields from "./StagingEditFields";
@@ -135,11 +136,18 @@ export default function StagingImagePanel() {
     if (modelFilter) params.append("model", modelFilter);
 
     const res = await fetch(`/api/admin/staging?${params.toString()}`);
-    const data = await res.json();
-    setImages(data.items);
-    setCounts(data.counts);
-    setTotalCount(data.totalCount);
-    setTotalPages(data.totalPages);
+    const text = await res.text();
+    if (!text) {
+      setLoading(false);
+      return;
+    }
+    const data = JSON.parse(text);
+    if (data.items) {
+      setImages(data.items);
+      setCounts(data.counts);
+      setTotalCount(data.totalCount);
+      setTotalPages(data.totalPages);
+    }
     setLoading(false);
   }, [currentPage, pageSize, statusFilter, makeFilter, modelFilter]);
 
@@ -401,6 +409,7 @@ export default function StagingImagePanel() {
                 ["flags", "Flags"],
                 ["coverage", "Coverage"],
                 ["reports", "Reports"],
+                ["reported", "Reported"],
                 ["car-of-the-day", "Car of the Day"],
                 ["daily-challenge", "Daily Challenge"],
                 ["feature-flags", "Feature Flags"],
@@ -436,6 +445,7 @@ export default function StagingImagePanel() {
       {activePage === "flags" && <FlagsPanel />}
       {activePage === "coverage" && <CoveragePanel />}
       {activePage === "reports" && <ReportsPanel />}
+      {activePage === "reported" && <ReportedPanel />}
       {activePage === "car-of-the-day" && <CarOfTheDayPanel />}
       {activePage === "daily-challenge" && <DailyChallengePanel />}
       {activePage === "feature-flags" && <FeatureFlagsPanel />}
