@@ -141,8 +141,8 @@ function ReportedImageRow({
 
       {expanded && (
         <div className="border-t border-gray-200 p-4 space-y-4">
-          <div className="relative w-full aspect-video rounded overflow-hidden bg-gray-100">
-            <Image src={item.imageUrl} alt={label} fill className="object-cover" unoptimized />
+          <div className="relative w-full max-w-4xl mx-auto aspect-video rounded overflow-hidden bg-gray-100 max-h-[500px]">
+            <Image src={item.imageUrl} alt={label} fill className="object-contain" unoptimized />
           </div>
 
           <div className="space-y-2">

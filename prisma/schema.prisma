@@ -162,6 +162,8 @@ model ImageReport {
   suggestedRarity         Rarity?
   createdAt               DateTime   @default(now())
   image                   Image      @relation(fields: [imageId], references: [id])
+
+  @@index([imageId])
 }
 
 model ImageStats {
