@@ -89,6 +89,7 @@ export function useGameLoader({ mode, username, filter, cfToken, playerId }: Par
             setMediumYearGuessing(flags?.medium_year_guessing === true);
             setLoading(false);
 
+            // Kick off background preloads for rounds 2–N so images are cached by the time the player advances.
             for (const round of game.rounds.slice(1)) {
               if (cancelled) break;
               const img = new Image();
