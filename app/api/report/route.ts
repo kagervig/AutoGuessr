@@ -6,8 +6,19 @@ import { imageUrl } from "@/app/lib/game";
 import type { BodyStyle, Era, Rarity } from "@/app/generated/prisma/client";
 
 const BODY_STYLES: BodyStyle[] = [
-  "coupe", "sedan", "convertible", "hatchback", "wagon",
-  "suv", "truck", "pickup", "van", "roadster", "targa", "compact", "special_purpose",
+  "coupe",
+  "sedan",
+  "convertible",
+  "hatchback",
+  "wagon",
+  "suv",
+  "truck",
+  "pickup",
+  "van",
+  "roadster",
+  "targa",
+  "compact",
+  "special_purpose",
 ];
 const ERAS: Era[] = ["classic", "retro", "modern", "contemporary"];
 const RARITIES: Rarity[] = ["common", "uncommon", "rare", "ultra_rare"];
@@ -49,18 +60,41 @@ export async function POST(request: NextRequest) {
   if (!imageId) {
     return Response.json({ error: "imageId is required" }, { status: 400 });
   }
-  if (typeof certainty !== "number" || !Number.isInteger(certainty) || certainty < 0 || certainty > 100) {
-    return Response.json({ error: "certainty must be an integer 0–100" }, { status: 400 });
+  if (
+    typeof certainty !== "number" ||
+    !Number.isInteger(certainty) ||
+    certainty < 0 ||
+    certainty > 100
+  ) {
+    return Response.json(
+      { error: "certainty must be an integer 0–100" },
+      { status: 400 },
+    );
   }
   if (
     !comment?.trim() &&
-    !suggestedMake && !suggestedModel && !suggestedYear && !suggestedTrim &&
-    !suggestedCountryOfOrigin && !suggestedBodyStyle && !suggestedEra && !suggestedRarity
+    !suggestedMake &&
+    !suggestedModel &&
+    !suggestedYear &&
+    !suggestedTrim &&
+    !suggestedCountryOfOrigin &&
+    !suggestedBodyStyle &&
+    !suggestedEra &&
+    !suggestedRarity
   ) {
-    return Response.json({ error: "At least one suggested change or comment is required" }, { status: 400 });
+    return Response.json(
+      { error: "At least one suggested change or comment is required" },
+      { status: 400 },
+    );
   }
-  if (suggestedBodyStyle && !BODY_STYLES.includes(suggestedBodyStyle as BodyStyle)) {
-    return Response.json({ error: "Invalid suggestedBodyStyle" }, { status: 400 });
+  if (
+    suggestedBodyStyle &&
+    !BODY_STYLES.includes(suggestedBodyStyle as BodyStyle)
+  ) {
+    return Response.json(
+      { error: "Invalid suggestedBodyStyle" },
+      { status: 400 },
+    );
   }
   if (suggestedEra && !ERAS.includes(suggestedEra as Era)) {
     return Response.json({ error: "Invalid suggestedEra" }, { status: 400 });
@@ -86,7 +120,9 @@ export async function POST(request: NextRequest) {
         suggestedYear: suggestedYear ?? null,
         suggestedTrim: suggestedTrim || null,
         suggestedCountryOfOrigin: suggestedCountryOfOrigin || null,
-        suggestedBodyStyle: suggestedBodyStyle ? (suggestedBodyStyle as BodyStyle) : null,
+        suggestedBodyStyle: suggestedBodyStyle
+          ? (suggestedBodyStyle as BodyStyle)
+          : null,
         suggestedEra: suggestedEra ? (suggestedEra as Era) : null,
         suggestedRarity: suggestedRarity ? (suggestedRarity as Rarity) : null,
       },
@@ -109,7 +145,12 @@ export async function POST(request: NextRequest) {
   const { vehicle } = result;
   await sendImageReport({
     imageId,
-    imageUrl: imageUrl(result.filename, result.vehicleId, result.transformationSignature, result.cropMethod),
+    imageUrl: imageUrl(
+      result.filename,
+      result.vehicleId,
+      result.transformationSignature,
+      result.cropMethod,
+    ),
     currentVehicle: {
       make: vehicle.make,
       model: vehicle.model,

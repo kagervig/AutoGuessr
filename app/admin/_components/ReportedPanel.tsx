@@ -180,7 +180,9 @@ function ReportedImageRow({
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setActionError((data as { error?: string }).error ?? `Request failed (${res.status})`);
+      setActionError(
+        (data as { error?: string }).error ?? `Request failed (${res.status})`,
+      );
       return;
     }
     onUpdate();
@@ -194,7 +196,9 @@ function ReportedImageRow({
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error((data as { error?: string }).error ?? `Request failed (${res.status})`);
+      throw new Error(
+        (data as { error?: string }).error ?? `Request failed (${res.status})`,
+      );
     }
     onUpdate();
   }
@@ -286,7 +290,9 @@ function ReportedImageRow({
             </button>
             {item.isActive ? (
               <button
-                onClick={() => patch({ action: "deactivate", imageId: item.id })}
+                onClick={() =>
+                  patch({ action: "deactivate", imageId: item.id })
+                }
                 disabled={busy}
                 className="text-xs px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
               >
@@ -294,7 +300,9 @@ function ReportedImageRow({
               </button>
             ) : (
               <button
-                onClick={() => patch({ action: "reactivate", imageId: item.id })}
+                onClick={() =>
+                  patch({ action: "reactivate", imageId: item.id })
+                }
                 disabled={busy}
                 className="text-xs px-3 py-1.5 rounded border border-green-300 text-green-600 hover:bg-green-50 disabled:opacity-50"
               >
@@ -343,7 +351,11 @@ export default function ReportedPanel() {
       </p>
       <div className="space-y-3">
         {items.map((item) => (
-          <ReportedImageRow key={item.id} item={item} onUpdate={fetchReported} />
+          <ReportedImageRow
+            key={item.id}
+            item={item}
+            onUpdate={fetchReported}
+          />
         ))}
       </div>
     </div>
