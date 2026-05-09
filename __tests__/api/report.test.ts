@@ -6,13 +6,14 @@ vi.mock("@/app/lib/prisma", () => {
   const image = { findUnique: vi.fn() };
   const imageReport = { create: vi.fn() };
   const imageStats = { upsert: vi.fn() };
-  const tx = { image, imageReport, imageStats };
+  type TxClient = { image: typeof image; imageReport: typeof imageReport; imageStats: typeof imageStats };
+  const tx: TxClient = { image, imageReport, imageStats };
   return {
     prisma: {
       image,
       imageReport,
       imageStats,
-      $transaction: vi.fn((fn: (tx: typeof tx) => Promise<unknown>) => fn(tx)),
+      $transaction: vi.fn((fn: (tx: TxClient) => Promise<unknown>) => fn(tx)),
     },
   };
 });
@@ -59,8 +60,8 @@ describe("POST /api/report", () => {
   });
 
   it("should create a report and update image stats/review status", async () => {
-    vi.mocked(prisma.image.findUnique).mockResolvedValue({ id: "img-123" } as any);
-    vi.mocked(prisma.imageReport.create).mockResolvedValue({ id: "rep-1" } as any);
+    vi.mocked(prisma.image.findUnique).mockResolvedValue({ id: "img-123" } as never);
+    vi.mocked(prisma.imageReport.create).mockResolvedValue({ id: "rep-1" } as never);
 
     const req = makeRequest(payload);
     const res = await POST(req);

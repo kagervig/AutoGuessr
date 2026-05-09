@@ -2,7 +2,7 @@
 // Client-side report form for flagging image problems.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
 interface VehicleData {

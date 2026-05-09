@@ -63,7 +63,7 @@ function makeRequest(body: Record<string, unknown>, id = "img-1") {
 
 function setupHappyPath() {
   vi.mocked(prisma.image.findUnique).mockResolvedValue(DB_IMAGE_ROW as never);
-  vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+  vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
     return fn({
       image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
       vehicle: { update: vi.fn() },
@@ -118,7 +118,7 @@ describe("PUT /api/admin/images/[id]", () => {
     it("passes isActive to the image update", async () => {
       setupHappyPath();
       let capturedImageData: Record<string, unknown> = {};
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: {
             update: vi.fn().mockImplementation(({ data }: { data: Record<string, unknown> }) => {
@@ -140,7 +140,7 @@ describe("PUT /api/admin/images/[id]", () => {
     it("omits image fields that are not provided in the body", async () => {
       setupHappyPath();
       let capturedImageData: Record<string, unknown> = {};
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: {
             update: vi.fn().mockImplementation(({ data }: { data: Record<string, unknown> }) => {
@@ -164,7 +164,7 @@ describe("PUT /api/admin/images/[id]", () => {
     it("updates vehicle when vehicle fields are provided", async () => {
       setupHappyPath();
       const vehicleUpdate = vi.fn();
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
           vehicle: { update: vehicleUpdate },
@@ -185,7 +185,7 @@ describe("PUT /api/admin/images/[id]", () => {
     it("parses year from string to integer", async () => {
       setupHappyPath();
       const vehicleUpdate = vi.fn();
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
           vehicle: { update: vehicleUpdate },
@@ -203,7 +203,7 @@ describe("PUT /api/admin/images/[id]", () => {
     it("does not update vehicle when no vehicle fields are provided", async () => {
       setupHappyPath();
       const vehicleUpdate = vi.fn();
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
           vehicle: { update: vehicleUpdate },
@@ -222,7 +222,7 @@ describe("PUT /api/admin/images/[id]", () => {
       setupHappyPath();
       const deleteMany = vi.fn();
       const createMany = vi.fn();
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
           vehicle: { update: vi.fn() },
@@ -242,7 +242,7 @@ describe("PUT /api/admin/images/[id]", () => {
       setupHappyPath();
       const deleteMany = vi.fn();
       const createMany = vi.fn();
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
           vehicle: { update: vi.fn() },
@@ -259,7 +259,7 @@ describe("PUT /api/admin/images/[id]", () => {
     it("skips category operations when categories is not provided", async () => {
       setupHappyPath();
       const deleteMany = vi.fn();
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
           vehicle: { update: vi.fn() },
@@ -306,7 +306,7 @@ describe("PUT /api/admin/images/[id]", () => {
     it("rejects the corresponding staging image when isActive is set to false", async () => {
       const stagingUpdateMany = vi.fn();
       vi.mocked(prisma.image.findUnique).mockResolvedValue(DB_IMAGE_ROW as never);
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: { update: vi.fn().mockResolvedValue({ ...UPDATED_IMAGE, isActive: false }) },
           vehicle: { update: vi.fn() },
@@ -327,7 +327,7 @@ describe("PUT /api/admin/images/[id]", () => {
     it("does not touch staging images when isActive is set to true", async () => {
       const stagingUpdateMany = vi.fn();
       vi.mocked(prisma.image.findUnique).mockResolvedValue(DB_IMAGE_ROW as never);
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
           vehicle: { update: vi.fn() },
@@ -345,7 +345,7 @@ describe("PUT /api/admin/images/[id]", () => {
     it("does not touch staging images when isActive is not provided", async () => {
       const stagingUpdateMany = vi.fn();
       vi.mocked(prisma.image.findUnique).mockResolvedValue(DB_IMAGE_ROW as never);
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
         return fn({
           image: { update: vi.fn().mockResolvedValue(UPDATED_IMAGE) },
           vehicle: { update: vi.fn() },
