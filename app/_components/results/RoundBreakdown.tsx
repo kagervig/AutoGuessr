@@ -10,7 +10,7 @@ import { GameMode } from "@/app/lib/constants";
 
 const HARD_MODES: GameMode[] = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
 
-function RoundRow({ round, mode, returnTo }: { round: RoundData; mode: string; returnTo: string }) {
+function RoundRow({ round, mode, returnTo, showReportFlag }: { round: RoundData; mode: string; returnTo: string; showReportFlag: boolean }) {
   const v = round.image.vehicle;
   const label = `${v.make} ${v.model}`;
   const g: GuessData | null = round.guess;
@@ -105,7 +105,7 @@ function RoundRow({ round, mode, returnTo }: { round: RoundData; mode: string; r
   );
 
   const reportHref = `/report/${round.image.id}?returnTo=${encodeURIComponent(returnTo)}`;
-  const flagLink = (
+  const flagLink = showReportFlag ? (
     <Link
       href={reportHref}
       title="Report a problem with this image"
@@ -113,7 +113,7 @@ function RoundRow({ round, mode, returnTo }: { round: RoundData; mode: string; r
     >
       <Flag className="w-4 h-4" />
     </Link>
-  );
+  ) : null;
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
@@ -156,9 +156,10 @@ interface Props {
   rounds: RoundData[];
   mode: string;
   returnTo?: string;
+  showReportFlag?: boolean;
 }
 
-export function RoundBreakdown({ rounds, mode, returnTo = "" }: Props) {
+export function RoundBreakdown({ rounds, mode, returnTo = "", showReportFlag = false }: Props) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -183,7 +184,7 @@ export function RoundBreakdown({ rounds, mode, returnTo = "" }: Props) {
       {open && (
         <div className="border-t border-white/10 p-4 space-y-3">
           {rounds.map((round) => (
-            <RoundRow key={round.sequenceNumber} round={round} mode={mode} returnTo={returnTo} />
+            <RoundRow key={round.sequenceNumber} round={round} mode={mode} returnTo={returnTo} showReportFlag={showReportFlag} />
           ))}
         </div>
       )}

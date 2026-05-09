@@ -176,7 +176,7 @@ describe("RoundBreakdown", () => {
         makeRound(1, "Toyota", "Supra", correctGuess),
         makeRound(2, "Honda", "NSX", missedGuess),
       ];
-      render(<RoundBreakdown rounds={rounds} mode="easy" returnTo="/results?gameId=abc&mode=easy" />);
+      render(<RoundBreakdown rounds={rounds} mode="easy" returnTo="/results?gameId=abc&mode=easy" showReportFlag />);
 
       const links = screen.getAllByTitle("Report a problem with this image");
       // Two rows × two layouts (mobile + desktop) = 4
@@ -185,11 +185,21 @@ describe("RoundBreakdown", () => {
 
     it("links to the report page for the correct image", () => {
       const rounds = [makeRound(1, "Toyota", "Supra", correctGuess)];
-      render(<RoundBreakdown rounds={rounds} mode="easy" returnTo="/results?gameId=abc&mode=easy" />);
+      render(<RoundBreakdown rounds={rounds} mode="easy" returnTo="/results?gameId=abc&mode=easy" showReportFlag />);
 
       const links = screen.getAllByTitle("Report a problem with this image");
       const expectedHref = `/report/img-1?returnTo=${encodeURIComponent("/results?gameId=abc&mode=easy")}`;
       expect(links[0]).toHaveAttribute("href", expectedHref);
+    });
+
+    it("hides the report flag links when showReportFlag is false", () => {
+      const rounds = [
+        makeRound(1, "Toyota", "Supra", correctGuess),
+        makeRound(2, "Honda", "NSX", missedGuess),
+      ];
+      render(<RoundBreakdown rounds={rounds} mode="easy" returnTo="/results?gameId=abc&mode=easy" showReportFlag={false} />);
+
+      expect(screen.queryByTitle("Report a problem with this image")).not.toBeInTheDocument();
     });
   });
 

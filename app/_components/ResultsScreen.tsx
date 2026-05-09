@@ -23,9 +23,10 @@ interface Props {
   mode: string;
   username: string;
   maxScore?: number;
+  showReportFlag?: boolean;
 }
 
-export default function ResultsScreen({ gameId, hasToken, mode, username, maxScore }: Props) {
+export default function ResultsScreen({ gameId, hasToken, mode, username, maxScore, showReportFlag = false }: Props) {
   const router = useRouter();
   const [session, setSession] = useState<SessionData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -190,6 +191,7 @@ export default function ResultsScreen({ gameId, hasToken, mode, username, maxSco
           rounds={session.rounds}
           mode={mode}
           returnTo={`/results?gameId=${gameId}&mode=${mode}${username ? `&username=${username}` : ""}`}
+          showReportFlag={showReportFlag}
         />
       </div>
     </div>
