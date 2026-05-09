@@ -4,6 +4,8 @@ import { cookies, headers } from "next/headers";
 import ResultsScreen from "@/app/_components/ResultsScreen";
 import { prisma } from "@/app/lib/prisma";
 import { MODES } from "@/app/lib/constants";
+import { isFeatureEnabled } from "@/app/lib/feature-flags-server";
+import { FEATURE_FLAG_KEY } from "@/app/lib/feature-flags";
 
 interface SearchParams {
   gameId?: string;
@@ -82,6 +84,7 @@ export default async function ResultsPage({
 
   const cookieStore = await cookies();
   const hasToken = cookieStore.has(`st_${gameId}`);
+  const showReportFlag = await isFeatureEnabled(FEATURE_FLAG_KEY.ImageReporting);
 
   return (
     <ResultsScreen
@@ -90,6 +93,7 @@ export default async function ResultsPage({
       mode={mode}
       username={username ?? ""}
       maxScore={maxScore ? parseInt(maxScore) : undefined}
+      showReportFlag={showReportFlag}
     />
   );
 }
