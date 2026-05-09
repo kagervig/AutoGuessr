@@ -126,13 +126,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await tx.image.update({
-      where: { id: imageId },
-      data: {
-        needsReview: true,
-      },
-    });
-
     return image;
   });
 

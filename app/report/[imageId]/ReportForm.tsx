@@ -2,7 +2,7 @@
 // Client-side report form for flagging image problems.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
 interface VehicleData {
@@ -160,6 +160,15 @@ export default function ReportForm({ imageId, returnTo }: Props) {
       <div className="max-w-xl mx-auto space-y-8">
         {/* Header */}
         <div>
+          {returnTo && (
+            <button
+              onClick={() => router.push(returnTo)}
+              className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors mb-4"
+            >
+              <ArrowLeft size={16} />
+              Back to results
+            </button>
+          )}
           <h1 className="text-2xl font-bold text-white">Report a Problem</h1>
           <p className="text-sm text-white mt-1">Help us keep AutoGuessr accurate. In the form below, please let us know what you believe the vehicle shown in the image to be. We review every report and will update the database if required.</p>
         </div>
