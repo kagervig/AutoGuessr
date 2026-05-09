@@ -11,6 +11,7 @@ export const FEATURE_FLAG_KEY = {
   ModePractice: "mode_practice",
   DailyChallenge: "daily_challenge",
   CarOfTheDay: "car_of_the_day",
+  ImageReporting: "image_reporting",
 } as const;
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEY)[keyof typeof FEATURE_FLAG_KEY];
 
@@ -18,7 +19,7 @@ export interface FeatureFlagDefinition {
   key: FeatureFlagKey;
   label: string;
   description: string;
-  group: "Game Modes" | "Daily Features";
+  group: "Game Modes" | "Daily Features" | "Admin Tools";
 }
 
 export const FEATURE_FLAGS: FeatureFlagDefinition[] = [
@@ -30,6 +31,7 @@ export const FEATURE_FLAGS: FeatureFlagDefinition[] = [
   { key: FEATURE_FLAG_KEY.ModePractice,   label: "Garage",       description: "Practice mode with no leaderboard.",           group: "Game Modes" },
   { key: FEATURE_FLAG_KEY.DailyChallenge, label: "Daily Challenge", description: "One challenge every day.",                  group: "Daily Features" },
   { key: FEATURE_FLAG_KEY.CarOfTheDay,    label: "Car of the Day",  description: "Identify the featured car for a bonus.",     group: "Daily Features" },
+  { key: FEATURE_FLAG_KEY.ImageReporting, label: "Image Reporting", description: "Enable users to report image problems.",     group: "Admin Tools" },
 ];
 
 export const GAME_MODE_FLAG: Record<GameMode, FeatureFlagKey> = {

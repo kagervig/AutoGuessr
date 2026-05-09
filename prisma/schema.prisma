@@ -141,8 +141,28 @@ model Image {
   stats                ImageStats?
   rounds               Round[]
   featuredDays         FeaturedVehicleOfDay[]
+  reports              ImageReport[]
 
   @@index([vehicleId])
+}
+
+model ImageReport {
+  id                      String     @id @default(cuid())
+  imageId                 String
+  certainty               Int
+  comment                 String?
+  suggestedMake           String?
+  suggestedModel          String?
+  suggestedYear           Int?
+  suggestedTrim           String?
+  suggestedCountryOfOrigin String?
+  suggestedBodyStyle      BodyStyle?
+  suggestedEra            Era?
+  suggestedRarity         Rarity?
+  createdAt               DateTime   @default(now())
+  image                   Image      @relation(fields: [imageId], references: [id])
+
+  @@index([imageId])
 }
 
 model ImageStats {
