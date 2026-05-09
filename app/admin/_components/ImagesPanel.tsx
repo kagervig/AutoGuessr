@@ -133,9 +133,13 @@ export default function ImagesPanel() {
     fetch(`/api/admin/images?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => {
-        setImages(data.items);
-        setTotalCount(data.totalCount);
-        setTotalPages(data.totalPages);
+        if (data.items) {
+          setImages(data.items);
+          setTotalCount(data.totalCount);
+          setTotalPages(data.totalPages);
+        } else {
+          setError(data.error ?? "Failed to load images");
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
