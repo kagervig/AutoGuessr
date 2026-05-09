@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
   };
 
   if (!imageId) {
-    return Response.json({ error: "imageId is required" }, { status: 400 });
+    return Response.json({ error: "Image ID is required" }, { status: 400 });
   }
   if (
     typeof certainty !== "number" ||
@@ -101,37 +101,48 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Invalid suggestedRarity" }, { status: 400 });
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    const image = await tx.image.findUnique({
-      where: { id: imageId },
-      include: { vehicle: true },
-    });
-    if (!image) return null;
+  let result;
+  try {
+    result = await prisma.$transaction(async (tx) => {
+      const image = await tx.image.findUnique({
+        where: { id: imageId },
+        include: { vehicle: true },
+      });
+      if (!image) return null;
 
-    await tx.imageReport.create({
-      data: {
-        imageId,
-        certainty,
-        comment: comment?.trim() || null,
-        suggestedMake: suggestedMake || null,
-        suggestedModel: suggestedModel || null,
-        suggestedYear: suggestedYear ?? null,
-        suggestedTrim: suggestedTrim || null,
-        suggestedCountryOfOrigin: suggestedCountryOfOrigin || null,
-        suggestedBodyStyle: suggestedBodyStyle
-          ? (suggestedBodyStyle as BodyStyle)
-          : null,
-        suggestedEra: suggestedEra ? (suggestedEra as Era) : null,
-        suggestedRarity: suggestedRarity ? (suggestedRarity as Rarity) : null,
-      },
-    });
+      await tx.imageReport.create({
+        data: {
+          imageId,
+          certainty,
+          comment: comment?.trim() || null,
+          suggestedMake: suggestedMake || null,
+          suggestedModel: suggestedModel || null,
+          suggestedYear: suggestedYear ?? null,
+          suggestedTrim: suggestedTrim || null,
+          suggestedCountryOfOrigin: suggestedCountryOfOrigin || null,
+          suggestedBodyStyle: suggestedBodyStyle
+            ? (suggestedBodyStyle as BodyStyle)
+            : null,
+          suggestedEra: suggestedEra ? (suggestedEra as Era) : null,
+          suggestedRarity: suggestedRarity ? (suggestedRarity as Rarity) : null,
+        },
+      });
 
-    return image;
-  });
+      await tx.imageStats.upsert({
+        where: { imageId },
+        update: { reportCount: { increment: 1 } },
+        create: { imageId, reportCount: 1 },
+      });
+
+      return image;
+    });
+  } catch {
+    return Response.json({ error: "Internal server error" }, { status: 500 });
+  }
 
   if (!result) {
     return Response.json({ error: "Image not found" }, { status: 404 });
   }
 
-  return Response.json({ success: true });
+  return Response.json({ ok: true });
 }

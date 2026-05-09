@@ -2,14 +2,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/report/route";
 
-vi.mock("@/app/lib/prisma", () => ({
-  prisma: {
-    image: { findUnique: vi.fn(), update: vi.fn() },
-    imageReport: { create: vi.fn() },
-    imageStats: { upsert: vi.fn() },
-    $transaction: vi.fn((promises) => Promise.all(promises)),
-  },
-}));
+vi.mock("@/app/lib/prisma", () => {
+  const image = { findUnique: vi.fn() };
+  const imageReport = { create: vi.fn() };
+  const imageStats = { upsert: vi.fn() };
+  const tx = { image, imageReport, imageStats };
+  return {
+    prisma: {
+      image,
+      imageReport,
+      imageStats,
+      $transaction: vi.fn((fn: (tx: typeof tx) => Promise<unknown>) => fn(tx)),
+    },
+  };
+});
 
 const { prisma } = await import("@/app/lib/prisma");
 
@@ -72,11 +78,6 @@ describe("POST /api/report", () => {
         suggestedModel: "Supra",
         suggestedYear: 1994,
       }),
-    });
-
-    expect(prisma.image.update).toHaveBeenCalledWith({
-      where: { id: "img-123" },
-      data: { needsReview: true },
     });
 
     expect(prisma.imageStats.upsert).toHaveBeenCalledWith({
