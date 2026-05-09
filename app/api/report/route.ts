@@ -101,8 +101,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Invalid suggestedRarity" }, { status: 400 });
   }
 
-  const deactivated = certainty >= 75;
-
   const result = await prisma.$transaction(async (tx) => {
     const image = await tx.image.findUnique({
       where: { id: imageId },
@@ -132,7 +130,6 @@ export async function POST(request: NextRequest) {
       where: { id: imageId },
       data: {
         needsReview: true,
-        ...(deactivated ? { isActive: false } : {}),
       },
     });
 
@@ -143,5 +140,5 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Image not found" }, { status: 404 });
   }
 
-  return Response.json({ success: true, deactivated });
+  return Response.json({ success: true });
 }
