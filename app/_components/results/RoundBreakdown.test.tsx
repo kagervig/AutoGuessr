@@ -14,6 +14,7 @@ const makeRound = (
   sequenceNumber,
   imageUrl: `/img/r${sequenceNumber}.jpg`,
   image: {
+    id: `img-${sequenceNumber}`,
     filename: `r${sequenceNumber}.jpg`,
     vehicleId: `v${sequenceNumber}`,
     vehicle: { make, model, year: 1994, countryOfOrigin: "JP" },
@@ -166,6 +167,29 @@ describe("RoundBreakdown", () => {
       const guess = { ...correctGuess, proBonus: 0, pointsEarned: 350 };
       render(<RoundBreakdown rounds={[makeRound(1, "Toyota", "Supra", guess)]} mode="standard" />);
       expect(screen.queryByText("Pro")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("report flag button", () => {
+    it("renders a flag link for each round row", () => {
+      const rounds = [
+        makeRound(1, "Toyota", "Supra", correctGuess),
+        makeRound(2, "Honda", "NSX", missedGuess),
+      ];
+      render(<RoundBreakdown rounds={rounds} mode="easy" returnTo="/results?gameId=abc&mode=easy" />);
+
+      const links = screen.getAllByTitle("Report a problem with this image");
+      // Two rows × two layouts (mobile + desktop) = 4
+      expect(links).toHaveLength(4);
+    });
+
+    it("links to the report page for the correct image", () => {
+      const rounds = [makeRound(1, "Toyota", "Supra", correctGuess)];
+      render(<RoundBreakdown rounds={rounds} mode="easy" returnTo="/results?gameId=abc&mode=easy" />);
+
+      const links = screen.getAllByTitle("Report a problem with this image");
+      const expectedHref = `/report/img-1?returnTo=${encodeURIComponent("/results?gameId=abc&mode=easy")}`;
+      expect(links[0]).toHaveAttribute("href", expectedHref);
     });
   });
 
