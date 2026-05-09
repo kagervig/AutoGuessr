@@ -81,7 +81,7 @@ export async function PATCH(request: Request) {
   if (!imageId) return Response.json({ error: "imageId is required" }, { status: 400 });
 
   if (action === "dismiss") {
-    await prisma.image.update({ where: { id: imageId }, data: { needsReview: false } });
+    await prisma.imageReport.deleteMany({ where: { imageId } });
     return Response.json({ ok: true });
   }
 
@@ -118,6 +118,8 @@ export async function PATCH(request: Request) {
     if (Object.keys(vehicleUpdate).length > 0) {
       await prisma.vehicle.update({ where: { id: report.image.vehicleId }, data: vehicleUpdate });
     }
+
+    await prisma.imageReport.delete({ where: { id: reportId } });
 
     return Response.json({ ok: true, fieldsApplied: Object.keys(vehicleUpdate) });
   }
