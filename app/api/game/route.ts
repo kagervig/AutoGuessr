@@ -19,6 +19,12 @@ interface FilterConfig {
   makes?: string[];
 }
 
+/**
+ * Verifies a Cloudflare Turnstile token.
+ * 
+ * @param token - The response token from the Turnstile widget.
+ * @returns True if the verification succeeded.
+ */
 async function verifyTurnstile(token: string): Promise<boolean> {
   const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
     method: "POST",
@@ -29,6 +35,17 @@ async function verifyTurnstile(token: string): Promise<boolean> {
   return data.success === true;
 }
 
+/**
+ * Handles the creation of a new game session.
+ * 
+ * Flow:
+ * 1. Validate mode and bot check (Turnstile).
+ * 2. Parse and build database filters.
+ * 3. Select images based on mode (Daily vs Tiered/Ranked vs Random).
+ * 4. Create a GameSession and generate Rounds.
+ * 5. Pre-compute distractor choices for Easy/Practice modes.
+ * 6. Set a session cookie and return obfuscated round data.
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const mode = searchParams.get("mode") as Mode | null;
@@ -37,6 +54,7 @@ export async function GET(request: NextRequest) {
   let playerId = searchParams.get("playerId");
   const requestedDate = searchParams.get("date"); // YYYY-MM-DD
 
+  // --- 1. Validation & Bot Check ---
   if (playerId) {
     const player = await prisma.player.findUnique({
       where: { id: playerId },
@@ -61,6 +79,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // --- 2. Filter Processing ---
   const filterConfig: FilterConfig = filterRaw
     ? JSON.parse(decodeURIComponent(filterRaw))
     : {};
@@ -95,6 +114,7 @@ export async function GET(request: NextRequest) {
   let makes: string[] | undefined;
   let dailyChallengeId: number | undefined;
 
+  // --- 3. Image Selection ---
   if (mode === GameMode.Daily) {
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10);
@@ -102,7 +122,7 @@ export async function GET(request: NextRequest) {
 
     // Strict UTC check: Cannot play future challenges
     if (dateToPlay > todayStr) {
-      return Response.json({ error: "This challenge is not yet available." }, { status: 403 });
+      return Response.json({ error: "This challenge is for a future date and therefore unavailable, please come again back later to play it." }, { status: 403 });
     }
 
     let challenge: DailyChallenge | null;
@@ -113,7 +133,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!challenge) {
-      return Response.json({ error: "Daily challenge not found for this date." }, { status: 404 });
+      return Response.json({ error: "A daily challenge has not been found for this date, check back soon." }, { status: 404 });
     }
 
     dailyChallengeId = challenge.id;
@@ -219,7 +239,7 @@ export async function GET(request: NextRequest) {
     // No eligible featured vehicle — bonus simply won't fire this session
   }
 
-  // Create session
+  // --- 4. Session & Round Creation ---
   const sessionToken = crypto.randomUUID();
   const session = await prisma.gameSession.create({
     data: {
@@ -286,6 +306,7 @@ export async function GET(request: NextRequest) {
     })
   );
 
+  // --- 5. Response Building ---
   // Build response rounds — vehicle identity is intentionally omitted to prevent client-side cheating
   const roundData = selected.map((image, i) => ({
     roundId: rounds[i].id,

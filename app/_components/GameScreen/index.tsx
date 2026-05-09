@@ -153,7 +153,7 @@ export default function GameScreen({ mode, username, filter, cfToken }: Props) {
   const isHardcore = mode === GameMode.Hardcore;
   const modeLabel = MODE_LABELS[mode] || mode;
 
-  // Practice complete screen
+  // Practice complete screen (shown only after a game in practice mode is completed)
   if (practiceComplete) {
     return (
       <PracticeCompleteScreen

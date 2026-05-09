@@ -1,6 +1,15 @@
 import type { Vehicle, CropMethod } from "../generated/prisma/client";
 import { GameMode, DAILY_DISCOVERY_BONUS } from "./constants";
 
+/**
+ * Calculates the Levenshtein distance between two strings using dynamic programming.
+ * Represents the minimum number of single-character edits (insertions, deletions, or substitutions)
+ * required to change one string into the other.
+ * 
+ * @param a - The first string to compare.
+ * @param b - The second string to compare.
+ * @returns The edit distance between strings a and b.
+ */
 export function levenshtein(a: string, b: string): number {
   const m = a.length;
   const n = b.length;
@@ -18,12 +27,29 @@ export function levenshtein(a: string, b: string): number {
   return dp[m][n];
 }
 
-// Normalise a string for fuzzy comparison
+/**
+ * Normalises a string for fuzzy comparison by trimming, lowercasing,
+ * and removing all non-alphanumeric characters.
+ * 
+ * @param s - The string to normalise.
+ * @returns The normalised string.
+ */
 export function normalise(s: string): string {
   return s.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-// Returns true if the guess matches the target via exact → alias → Levenshtein ≤ 2
+/**
+ * Performs a fuzzy match between a user's guess and a target string.
+ * A match is successful if the normalised guess:
+ * 1. Exactly matches the normalised target.
+ * 2. Matches any of the provided aliases.
+ * 3. Has a Levenshtein distance of 2 or less from the target.
+ * 
+ * @param guess - The user's input string.
+ * @param target - The correct answer to compare against.
+ * @param aliases - Alternative acceptable names for the target.
+ * @returns True if the guess is considered a match.
+ */
 export function fuzzyMatch(guess: string, target: string, aliases: string[]): boolean {
   const g = normalise(guess);
   const t = normalise(target);
@@ -41,7 +67,12 @@ export type VehicleForDistractor = Pick<Vehicle, "id" | "era" | "make" | "model"
   categorySlugs?: string[];
 };
 
-// Fisher-Yates shuffle — returns a new array
+/**
+ * Randomly shuffles an array using the Fisher-Yates algorithm.
+ * 
+ * @param arr - The array to shuffle.
+ * @returns A new array containing the shuffled elements.
+ */
 export function shuffle<T>(arr: T[]): T[] {
   const result = [...arr];
   for (let i = result.length - 1; i > 0; i--) {
@@ -51,18 +82,24 @@ export function shuffle<T>(arr: T[]): T[] {
   return result;
 }
 
-// Pick `count` distractor vehicles for a given correct vehicle.
-//
-// When makeConstraint is provided (manufacturer filter mode), all distractors are
-// sourced exclusively from those makes — the normal priority ladder is bypassed.
-//
-// Default priority order (no constraint):
-//   1. At most 1 same-make vehicle (brand confusion is plausible)
-//   2. Same-category, different make (e.g. other supercars, other muscle cars)
-//   3. Same-era, different make
-//   4. Anything else
-//
-// Deduplicates by make+model to prevent identical labels in the answer choices.
+/**
+ * Selects a specified number of distractor vehicles for a game round.
+ * 
+ * Logic flow:
+ * 1. If `makeConstraint` is provided, filters the pool exclusively to those makes.
+ * 2. Otherwise, applies a priority ladder:
+ *    - Up to 1 vehicle from the same make (brand confusion).
+ *    - Vehicles from the same category but different make.
+ *    - Vehicles from the same era but different make.
+ *    - Random fallback vehicles.
+ * 3. Deduplicates by make and model to ensure unique answer labels.
+ * 
+ * @param correct - The vehicle the player must correctly identify.
+ * @param pool - The set of candidate vehicles to select distractors from.
+ * @param count - The number of distractors to return (default: 3).
+ * @param makeConstraint - Optional list of makes to restrict the selection to.
+ * @returns An array of distractor vehicles.
+ */
 export function selectDistractors(
   correct: VehicleForDistractor,
   pool: VehicleForDistractor[],
@@ -134,12 +171,26 @@ export function selectDistractors(
   return result;
 }
 
+/**
+ * Returns a human-readable label for a vehicle.
+ * 
+ * @param vehicle - The vehicle to label.
+ * @returns A string in the format "Make Model".
+ */
 export function vehicleLabel(vehicle: Pick<Vehicle, "make" | "model">): string {
   return `${vehicle.make} ${vehicle.model}`;
 }
 
-// Builds a Cloudinary URL for a game image, applying the stored crop method.
-// The conditional method uses a signed AI crop only for portrait images to stay within Cloudinary's monthly AI credit limit.
+/**
+ * Generates a Cloudinary image URL for a vehicle photo.
+ * Applies different transformation strategies based on the `method`.
+ * 
+ * @param filename - The filename/public_id in Cloudinary.
+ * @param vehicleId - The ID of the vehicle (used as a fallback seed).
+ * @param signature - A cryptographic signature for authenticated AI transformations.
+ * @param method - The cropping strategy ("standard", "subject", or "conditional").
+ * @returns A complete URL to the transformed image.
+ */
 export function imageUrl(
   filename: string,
   vehicleId: string,
@@ -170,6 +221,12 @@ export function imageUrl(
   return `https://picsum.photos/seed/${vehicleId}/800/600`;
 }
 
+/**
+ * Calculates the score for a single round based on accuracy, time, and game mode.
+ * 
+ * @param params - The round results and context.
+ * @returns Detailed breakdown of points earned and multipliers applied.
+ */
 export function scoreRound({
   makeCorrect,
   modelCorrect,
@@ -243,8 +300,14 @@ export function scoreRound({
   return { makePoints, modelPoints, yearBonus, timeBonus, modeMultiplier, dailyDiscoveryBonus, pointsEarned };
 }
 
-// Returns a flat bonus awarded when correctly identifying a statistically hard image.
-// Thresholds are based on the image's historical incorrect-guess ratio.
+/**
+ * Returns a flat bonus awarded when correctly identifying a statistically difficult image.
+ * Difficulty is determined by the historical ratio of incorrect guesses.
+ * 
+ * @param correctGuesses - Total number of times this image was guessed correctly globally.
+ * @param incorrectGuesses - Total number of times this image was guessed incorrectly globally.
+ * @returns A flat points bonus (0, 100, 300, 500, or 1000).
+ */
 export function proLevelBonus(correctGuesses: number, incorrectGuesses: number): number {
   const total = correctGuesses + incorrectGuesses;
   if (total === 0) return 0;
@@ -256,6 +319,9 @@ export function proLevelBonus(correctGuesses: number, incorrectGuesses: number):
   return 0;
 }
 
+/**
+ * Time limits (in milliseconds) for a single round, keyed by game mode.
+ */
 export const TIME_LIMITS: Record<GameMode, number> = {
   [GameMode.Daily]: 30_000,
   [GameMode.Easy]: 30_000,
