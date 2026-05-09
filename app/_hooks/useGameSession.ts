@@ -444,7 +444,8 @@ export function useGameSession({
 
   async function handleReportImage() {
     if (imageReported || !round) return;
-    window.open(`/report/${round.imageId}`, "_blank");
+    setImageReported(true);
+    await fetch(`/api/image/${round.imageId}/report`, { method: "POST" });
   }
 
   return {
