@@ -63,3 +63,64 @@ export async function GET() {
 
   return Response.json(items);
 }
+
+export async function PATCH(request: Request) {
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { action, imageId, reportId } = body as {
+    action?: string;
+    imageId?: string;
+    reportId?: string;
+  };
+
+  if (!imageId) return Response.json({ error: "imageId is required" }, { status: 400 });
+
+  if (action === "dismiss") {
+    await prisma.image.update({ where: { id: imageId }, data: { needsReview: false } });
+    return Response.json({ ok: true });
+  }
+
+  if (action === "reactivate") {
+    await prisma.image.update({ where: { id: imageId }, data: { isActive: true } });
+    return Response.json({ ok: true });
+  }
+
+  if (action === "deactivate") {
+    await prisma.image.update({ where: { id: imageId }, data: { isActive: false } });
+    return Response.json({ ok: true });
+  }
+
+  if (action === "apply") {
+    if (!reportId) return Response.json({ error: "reportId is required for apply" }, { status: 400 });
+
+    const report = await prisma.imageReport.findUnique({
+      where: { id: reportId },
+      include: { image: true },
+    });
+    if (!report) return Response.json({ error: "Report not found" }, { status: 404 });
+    if (report.imageId !== imageId) return Response.json({ error: "Report does not belong to this image" }, { status: 400 });
+
+    const vehicleUpdate: Record<string, unknown> = {};
+    if (report.suggestedMake) vehicleUpdate.make = report.suggestedMake;
+    if (report.suggestedModel) vehicleUpdate.model = report.suggestedModel;
+    if (report.suggestedYear != null) vehicleUpdate.year = report.suggestedYear;
+    if (report.suggestedTrim) vehicleUpdate.trim = report.suggestedTrim;
+    if (report.suggestedCountryOfOrigin) vehicleUpdate.countryOfOrigin = report.suggestedCountryOfOrigin;
+    if (report.suggestedBodyStyle) vehicleUpdate.bodyStyle = report.suggestedBodyStyle as BodyStyle;
+    if (report.suggestedEra) vehicleUpdate.era = report.suggestedEra as Era;
+    if (report.suggestedRarity) vehicleUpdate.rarity = report.suggestedRarity as Rarity;
+
+    if (Object.keys(vehicleUpdate).length > 0) {
+      await prisma.vehicle.update({ where: { id: report.image.vehicleId }, data: vehicleUpdate });
+    }
+
+    return Response.json({ ok: true, fieldsApplied: Object.keys(vehicleUpdate) });
+  }
+
+  return Response.json({ error: "Unknown action" }, { status: 400 });
+}
