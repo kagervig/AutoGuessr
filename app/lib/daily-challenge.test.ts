@@ -126,4 +126,24 @@ describe("generateChallengesForRange", () => {
     expect(result.skipped).toEqual(["2025-01-13"]);
     expect(result.created).toHaveLength(2);
   });
+
+  it("should handle a race condition (P2002) during creation by treating it as a skip", async () => {
+    const { Prisma } = await import("../generated/prisma/client");
+    const date = new Date("2025-01-15T00:00:00Z");
+
+    // Simulate finding nothing initially...
+    vi.mocked(prisma.dailyChallenge.findUnique).mockResolvedValue(null);
+
+    // ...but someone else creates it in the split-second before we do
+    const p2002Error = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
+      clientVersion: "mock",
+    });
+    vi.mocked(prisma.dailyChallenge.create).mockRejectedValue(p2002Error);
+
+    const result = await generateChallengesForRange(date, date);
+
+    expect(result.skipped).toEqual(["2025-01-15"]);
+    expect(result.created).toHaveLength(0);
+  });
 });
