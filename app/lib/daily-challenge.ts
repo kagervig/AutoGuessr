@@ -98,14 +98,23 @@ export async function generateChallengesForRange(
         prevChallenge?.imageIds ?? []
       );
 
-      const challenge = await prisma.dailyChallenge.create({
-        data: {
-          date: daySnapshot,
-          imageIds,
-          isPublished: true,
-        },
-      });
-      created.push(challenge);
+      try {
+        const challenge = await prisma.dailyChallenge.create({
+          data: {
+            date: daySnapshot,
+            imageIds,
+            isPublished: true,
+          },
+        });
+        created.push(challenge);
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+          // Lost a race to create this challenge; treat it as skipped so the caller can retry/fetch.
+          skipped.push(dateStr);
+        } else {
+          throw e;
+        }
+      }
     }
 
     current.setUTCDate(current.getUTCDate() + 1);

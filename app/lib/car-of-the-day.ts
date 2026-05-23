@@ -1,4 +1,5 @@
 // Selection logic and helpers for the Car of the Day feature.
+import { Prisma } from "../generated/prisma/client";
 import { prisma } from "./prisma";
 import type { FeaturedVehicleOfDay, Image, Vehicle, VehicleTrivia } from "../generated/prisma/client";
 
@@ -95,16 +96,25 @@ export async function selectAndInsertFeatured(date: Date): Promise<FeaturedWithR
   const imageIndex = fnv1a(dateStr + chosen.id) % imagePool.length;
   const chosenImage = imagePool[imageIndex];
 
-  const featured = await prisma.featuredVehicleOfDay.create({
-    data: {
-      date,
-      vehicleId: chosen.id,
-      imageId: chosenImage.id,
-    },
-    include: VEHICLE_INCLUDE,
-  });
+  try {
+    const featured = await prisma.featuredVehicleOfDay.create({
+      data: {
+        date,
+        vehicleId: chosen.id,
+        imageId: chosenImage.id,
+      },
+      include: VEHICLE_INCLUDE,
+    });
 
-  return featured as FeaturedWithRelations;
+    return featured as FeaturedWithRelations;
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      const race = await getFeatured(date);
+      if (!race) throw new Error("Failed to get or create featured vehicle");
+      return race;
+    }
+    throw e;
+  }
 }
 
 const COTD_COOLDOWN_DAYS = 365;
