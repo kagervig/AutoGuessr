@@ -2,6 +2,7 @@
 // Animated car image card with hardcore panel grid overlay and round label.
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
+import Image from "next/image";
 
 interface Props {
   imageUrl: string;
@@ -29,12 +30,12 @@ export function RoundImage({ imageUrl, currentIndex, isHardcore, roundState, vis
         exit={{ opacity: 0, scale: 1.02 }}
         className="relative rounded-2xl overflow-hidden aspect-video bg-card border border-white/10 shadow-xl"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={imageUrl}
+        <Image
           src={imageUrl}
           alt="Identify this car"
-          loading="eager"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="absolute inset-0 w-full h-full object-cover"
           draggable={false}
           onError={() => setHasError(true)}
