@@ -73,6 +73,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Fetch all image data, the featured vehicle, and the full vehicle pool in parallel so we can
+  // build round choices without sequential round-trips.
   const [images, featured, allVehicles] = await Promise.all([
     prisma.image.findMany({
       where: { id: { in: challenge.imageIds } },

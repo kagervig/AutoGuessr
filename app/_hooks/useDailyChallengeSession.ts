@@ -122,9 +122,6 @@ export function useDailyChallengeSession({ data, currentIndex, setCurrentIndex }
       setRoundState("complete");
       return;
     }
-    // NOTE: roundStartRef is also reset by the useEffect on currentIndex, which fires after the new round renders.
-    // This early reset is redundant but harmless.
-    roundStartRef.current = Date.now();
     hasSubmittedRef.current = false;
     setCurrentIndex((i) => i + 1);
     setRoundState("answering");

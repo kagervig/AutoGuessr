@@ -73,11 +73,21 @@ PostgreSQL, accessed via Prisma ORM.
 
 ### Gameplay
 
-**`GameSession`** — mode, filterConfig (Json), startedAt, endedAt, finalScore, initials, sessionToken (@unique, db-generated UUID). Optional `playerId` FK for logged-in players; anonymous sessions have no player.
+**`GameSession`** — mode, filterConfig (Json), startedAt, endedAt, finalScore, initials, sessionToken (@unique, db-generated UUID), featuredVehicleIdAtStart, optional dailyChallengeId (FK → DailyChallenge). Optional `playerId` FK for logged-in players; anonymous sessions have no player.
 
 **`Round`** — gameId (FK → GameSession), imageId, sequenceNumber, easyChoices (String[] of vehicleIds for easy/practice mode), timeLimitMs. One-to-one with `Guess`.
 
 **`Guess`** — rawInput, guessedVehicleId, isCorrect, partialCredit, yearDelta, timeTakenMs, zoomLevelAtGuess, makePoints, modelPoints, yearBonus, timeBonus, proBonus, modeMultiplier, pointsEarned. roundId is @unique (one guess per round).
+
+---
+
+### Daily challenge
+
+**`DailyChallenge`** — date (@unique), imageIds (String[] of image IDs in play order), isPublished, curatedBy?, generatedAt. One-to-many with `DailyChallengeSession` and `GameSession` (legacy FK).
+
+**`DailyChallengeSession`** — id (UUID), optional playerId (FK → Player), challengeId (FK → DailyChallenge), answerVehicleIds (String[] — correct vehicleId per round, used for server-side grading), roundBonuses (Json array of `{ isHardcore, isCotd, isRareFind }` per round), roundScores (Int[]), totalScore?, startedAt, completedAt?. Unique constraint `[playerId, challengeId]` prevents a logged-in player from replaying. Anonymous sessions use a cookie instead.
+
+**`FeaturedVehicleOfDay`** — date (@id), vehicleId (FK → Vehicle), imageId (FK → Image), curatedBy?, createdAt. Tracks the Car of the Day shown as a bonus round hint.
 
 ---
 
@@ -106,11 +116,16 @@ Images go through a pipeline before being published to the game.
 ## Key relationships
 
 ```
-GameSession ──< Round ──── Guess
-                  │
-                  └──── Image ──── Vehicle ──>── Region
-                                     │
-                                     └──>── Category (via VehicleCategory)
+DailyChallenge ──< DailyChallengeSession >── Player
+      │
+      └──< GameSession ──< Round ──── Guess
+                              │
+                              └──── Image ──── Vehicle ──>── Region
+                                                 │
+                                                 └──>── Category (via VehicleCategory)
+
+FeaturedVehicleOfDay >── Vehicle
+FeaturedVehicleOfDay >── Image
 ```
 
 - `GameSession` → `Round`: one-to-many
@@ -119,5 +134,38 @@ GameSession ──< Round ──── Guess
 - `Image` → `Vehicle`: many-to-one
 - `Vehicle` ↔ `Category`: many-to-many via `VehicleCategory`
 - `GameSession` → `Player`: many-to-one (optional)
+- `GameSession` → `DailyChallenge`: many-to-one (optional, legacy)
 - `Player` → `PlayerStats`: one-to-one
 - `Player` → `PlayerDimensionStats`: one-to-many
+- `DailyChallenge` → `DailyChallengeSession`: one-to-many
+- `Player` → `DailyChallengeSession`: one-to-many (optional — anonymous sessions have no player)
+- `FeaturedVehicleOfDay` → `Vehicle`: many-to-one
+- `FeaturedVehicleOfDay` → `Image`: many-to-one
+
+---
+
+## Game logic
+
+### Distractor selection (`selectDistractors` in `app/lib/game.ts`)
+
+Picks `count` (default 3) wrong-answer vehicles for a round. The correct vehicle and any vehicle sharing the same make+model are excluded from the candidate pool first.
+
+**`makeConstraint` path** — used in manufacturer-filter game modes, not in the daily challenge. Restricts the entire pool to the given makes, deduplicates by `make|model`, and warns if fewer than `count` slots can be filled.
+
+**Default path** — used by the daily challenge. Builds four candidate buckets from the remaining pool, each independently shuffled:
+
+| Bucket | Criterion |
+|---|---|
+| `sameMake` | Same manufacturer as the correct vehicle |
+| `sameCategoryDiffMake` | Shares at least one category slug (e.g. `suv`, `sports`) but different make |
+| `sameEraDiffMake` | Same era (e.g. `retro`) but different make |
+| `fallback` | Anything else with a different make |
+
+Fill order — `fill()` walks each bucket in priority order and deduplicates by `make|model` across all selected distractors:
+
+1. At most 1 from `sameMake` — one brand-confusion option without dominating the choices
+2. Fill remaining slots from `sameCategoryDiffMake` — same vehicle type, different brand
+3. Then `sameEraDiffMake`
+4. Then `fallback` — anything to reach `count`
+
+The result is that wrong answers are plausible (same brand or same vehicle type) rather than random noise.
