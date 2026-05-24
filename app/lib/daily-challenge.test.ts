@@ -14,6 +14,7 @@ vi.mock("@/app/lib/prisma", () => ({
 }));
 
 const { prisma } = await import("@/app/lib/prisma");
+const { ROUNDS_PER_GAME } = await import("@/app/lib/constants");
 const { pickImageIdsForChallenge, generateChallengesForRange } = await import(
   "@/app/lib/daily-challenge"
 );
@@ -29,8 +30,8 @@ function makeChallenge(overrides: Partial<DailyChallenge> & { date: Date }): Dai
   } as DailyChallenge;
 }
 
-const TEN_IMAGE_ROWS = Array.from({ length: 10 }, (_, i) => ({ id: `img-${i + 1}` }));
-const TEN_IMAGE_IDS = TEN_IMAGE_ROWS.map((r) => r.id);
+const TEST_IMAGE_ROWS = Array.from({ length: ROUNDS_PER_GAME }, (_, i) => ({ id: `img-${i + 1}` }));
+const TEST_IMAGE_IDS = TEST_IMAGE_ROWS.map((r) => r.id);
 
 afterEach(() => {
   vi.useRealTimers();
@@ -43,15 +44,15 @@ afterEach(() => {
 
 describe("pickImageIdsForChallenge", () => {
   it("should return image IDs from the query result", async () => {
-    vi.mocked(prisma.$queryRaw).mockResolvedValue(TEN_IMAGE_ROWS);
-    const ids = await pickImageIdsForChallenge(10);
-    expect(ids).toEqual(TEN_IMAGE_IDS);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue(TEST_IMAGE_ROWS);
+    const ids = await pickImageIdsForChallenge(ROUNDS_PER_GAME);
+    expect(ids).toEqual(TEST_IMAGE_IDS);
   });
 
   it("should throw when the DB returns fewer images than requested", async () => {
     vi.mocked(prisma.$queryRaw).mockResolvedValue([{ id: "img-1" }, { id: "img-2" }]);
-    await expect(pickImageIdsForChallenge(10)).rejects.toThrow(
-      "Not enough active images to generate a challenge (need 10, got 2)"
+    await expect(pickImageIdsForChallenge(ROUNDS_PER_GAME)).rejects.toThrow(
+      `Not enough active images to generate a challenge (need ${ROUNDS_PER_GAME}, got 2)`
     );
   });
 });
@@ -62,7 +63,7 @@ describe("pickImageIdsForChallenge", () => {
 
 describe("generateChallengesForRange", () => {
   beforeEach(() => {
-    vi.mocked(prisma.$queryRaw).mockResolvedValue(TEN_IMAGE_ROWS);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue(TEST_IMAGE_ROWS);
     vi.mocked(prisma.dailyChallenge.create).mockResolvedValue(
       makeChallenge({ date: new Date("2025-01-01T00:00:00Z") })
     );

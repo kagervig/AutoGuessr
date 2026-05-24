@@ -3,9 +3,10 @@
 import { Prisma } from "../generated/prisma/client";
 import { prisma } from "./prisma";
 import type { DailyChallenge } from "../generated/prisma/client";
+import { ROUNDS_PER_GAME } from "./constants";
 
-// Daily challenges are always exactly 10 rounds regardless of the DAILY_CHALLENGE_ROUNDS env var.
-const DAILY_CHALLENGE_ROUNDS = 10;
+// Daily challenges now respect the ROUNDS_PER_GAME env var.
+const DAILY_CHALLENGE_ROUNDS = ROUNDS_PER_GAME;
 
 export type GenerateResult = {
   created: DailyChallenge[];
