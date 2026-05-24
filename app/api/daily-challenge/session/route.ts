@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const targetDate = dateParam ?? todayStr;
+  const isLocal = process.env.IS_LOCAL === "true";
 
   if (targetDate > todayStr) {
     return Response.json({ error: "This challenge is not yet available." }, { status: 403 });
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
   // Cookie-based play-once check — works for all users including anonymous.
   const cookieName = playedCookieName(challenge.id);
   const existingCookie = request.cookies.get(cookieName)?.value;
-  if (existingCookie) {
+  if (existingCookie && !isLocal) {
     return Response.json(
       { error: "You have already played this challenge.", existingSessionId: existingCookie },
       { status: 403 }
@@ -66,10 +67,15 @@ export async function GET(request: NextRequest) {
       select: { id: true },
     });
     if (existing) {
-      return Response.json(
-        { error: "You have already played this challenge.", existingSessionId: existing.id },
-        { status: 403 }
-      );
+      if (isLocal) {
+        // In development, automatically delete the old session to allow replaying.
+        await prisma.dailyChallengeSession.delete({ where: { id: existing.id } });
+      } else {
+        return Response.json(
+          { error: "You have already played this challenge.", existingSessionId: existing.id },
+          { status: 403 }
+        );
+      }
     }
   }
 
