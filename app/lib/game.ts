@@ -201,21 +201,21 @@ export function imageUrl(
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
     if (method === "standard") {
-      return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${filename}`;
+      return `https://res.cloudinary.com/${cloudName}/image/upload/w_850,f_auto,q_auto/${filename}`;
     }
 
     if (method === "subject") {
-      return `https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_auto:subject,ar_16:9,w_1280,f_auto,q_auto/${filename}`;
+      return `https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_auto:subject,ar_16:9,w_850,f_auto,q_auto/${filename}`;
     }
 
     // Default: conditional
     if (signature) {
-      const transformation = "if_ar_lt_1.0/c_fill,ar_16:9,g_auto:coco_v2_car,w_1280/if_end/f_auto,q_auto";
+      const transformation = "if_ar_lt_1.0/c_fill,ar_16:9,g_auto:coco_v2_car,w_850/if_end/f_auto,q_auto";
       return `https://res.cloudinary.com/${cloudName}/image/upload/${signature}/${transformation}/${filename}`;
     }
 
     // Fallback if no signature provided for conditional
-    return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${filename}`;
+    return `https://res.cloudinary.com/${cloudName}/image/upload/w_850,f_auto,q_auto/${filename}`;
   }
   // Stable placeholder per vehicle during local development
   return `https://picsum.photos/seed/${vehicleId}/800/600`;

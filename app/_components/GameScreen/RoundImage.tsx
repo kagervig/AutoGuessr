@@ -2,7 +2,17 @@
 // Animated car image card with hardcore panel grid overlay and round label.
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import Image from "next/image";
+import Image, { ImageLoaderProps } from "next/image";
+
+const cloudinaryLoader = ({ src, width }: ImageLoaderProps) => {
+  // If it's a Cloudinary URL, replace the width parameter with the one requested by Next.js
+  // Cap it at 850px to ensure we never serve overly large images even on high-DPI screens
+  if (src.includes("res.cloudinary.com")) {
+    const effectiveWidth = Math.min(width, 850);
+    return src.replace(/w_\d+/, `w_${effectiveWidth}`);
+  }
+  return src;
+};
 
 interface Props {
   imageUrl: string;
@@ -31,11 +41,12 @@ export function RoundImage({ imageUrl, currentIndex, isHardcore, roundState, vis
         className="relative rounded-2xl overflow-hidden aspect-video bg-card border border-white/10 shadow-xl"
       >
         <Image
+          loader={cloudinaryLoader}
           src={imageUrl}
           alt="Identify this car"
           fill
           priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          sizes="(max-width: 850px) 100vw, 850px"
           className="absolute inset-0 w-full h-full object-cover"
           draggable={false}
           onError={() => setHasError(true)}
