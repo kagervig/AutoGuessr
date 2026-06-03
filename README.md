@@ -173,6 +173,16 @@ Uploads every image to Cloudinary under `autoguessr/staging/` and creates a `Sta
 npx tsx scripts/tag-images.ts [--limit N]
 ```
 
+- Flags:
+- --limit N Process only N images (useful for testing)
+- --skip M Skip the first M images (useful for resuming)
+- --review Review already-tagged images (where aiTaggedAt is set)
+- --min-confidence X Only process images where current AI confidence is < X
+- --status S Filter by status (e.g. PENDING_REVIEW, READY)
+- --force Re-tag even if already tagged (normally skipped)
+- --pro Use Gemini 1.5 Pro instead of Flash
+- --reset-keys Clear the key usage state file
+
 Sends untagged staging images to Gemini 2.5 Flash and writes `aiMake`, `aiModel`, `aiYear`, `aiBodyStyle`, and `aiConfidence` back to the DB. Safe to re-run — already-tagged images are skipped.
 
 - If the image exists in `Data/Images/`, it is read from disk. Otherwise the script fetches it from Cloudinary.
@@ -222,6 +232,7 @@ Available at `/admin`. HTTP Basic Auth — username `admin`, password is `ADMIN_
 The game uses a **Conditional AI-Cropping** strategy to ensure all images (landscape or portrait) fit the 16:9 game viewer without cutting off the car.
 
 ### Transformation Logic
+
 We use the `coco_v2_car` model, but only trigger it for "tall" (portrait) images to save AI credits:
 `if_ar_lt_1.0/c_fill,g_auto:coco_v2_car,ar_16:9,w_1280/if_end/f_auto,q_auto`
 
@@ -229,24 +240,29 @@ We use the `coco_v2_car` model, but only trigger it for "tall" (portrait) images
 - **Portrait images:** AI identifies the car and re-crops to 16:9 (1 AI credit per image).
 
 ### Signed URLs
+
 To bypass Cloudinary security restrictions and allow access to AI add-ons without opening your account to unsigned transformations, all game images use **Signed URLs**.
 
 **1. Generate/Refresh Signatures**
 Signatures are pre-calculated and stored in the database. If you rotate your Cloudinary API Secret, you must re-run this script:
+
 ```bash
 npx tsx scripts/update-image-signatures.ts
 ```
 
 **2. Frontend Usage**
 The `imageUrl` helper in `app/lib/game.ts` automatically handles the construction of the signed URL if a `transformationSignature` is provided from the database:
+
 ```typescript
 const url = imageUrl(image.filename, image.vehicleId, image.transformationSignature);
 ```
 
 ### Testing Transformations
+
 A dedicated test page is available at `/test-cropping`. It allows you to compare 5 different cropping modes side-by-side, including the "Conditional COCO v2" mode used in the game. It generates signatures on-the-fly for the test set using server-side credentials.
 
 ### Crop Review Tool
+
 Located in the Admin Panel under the **Crop Review** tab. This tool is used to audit published images to ensure they crop correctly for the 16:9 game viewer.
 
 - **Purpose:** Specifically identifies "problem" images (usually portraits) where the car is cropped out of frame.
