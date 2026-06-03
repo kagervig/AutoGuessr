@@ -46,18 +46,32 @@ jobs:
           echo "Images tagged: $TOTAL" > summary.txt
           echo "Keys used: $KEYS" >> summary.txt
 
-          if [ -f tagging-report.json ] && [ "$(jq 'length' tagging-report.json)" -gt 0 ]; then
-            echo "" >> summary.txt
-            echo "Make                 Model                Year  Conf  Auto" >> summary.txt
-            echo "-------------------- -------------------- ----  ----  ----" >> summary.txt
-            jq -r '.[] | [
-              (.make | .[0:20] | . + (" " * (20 - length))),
-              (.model | .[0:20] | . + (" " * (20 - length))),
-              ((.year // "?") | tostring | .[0:4] | . + (" " * (4 - length))),
-              ((.confidence * 100 | round | tostring) + "%" | .[0:4] | . + (" " * (4 - length))),
-              (if .autopublished then "Y" else "N" end)
-            ] | join("  ")' tagging-report.json >> summary.txt
-          fi
+          python3 << 'EOF' >> summary.txt
+import json, os, sys
+
+if not os.path.exists("tagging-report.json"):
+    sys.exit(0)
+
+with open("tagging-report.json") as f:
+    rows = json.load(f)
+
+if not rows:
+    sys.exit(0)
+
+COL = {"make": 20, "model": 20, "year": 4, "conf": 5}
+
+def cell(val, width):
+    return str(val)[:width].ljust(width)
+
+print()
+print(f"{cell('Make', COL['make'])}  {cell('Model', COL['model'])}  {cell('Year', COL['year'])}  {cell('Conf', COL['conf'])}  Auto")
+print(f"{'─' * COL['make']}  {'─' * COL['model']}  {'─' * COL['year']}  {'─' * COL['conf']}  ────")
+for r in rows:
+    year = str(r["year"]) if r["year"] else "?"
+    conf = f"{round(r['confidence'] * 100)}%"
+    auto = "Y" if r["autopublished"] else "N"
+    print(f"{cell(r['make'], COL['make'])}  {cell(r['model'], COL['model'])}  {cell(year, COL['year'])}  {cell(conf, COL['conf'])}  {auto}")
+EOF
 
       - name: Send email
         uses: dawidd6/action-send-mail@v3
