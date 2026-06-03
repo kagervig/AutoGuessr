@@ -186,6 +186,15 @@ If you are unsure, provide a low confidence score. If you are certain it is diff
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+interface ProcessedImage {
+  filename: string;
+  make: string;
+  model: string;
+  year: number | null;
+  confidence: number;
+  autopublished: boolean;
+}
+
 interface GeminiTag {
   make: string;
   model: string;
@@ -468,6 +477,7 @@ async function main(): Promise<void> {
 
   let tagged = 0;
   let failed = 0;
+  const results: ProcessedImage[] = [];
 
   for (let i = 0; i < untagged.length; i++) {
     const record = untagged[i];
@@ -556,9 +566,19 @@ async function main(): Promise<void> {
         console.log(`  Tagged image: ${record.filename}`); // Keyword for GA summary
         tagged++;
 
+        let wasAutopublished = false;
         if (tag.confidence >= AUTOPUBLISH_CONFIDENCE_THRESHOLD) {
-          await autopublish(prisma, record.id, tag);
+          wasAutopublished = await autopublish(prisma, record.id, tag);
         }
+
+        results.push({
+          filename: record.filename,
+          make: tag.make || "?",
+          model: tag.model || "?",
+          year: tag.year,
+          confidence: tag.confidence,
+          autopublished: wasAutopublished,
+        });
       } catch (dbErr) {
         console.error(`  Database error updating ${record.filename}:`, dbErr);
         failed++;
@@ -572,6 +592,9 @@ async function main(): Promise<void> {
 
   await prisma.$disconnect();
   await pool.end();
+
+  const reportPath = path.join(process.cwd(), "tagging-report.json");
+  fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
 
   console.log(`\nDone.`);
   console.log(`  Tagged:  ${tagged}`);

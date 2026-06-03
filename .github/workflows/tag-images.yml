@@ -46,6 +46,19 @@ jobs:
           echo "Images tagged: $TOTAL" > summary.txt
           echo "Keys used: $KEYS" >> summary.txt
 
+          if [ -f tagging-report.json ] && [ "$(jq 'length' tagging-report.json)" -gt 0 ]; then
+            echo "" >> summary.txt
+            echo "Make                 Model                Year  Conf  Auto" >> summary.txt
+            echo "-------------------- -------------------- ----  ----  ----" >> summary.txt
+            jq -r '.[] | [
+              (.make | .[0:20] | . + (" " * (20 - length))),
+              (.model | .[0:20] | . + (" " * (20 - length))),
+              ((.year // "?") | tostring | .[0:4] | . + (" " * (4 - length))),
+              ((.confidence * 100 | round | tostring) + "%" | .[0:4] | . + (" " * (4 - length))),
+              (if .autopublished then "Y" else "N" end)
+            ] | join("  ")' tagging-report.json >> summary.txt
+          fi
+
       - name: Send email
         uses: dawidd6/action-send-mail@v3
         if: always()
