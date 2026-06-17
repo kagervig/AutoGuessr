@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
     where: { id: sessionId },
     select: {
       answerVehicleIds: true,
+      guessVehicleIds: true,
       roundBonuses: true,
       roundScores: true,
       completedAt: true,
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
     where: { id: sessionId },
     data: {
       roundScores: updatedScores,
+      guessVehicleIds: [...session.guessVehicleIds, vehicleId],
       ...(isFinal ? { totalScore, completedAt: new Date() } : {}),
     },
   });

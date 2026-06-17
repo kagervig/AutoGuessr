@@ -410,6 +410,8 @@ model DailyChallengeSession {
   challengeId      Int
   // correct vehicleId per round in play order; used for server-side grading
   answerVehicleIds String[]
+  // player's chosen vehicleId per round in play order
+  guessVehicleIds  String[]
   // { isHardcore, isCotd, isRareFind } per round
   roundBonuses     Json
   startedAt        DateTime       @default(now())
