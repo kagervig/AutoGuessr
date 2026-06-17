@@ -46,6 +46,7 @@ const SESSION = {
   answerVehicleIds: Array.from({ length: 10 }, (_, i) => `v-${i + 1}`),
   roundBonuses: Array.from({ length: 10 }, () => ({ ...NO_BONUSES })),
   roundScores: [] as number[],
+  guessVehicleIds: [] as string[],
   completedAt: null,
   challengeId: 1,
   challenge: { imageIds: Array.from({ length: 10 }, (_, i) => `img-${i + 1}`) },
@@ -237,6 +238,29 @@ describe("POST /api/daily-challenge/guess", () => {
           completedAt: expect.any(Date),
           totalScore: 9000 + SCORING.pointsEarned,
         }),
+      })
+    );
+  });
+
+  it("writes the guessed vehicleId to guessVehicleIds on update", async () => {
+    await POST(makeRequest({ sessionId: "s-1", roundIndex: 0, vehicleId: "v-wrong" }));
+    expect(vi.mocked(prisma.dailyChallengeSession.update)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ guessVehicleIds: ["v-wrong"] }),
+      })
+    );
+  });
+
+  it("appends to existing guessVehicleIds in a mid-session round", async () => {
+    vi.mocked(prisma.dailyChallengeSession.findUnique).mockResolvedValue({
+      ...SESSION,
+      roundScores: [1190],
+      guessVehicleIds: ["v-1"],
+    } as never);
+    await POST(makeRequest({ sessionId: "s-1", roundIndex: 1, vehicleId: "v-wrong" }));
+    expect(vi.mocked(prisma.dailyChallengeSession.update)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ guessVehicleIds: ["v-1", "v-wrong"] }),
       })
     );
   });
