@@ -1,0 +1,82 @@
+[
+  {
+    "filename": "IMG_9285.jpeg",
+    "make": "VinFast",
+    "model": "VF e34",
+    "year": 2022,
+    "confidence": 0.95,
+    "autopublished": false
+  },
+  {
+    "filename": "IMG_9286.jpeg",
+    "make": "VinFast",
+    "model": "VF 5",
+    "year": 2023,
+    "confidence": 0.9,
+    "autopublished": false
+  },
+  {
+    "filename": "IMG_9288.jpeg",
+    "make": "Kia",
+    "model": "Forte",
+    "year": 2015,
+    "confidence": 0.9,
+    "autopublished": false
+  },
+  {
+    "filename": "IMG_9289.jpeg",
+    "make": "Kia",
+    "model": "Forte",
+    "year": 2015,
+    "confidence": 0.9,
+    "autopublished": false
+  },
+  {
+    "filename": "IMG_9290.jpeg",
+    "make": "Kia",
+    "model": "Cerato K3",
+    "year": 2015,
+    "confidence": 0.9,
+    "autopublished": false
+  },
+  {
+    "filename": "IMG_9291.jpeg",
+    "make": "VinFast",
+    "model": "VF e34",
+    "year": 2022,
+    "confidence": 0.9,
+    "autopublished": false
+  },
+  {
+    "filename": "IMG_9297.jpeg",
+    "make": "VinFast",
+    "model": "VF 5",
+    "year": 2023,
+    "confidence": 0.9,
+    "autopublished": false
+  },
+  {
+    "filename": "IMG_9298.jpeg",
+    "make": "VinFast",
+    "model": "VF 5",
+    "year": 2023,
+    "confidence": 0.95,
+    "autopublished": false
+  },
+  {
+    "filename": "IMG_9300.jpeg",
+    "make": "Mitsubishi",
+    "model": "Xpander",
+    "year": 2022,
+    "confidence": 0.9,
+    "autopublished": false
+  },
+  {
+    "filename": "IMG_9302.jpeg",
+    "make": "MG",
+    "model": "G50 Plus",
+    "year": 2023,
+    "confidence": 0.9,
+    "autopublished": false
+  }
+]

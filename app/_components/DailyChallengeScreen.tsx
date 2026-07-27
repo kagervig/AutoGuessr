@@ -38,6 +38,20 @@ function DailyChallengeErrorState({ error, onBack }: { error: string | null; onB
   );
 }
 
+function DailyChallengeAlreadyPlayedState({ onBack }: { onBack: () => void }) {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
+      <p className="text-center text-muted-foreground">You have already played this challenge.</p>
+      <button
+        onClick={onBack}
+        className="flex items-center gap-2 glass-panel rounded-xl px-6 py-3 text-sm font-bold text-white hover:bg-white/10 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Calendar
+      </button>
+    </main>
+  );
+}
+
 function DailyChallengeNetworkErrorState({ onHome }: { onHome: () => void }) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
@@ -119,11 +133,12 @@ export default function DailyChallengeScreen({ username = "", date }: Props) {
   const playerId = usePlayerId();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const { data, loading, error } = useDailyChallengeLoader({ date, playerId });
+  const { data, loading, error, alreadyPlayed } = useDailyChallengeLoader({ date, playerId });
   const { roundState, selectedChoiceId, isSubmitting, score, reveal, networkError, round, handleAnswer, handleNext } =
     useDailyChallengeSession({ data, currentIndex, setCurrentIndex });
 
   if (loading) return <DailyChallengeLoadingState />;
+  if (alreadyPlayed) return <DailyChallengeAlreadyPlayedState onBack={() => router.push("/daily-challenge")} />;
   if (error || !data) return <DailyChallengeErrorState error={error} onBack={() => router.push("/")} />;
   if (networkError) return <DailyChallengeNetworkErrorState onHome={() => router.push("/")} />;
 

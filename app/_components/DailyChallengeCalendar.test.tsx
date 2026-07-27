@@ -2,10 +2,15 @@
 // Tests for DailyChallengeCalendar and DailyChallengeCalendarDay.
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect } from "vitest";
+import { vi, describe, it, expect } from "vitest";
 import { DailyChallengeCalendar } from "./DailyChallengeCalendar";
 import { DailyChallengeCalendarDay } from "./DailyChallengeCalendarDay";
 import type { CalendarDayData } from "./DailyChallengeCalendar";
+
+const mockPush = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
 
 // June 2026: starts Monday, 30 days
 const JUNE = { initialYear: 2026, initialMonth: 6 };
@@ -67,6 +72,13 @@ describe("DailyChallengeCalendar", () => {
     await userEvent.click(screen.getByLabelText("Next month"));
     await userEvent.click(screen.getByLabelText("Next month"));
     expect(screen.getByText("July 2026")).toBeInTheDocument();
+  });
+
+  it("clicking an unplayed day navigates to /daily-challenge/YYYY-MM-DD", async () => {
+    const days: CalendarDayData[] = [{ dateStr: june(5), state: "unplayed" }];
+    render(<DailyChallengeCalendar {...JUNE} days={days} today={TODAY} />);
+    await userEvent.click(screen.getByRole("button", { name: "5" }));
+    expect(mockPush).toHaveBeenCalledWith("/daily-challenge/2026-06-05");
   });
 });
 

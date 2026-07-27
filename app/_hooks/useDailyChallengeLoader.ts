@@ -23,6 +23,7 @@ interface Result {
   data: DailyChallengeData | null;
   loading: boolean;
   error: string | null;
+  alreadyPlayed: boolean;
 }
 
 // Fetches the daily challenge session (round images, distractor choices, bonus flags) and prefetches subsequent round images in the background.
@@ -30,6 +31,7 @@ export function useDailyChallengeLoader({ date, playerId }: Params): Result {
   const [data, setData] = useState<DailyChallengeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [alreadyPlayed, setAlreadyPlayed] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -41,10 +43,15 @@ export function useDailyChallengeLoader({ date, playerId }: Params): Result {
     fetch(`/api/daily-challenge/session${query ? `?${query}` : ""}`, {
       signal: controller.signal,
     })
-      .then((r) => r.json())
-      .then((json: DailyChallengeData & { error?: string }) => {
+      .then(async (r) => {
+        const status = r.status;
+        const json = (await r.json()) as DailyChallengeData & { error?: string };
         if (json.error) {
-          setError(json.error);
+          if (status === 403) {
+            setAlreadyPlayed(true);
+          } else {
+            setError(json.error);
+          }
         } else {
           setData(json);
           json.rounds.slice(1).forEach((round) => {
@@ -67,5 +74,5 @@ export function useDailyChallengeLoader({ date, playerId }: Params): Result {
     return () => controller.abort();
   }, [date, playerId]);
 
-  return { data, loading, error };
+  return { data, loading, error, alreadyPlayed };
 }

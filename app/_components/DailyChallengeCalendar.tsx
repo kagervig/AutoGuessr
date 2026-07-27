@@ -1,6 +1,7 @@
 "use client";
 // Monthly calendar grid showing daily challenge status per day.
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DailyChallengeCalendarDay } from "./DailyChallengeCalendarDay";
 import type { DayState } from "./DailyChallengeCalendarDay";
@@ -37,6 +38,7 @@ function monthStartOffset(year: number, month: number): number {
 
 export function DailyChallengeCalendar({ days, today, initialYear, initialMonth }: Props) {
   const now = new Date();
+  const router = useRouter();
   const [year, setYear] = useState(initialYear ?? now.getFullYear());
   const [month, setMonth] = useState(initialMonth ?? now.getMonth() + 1);
 
@@ -107,6 +109,7 @@ export function DailyChallengeCalendar({ days, today, initialYear, initialMonth 
               isToday={cell.dateStr === today}
               score={cell.score}
               rank={cell.rank}
+              onClick={() => router.push(`/daily-challenge/${cell.dateStr}`)}
             />
           )
         )}
