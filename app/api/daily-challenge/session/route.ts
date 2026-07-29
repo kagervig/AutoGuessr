@@ -26,11 +26,13 @@ export async function GET(request: NextRequest) {
   let playerId = searchParams.get("playerId") ?? null;
 
   if (playerId) {
-    const player = await prisma.player.findUnique({
+    // Auto-create an anonymous player on first contact so that sessions can be
+    // stored with a non-null playerId and looked up by the history/summary APIs.
+    await prisma.player.upsert({
       where: { id: playerId },
-      select: { id: true },
+      update: {},
+      create: { id: playerId, username: playerId },
     });
-    if (!player) playerId = null;
   }
 
   const todayStr = new Date().toISOString().slice(0, 10);

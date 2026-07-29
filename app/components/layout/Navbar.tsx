@@ -3,10 +3,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Flag, Trophy, TrendingUp, Search, Menu, X } from "lucide-react";
+import { Flag, Trophy, TrendingUp, Search, Menu, X, Calendar } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/identify", label: "COMMUNITY", Icon: Search },
+  { href: "/daily-challenge", label: "DAILY", Icon: Calendar },
   { href: "/scoring", label: "SCORING", Icon: TrendingUp },
   { href: "/leaderboard", label: "LEADERBOARD", Icon: Trophy },
 ];
