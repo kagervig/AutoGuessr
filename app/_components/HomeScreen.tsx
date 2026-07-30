@@ -14,6 +14,7 @@ import {
   Timer,
   Wrench,
   Power,
+  Flame,
 } from "lucide-react";
 import { MODES, COUNTRIES, FALLBACK_CATEGORIES, FALLBACK_REGIONS, GameMode } from "@/app/lib/constants";
 import type { ModeId } from "@/app/lib/constants";
@@ -32,6 +33,7 @@ const MODE_ICONS: Record<GameMode, React.ReactNode> = {
   [GameMode.Hardcore]: <EyeOff className="w-6 h-6" />,
   [GameMode.TimeAttack]: <Timer className="w-6 h-6" />,
   [GameMode.Practice]: <Wrench className="w-6 h-6" />,
+  [GameMode.Survival]: <Flame className="w-6 h-6" />,
 };
 
 interface FilterOption {

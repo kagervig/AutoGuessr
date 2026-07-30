@@ -8,6 +8,7 @@ import {
   selectRookieImages,
   selectStandardImages,
   selectHardcoreImages,
+  filterSurvivalPool,
 } from "../image-selection";
 import type { RawImage, ScoredImage } from "../image-selection";
 
@@ -293,6 +294,67 @@ describe("selectStandardImages", () => {
     // 15 plain images: none hardcore-eligible, none cropped, none rare, none logo-visible — slots A–D yield 0, slot E yields 3
     const plainPool = Array.from({ length: 15 }, (_, i) => makeScored(i + 100));
     expect(selectStandardImages(plainPool)).toHaveLength(10);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// filterSurvivalPool
+// ---------------------------------------------------------------------------
+
+describe("filterSurvivalPool", () => {
+  it("should exclude images from vehicles in excludeVehicleIds", () => {
+    const pool = [makeScored(1), makeScored(2), makeScored(3)];
+    const result = filterSurvivalPool(pool, 1, ["veh-1", "veh-3"]);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("img-2");
+  });
+
+  it("should exclude hardcore-eligible images for sequenceNumber <= 5", () => {
+    const pool = [
+      makeScored(1, { isHardcoreEligible: true }),
+      makeScored(2, { isHardcoreEligible: false }),
+    ];
+    const result = filterSurvivalPool(pool, 3, []);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("img-2");
+  });
+
+  it("should allow hardcore-eligible images for sequenceNumber > 5", () => {
+    const pool = [
+      makeScored(1, { isHardcoreEligible: true }),
+      makeScored(2, { isHardcoreEligible: false }),
+    ];
+    const result = filterSurvivalPool(pool, 6, []);
+    expect(result).toHaveLength(2);
+  });
+
+  it("should exclude hardcore-eligible images at exactly sequenceNumber 5", () => {
+    const pool = [makeScored(1, { isHardcoreEligible: true })];
+    const result = filterSurvivalPool(pool, 5, []);
+    expect(result).toHaveLength(0);
+  });
+
+  it("should allow hardcore-eligible images at exactly sequenceNumber 6", () => {
+    const pool = [makeScored(1, { isHardcoreEligible: true })];
+    const result = filterSurvivalPool(pool, 6, []);
+    expect(result).toHaveLength(1);
+  });
+
+  it("should return empty when all images are excluded by vehicleId", () => {
+    const pool = [makeScored(1), makeScored(2)];
+    const result = filterSurvivalPool(pool, 1, ["veh-1", "veh-2"]);
+    expect(result).toHaveLength(0);
+  });
+
+  it("should apply both filters simultaneously", () => {
+    const pool = [
+      makeScored(1, { isHardcoreEligible: true }),
+      makeScored(2),
+      makeScored(3),
+    ];
+    const result = filterSurvivalPool(pool, 3, ["veh-2"]);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("img-3");
   });
 });
 

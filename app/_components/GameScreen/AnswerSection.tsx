@@ -7,7 +7,7 @@ import StandardModeInput from "../StandardModeInput";
 import { GameMode } from "@/app/lib/constants";
 
 const HARD_MODES: GameMode[] = [GameMode.Standard, GameMode.Hardcore, GameMode.TimeAttack];
-const CHOICE_MODES: GameMode[] = [GameMode.Easy, GameMode.Practice, GameMode.Custom];
+const CHOICE_MODES: GameMode[] = [GameMode.Easy, GameMode.Practice, GameMode.Custom, GameMode.Survival];
 
 const PROMPT_LABELS: Record<GameMode, string> = {
   [GameMode.Daily]: "Choose the correct make & model",
@@ -17,6 +17,7 @@ const PROMPT_LABELS: Record<GameMode, string> = {
   [GameMode.Hardcore]: "Type make, model & year exactly",
   [GameMode.TimeAttack]: "Identify before the image reveals!",
   [GameMode.Practice]: "Choose the correct make & model",
+  [GameMode.Survival]: "Choose the correct make & model",
 };
 
 interface Props {

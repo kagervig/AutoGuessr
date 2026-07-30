@@ -60,6 +60,11 @@ export const MODES = [
     label: "Garage",
     description: "Drill specific categories or regions. No leaderboard.",
   },
+  {
+    id: GameMode.Survival,
+    label: "Survival",
+    description: "Endless rounds. One wrong answer costs a pit stop. How far can you go?",
+  },
 ] as const;
 
 export type ModeId = GameMode;

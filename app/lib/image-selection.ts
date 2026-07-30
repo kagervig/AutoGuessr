@@ -416,6 +416,37 @@ async function fetchRandom(
 // Public export
 // ---------------------------------------------------------------------------
 
+// Filters a scored pool for survival round selection.
+// Excludes vehicles already seen this session and, for the first 5 rounds, hardcore-eligible images.
+export function filterSurvivalPool(
+  pool: ScoredImage[],
+  sequenceNumber: number,
+  excludeVehicleIds: string[],
+): ScoredImage[] {
+  const excluded = new Set(excludeVehicleIds);
+  return pool.filter(
+    (img) => !excluded.has(img.vehicleId) && (sequenceNumber > 5 || !img.isHardcoreEligible)
+  );
+}
+
+export async function selectSurvivalImage(
+  sequenceNumber: number,
+  excludeVehicleIds: string[],
+): Promise<SelectedImage> {
+  const leastServed = await fetchLeastServed(null, 50);
+  const leastServedIds = leastServed.map((img) => img.id);
+  const random = await fetchRandom(null, leastServedIds, 100);
+  const pool = deriveMetrics([...leastServed, ...random]);
+  const filtered = filterSurvivalPool(pool, sequenceNumber, excludeVehicleIds);
+
+  if (filtered.length === 0) {
+    throw new Error("No images available for survival round");
+  }
+
+  const [selected] = pickWeighted(filtered, 1);
+  return selected;
+}
+
 export async function selectTieredImages(
   mode: typeof GameMode.Easy | typeof GameMode.Standard | typeof GameMode.Hardcore,
   vehicleFilters: Prisma.VehicleWhereInput[]
