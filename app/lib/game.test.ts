@@ -620,6 +620,97 @@ describe("scoreRound", () => {
     });
   });
 
+  describe("survival mode", () => {
+    it("should use overrideMultiplier when provided", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: null,
+        mode: GameMode.Survival,
+        overrideMultiplier: 1.3,
+      });
+      expect(result.modeMultiplier).toBe(1.3);
+      expect(result.pointsEarned).toBe(Math.floor((300 + 400 + 100) * 1.3));
+    });
+
+    it("should not apply year bonus", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: 0,
+        mode: GameMode.Survival,
+        overrideMultiplier: 1.0,
+      });
+      expect(result.yearBonus).toBeNull();
+    });
+
+    it("should apply overrideMultiplier of 1.0 at streak 0", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: null,
+        mode: GameMode.Survival,
+        overrideMultiplier: 1.0,
+      });
+      expect(result.modeMultiplier).toBe(1.0);
+      expect(result.pointsEarned).toBe(Math.floor((300 + 400 + 100) * 1.0));
+    });
+
+    it("should apply overrideMultiplier of 1.9 at streak 9", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: null,
+        mode: GameMode.Survival,
+        overrideMultiplier: 1.9,
+      });
+      expect(result.modeMultiplier).toBe(1.9);
+      expect(result.pointsEarned).toBe(Math.floor((300 + 400 + 100) * 1.9));
+    });
+
+    it("should award 0 points on wrong answer regardless of multiplier", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: false,
+        modelCorrect: false,
+        yearDelta: null,
+        mode: GameMode.Survival,
+        overrideMultiplier: 2.5,
+      });
+      expect(result.makePoints).toBe(0);
+      expect(result.modelPoints).toBe(0);
+      expect(result.pointsEarned).toBe(0);
+    });
+
+    it("should apply time bonus on correct answer", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: true,
+        modelCorrect: true,
+        yearDelta: null,
+        mode: GameMode.Survival,
+        overrideMultiplier: 1.0,
+      });
+      expect(result.timeBonus).toBe(100);
+    });
+
+    it("should not apply time bonus on wrong answer", () => {
+      const result = scoreRound({
+        ...BASE_PARAMS,
+        makeCorrect: false,
+        modelCorrect: false,
+        yearDelta: null,
+        mode: GameMode.Survival,
+        overrideMultiplier: 1.0,
+      });
+      expect(result.timeBonus).toBe(0);
+    });
+  });
+
 // ---------------------------------------------------------------------------
 // proLevelBonus
 // ---------------------------------------------------------------------------

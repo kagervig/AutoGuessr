@@ -236,6 +236,7 @@ export function scoreRound({
   mode,
   panelsRevealed,
   isDailyDiscovery = false,
+  overrideMultiplier,
 }: {
   makeCorrect: boolean;
   modelCorrect: boolean;
@@ -245,6 +246,7 @@ export function scoreRound({
   mode: GameMode;
   panelsRevealed?: number;
   isDailyDiscovery?: boolean;
+  overrideMultiplier?: number;
 }): {
   makePoints: number;
   modelPoints: number;
@@ -280,10 +282,13 @@ export function scoreRound({
     [GameMode.TimeAttack]: 2.0,
     [GameMode.Practice]: 0,
     [GameMode.Hardcore]: 1.0,
+    [GameMode.Survival]: 1.0,
   };
 
   let modeMultiplier: number;
-  if (mode === GameMode.Hardcore && panelsRevealed !== undefined) {
+  if (overrideMultiplier !== undefined) {
+    modeMultiplier = overrideMultiplier;
+  } else if (mode === GameMode.Hardcore && panelsRevealed !== undefined) {
     // Scale from 4.0 (1 panel revealed) down to 1.0 (all 9 panels revealed)
     const clamped = Math.max(1, Math.min(9, panelsRevealed));
     modeMultiplier = 1.0 + 3.0 * (9 - clamped) / 8;
@@ -330,4 +335,5 @@ export const TIME_LIMITS: Record<GameMode, number> = {
   [GameMode.Hardcore]: 30_000,
   [GameMode.TimeAttack]: 15_000,
   [GameMode.Practice]: 30_000,
+  [GameMode.Survival]: 30_000,
 };

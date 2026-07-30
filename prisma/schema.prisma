@@ -45,6 +45,7 @@ enum GameMode {
   time_attack
   practice
   daily
+  survival
 }
 
 enum DimensionType {
@@ -230,6 +231,7 @@ model GameSession {
   initials                  String?
   sessionToken              String      @unique @default(dbgenerated("gen_random_uuid()"))
   featuredVehicleIdAtStart  String?
+  survivalStreak            Int?
   dailyChallengeId          Int?
   dailyChallenge            DailyChallenge? @relation(fields: [dailyChallengeId], references: [id])
   player                    Player?         @relation(fields: [playerId], references: [id])
@@ -270,6 +272,7 @@ model Guess {
   timeBonus            Int      @default(0)
   proBonus             Int      @default(0)
   dailyDiscoveryBonus  Int      @default(0)
+  rareFindBonus        Int      @default(0)
   modeMultiplier       Float
   pointsEarned         Int
   round                Round    @relation(fields: [roundId], references: [id])

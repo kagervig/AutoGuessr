@@ -9,6 +9,7 @@ export const FEATURE_FLAG_KEY = {
   ModeTimeAttack: "mode_time_attack",
   ModeCustom: "mode_custom",
   ModePractice: "mode_practice",
+  ModeSurvival: "mode_survival",
   DailyChallenge: "daily_challenge",
   CarOfTheDay: "car_of_the_day",
   ImageReporting: "image_reporting",
@@ -20,6 +21,7 @@ export interface FeatureFlagDefinition {
   label: string;
   description: string;
   group: "Game Modes" | "Daily Features" | "Admin Tools";
+  defaultEnabled?: boolean;
 }
 
 export const FEATURE_FLAGS: FeatureFlagDefinition[] = [
@@ -29,6 +31,7 @@ export const FEATURE_FLAGS: FeatureFlagDefinition[] = [
   { key: FEATURE_FLAG_KEY.ModeTimeAttack, label: "Time Attack",  description: "Beat the clock as the image reveals.",         group: "Game Modes" },
   { key: FEATURE_FLAG_KEY.ModeCustom,     label: "Custom",       description: "User-filtered car collections.",               group: "Game Modes" },
   { key: FEATURE_FLAG_KEY.ModePractice,   label: "Garage",       description: "Practice mode with no leaderboard.",           group: "Game Modes" },
+  { key: FEATURE_FLAG_KEY.ModeSurvival,   label: "Survival",     description: "Endless mode — keep guessing until pit stops run out.", group: "Game Modes", defaultEnabled: false },
   { key: FEATURE_FLAG_KEY.DailyChallenge, label: "Daily Challenge", description: "One challenge every day.",                  group: "Daily Features" },
   { key: FEATURE_FLAG_KEY.CarOfTheDay,    label: "Car of the Day",  description: "Identify the featured car for a bonus.",     group: "Daily Features" },
   { key: FEATURE_FLAG_KEY.ImageReporting, label: "Image Reporting", description: "Enable users to report image problems.",     group: "Admin Tools" },
@@ -42,6 +45,7 @@ export const GAME_MODE_FLAG: Record<GameMode, FeatureFlagKey> = {
   [GameMode.TimeAttack]: FEATURE_FLAG_KEY.ModeTimeAttack,
   [GameMode.Custom]:     FEATURE_FLAG_KEY.ModeCustom,
   [GameMode.Practice]:   FEATURE_FLAG_KEY.ModePractice,
+  [GameMode.Survival]:   FEATURE_FLAG_KEY.ModeSurvival,
 };
 
 export type FeatureFlagMap = Record<FeatureFlagKey, boolean>;

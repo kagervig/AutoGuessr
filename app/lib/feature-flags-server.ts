@@ -16,15 +16,16 @@ export async function getFeatureFlagMap(): Promise<FeatureFlagMap> {
   const stored = new Map(rows.map((r) => [r.key, r.enabled]));
   const result = {} as FeatureFlagMap;
   for (const def of FEATURE_FLAGS) {
-    result[def.key] = stored.get(def.key) ?? true;
+    result[def.key] = stored.get(def.key) ?? (def.defaultEnabled ?? true);
   }
   return result;
 }
 
 export async function isFeatureEnabled(key: FeatureFlagKey): Promise<boolean> {
+  const def = FEATURE_FLAGS.find((f) => f.key === key);
   const row = await prisma.featureFlag.findUnique({
     where: { key },
     select: { enabled: true },
   });
-  return row?.enabled ?? true;
+  return row?.enabled ?? (def?.defaultEnabled ?? true);
 }

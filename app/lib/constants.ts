@@ -21,6 +21,7 @@ export const GameMode = {
   TimeAttack: "time_attack",
   Custom: "custom",
   Practice: "practice",
+  Survival: "survival",
 } as const;
 export type GameMode = (typeof GameMode)[keyof typeof GameMode];
 export const MODES = [
