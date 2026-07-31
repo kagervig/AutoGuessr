@@ -4,9 +4,11 @@ import type { Prisma } from "../../../app/generated/prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { shuffle, selectDistractors, vehicleLabel, imageUrl, TIME_LIMITS, proLevelBonus, type VehicleForDistractor } from "@/app/lib/game";
 import { ROUNDS_PER_GAME, GameMode } from "@/app/lib/constants";
-import { selectTieredImages } from "@/app/lib/image-selection";
+import { selectTieredImages, selectSurvivalImage } from "@/app/lib/image-selection";
 import { getOrCreateTodaysFeatured } from "@/app/lib/car-of-the-day";
 import { getOrCreateTodaysChallenge, getChallengeByDate } from "@/app/lib/daily-challenge";
+import { isFeatureEnabled } from "@/app/lib/feature-flags-server";
+import { FEATURE_FLAG_KEY } from "@/app/lib/feature-flags";
 import type { DailyChallenge } from "@/app/generated/prisma/client";
 
 const VALID_MODES = Object.values(GameMode);
@@ -194,6 +196,15 @@ export async function GET(request: NextRequest) {
       }
       throw err;
     }
+  } else if (mode === GameMode.Survival) {
+    const enabled = await isFeatureEnabled(FEATURE_FLAG_KEY.ModeSurvival);
+    if (!enabled) {
+      return Response.json({ error: "Survival mode is not available" }, { status: 403 });
+    }
+    // Sequential: round 2 must exclude round 1's vehicleId
+    const img1 = await selectSurvivalImage(1, []);
+    const img2 = await selectSurvivalImage(2, [img1.vehicleId]);
+    selected = [img1, img2];
   } else {
     // custom, practice, time_attack: existing shuffle-and-slice path
     const imageWhere: Prisma.ImageWhereInput = {
@@ -255,9 +266,9 @@ export async function GET(request: NextRequest) {
   // Create rounds
   const timeLimitMs = mode === GameMode.TimeAttack ? TIME_LIMITS[GameMode.TimeAttack] : null;
 
-  // Easy mode: pre-compute distractor choices before the transaction to avoid per-round updates
+  // Easy and Survival: pre-compute distractor choices before the transaction to avoid per-round updates
   let precomputedChoices: { vehicleId: string; label: string }[][] | undefined;
-  if (mode === GameMode.Easy) {
+  if (mode === GameMode.Easy || mode === GameMode.Survival) {
     const allVehicles = await prisma.vehicle.findMany({
       select: {
         id: true,
@@ -316,9 +327,9 @@ export async function GET(request: NextRequest) {
     ...(image.pointsBonus ? { pointsBonus: true } : {}),
   }));
 
-  // Easy mode: build easyChoices response from pre-computed choices
+  // Easy and Survival: build easyChoices response from pre-computed choices
   let easyChoices: Record<string, { vehicleId: string; label: string }[]> | undefined;
-  if (mode === GameMode.Easy && precomputedChoices) {
+  if ((mode === GameMode.Easy || mode === GameMode.Survival) && precomputedChoices) {
     easyChoices = Object.fromEntries(rounds.map((round, i) => [round.id, precomputedChoices![i]]));
   }
 
