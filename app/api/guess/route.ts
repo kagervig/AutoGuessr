@@ -2,7 +2,7 @@ import { after } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { fuzzyMatch, scoreRound, TIME_LIMITS } from "@/app/lib/game";
-import { GameMode } from "@/app/lib/constants";
+import { GameMode, DAILY_RARE_FIND_BONUS } from "@/app/lib/constants";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
               make: true,
               model: true,
               year: true,
+              rarity: true,
               aliases: { select: { alias: true, aliasType: true } },
             },
           },
@@ -112,6 +113,31 @@ export async function POST(request: NextRequest) {
     !!round.session.featuredVehicleIdAtStart &&
     round.image.vehicleId === round.session.featuredVehicleIdAtStart;
 
+  // Survival-specific: derive multiplier from prior correct count and compute lives
+  let survivalMultiplier: number | undefined;
+  let livesRemaining: number | undefined;
+  let rareFindBonus = 0;
+  let survivalCorrectCount = 0;
+  let isGameOver = false;
+
+  if (mode === GameMode.Survival) {
+    const [correctCount, wrongCount] = await Promise.all([
+      prisma.guess.count({ where: { round: { gameId: round.gameId }, isCorrect: true } }),
+      prisma.guess.count({ where: { round: { gameId: round.gameId }, isCorrect: false } }),
+    ]);
+    survivalCorrectCount = correctCount;
+    survivalMultiplier = 1.0 + 0.1 * correctCount;
+
+    if (isCorrect && (vehicle.rarity === "rare" || vehicle.rarity === "ultra_rare")) {
+      rareFindBonus = DAILY_RARE_FIND_BONUS;
+    }
+
+    const newCorrect = correctCount + (isCorrect ? 1 : 0);
+    const newWrong = wrongCount + (isCorrect ? 0 : 1);
+    livesRemaining = 1 + Math.floor(newCorrect / 10) - newWrong;
+    isGameOver = livesRemaining <= 0;
+  }
+
   const scoring = scoreRound({
     makeCorrect: makeMatch,
     modelCorrect: modelMatch,
@@ -121,32 +147,52 @@ export async function POST(request: NextRequest) {
     mode,
     panelsRevealed,
     isDailyDiscovery,
+    overrideMultiplier: survivalMultiplier,
   });
 
   const proBonus = isCorrect ? round.proBonus : 0;
-  const totalPointsEarned = scoring.pointsEarned + proBonus;
+  const totalPointsEarned = scoring.pointsEarned + proBonus + rareFindBonus;
   const imageId = round.image.id;
 
-  const guess = await prisma.guess.create({
-    data: {
-      roundId,
-      rawInput: rawInput ?? "",
-      guessedVehicleId: guessedVehicleId ?? null,
-      isCorrect,
-      partialCredit,
-      yearDelta,
-      timeTakenMs: timeTakenMs ?? null,
-      zoomLevelAtGuess: zoomLevelAtGuess ?? null,
-      makePoints: scoring.makePoints,
-      modelPoints: scoring.modelPoints,
-      yearBonus: scoring.yearBonus,
-      timeBonus: scoring.timeBonus,
-      proBonus,
-      dailyDiscoveryBonus: scoring.dailyDiscoveryBonus,
-      modeMultiplier: scoring.modeMultiplier,
-      pointsEarned: totalPointsEarned,
-    },
-  });
+  const guessData = {
+    roundId,
+    rawInput: rawInput ?? "",
+    guessedVehicleId: guessedVehicleId ?? null,
+    isCorrect,
+    partialCredit,
+    yearDelta,
+    timeTakenMs: timeTakenMs ?? null,
+    zoomLevelAtGuess: zoomLevelAtGuess ?? null,
+    makePoints: scoring.makePoints,
+    modelPoints: scoring.modelPoints,
+    yearBonus: scoring.yearBonus,
+    timeBonus: scoring.timeBonus,
+    proBonus,
+    dailyDiscoveryBonus: scoring.dailyDiscoveryBonus,
+    rareFindBonus,
+    modeMultiplier: scoring.modeMultiplier,
+    pointsEarned: totalPointsEarned,
+  };
+
+  let guess: { id: string };
+  if (isGameOver) {
+    const { _sum } = await prisma.guess.aggregate({
+      where: { round: { gameId: round.gameId } },
+      _sum: { pointsEarned: true },
+    });
+    const finalScore = (_sum.pointsEarned ?? 0) + totalPointsEarned;
+    const survivalStreak = survivalCorrectCount + (isCorrect ? 1 : 0);
+    const [createdGuess] = await prisma.$transaction([
+      prisma.guess.create({ data: guessData }),
+      prisma.gameSession.update({
+        where: { id: round.gameId },
+        data: { endedAt: new Date(), finalScore, survivalStreak },
+      }),
+    ]);
+    guess = createdGuess as { id: string };
+  } else {
+    guess = await prisma.guess.create({ data: guessData });
+  }
 
   after(() => {
     prisma.imageStats.findUnique({
@@ -183,8 +229,12 @@ export async function POST(request: NextRequest) {
     vehicle: { make: vehicle.make, model: vehicle.model, year: vehicle.year },
     ...scoring,
     proBonus,
+    rareFindBonus,
     pointsEarned: totalPointsEarned,
     dailyDiscoveryAwarded: isDailyDiscovery,
+    ...(mode === GameMode.Survival
+      ? { survivalMultiplier, livesRemaining, gameOver: isGameOver }
+      : {}),
   });
 
   if (isDailyDiscovery) {
